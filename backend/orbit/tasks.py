@@ -31,7 +31,10 @@ TRANSITIONS: dict[TaskStatus, set[TaskStatus]] = {
     S.REVISION: {S.FOUNDER_APPROVAL},
 }
 TERMINAL = {S.DONE, S.CANCELLED}
-ASSIGNABLE_AGENT_STATUSES = {AgentStatus.READY, AgentStatus.ACTIVE}
+# Agents in these statuses cannot take work. Draft/Configuring agents can: they
+# become Ready automatically when the Founder assigns them a task.
+UNASSIGNABLE_AGENT_STATUSES = {AgentStatus.PAUSED, AgentStatus.ERROR, AgentStatus.ARCHIVED}
+AUTO_READY_STATUSES = {AgentStatus.DRAFT, AgentStatus.CONFIGURING}
 
 
 class TransitionError(DomainError):
@@ -71,12 +74,14 @@ def create_task(db: Session, user: User, project: Project, **fields) -> Task:
     return task
 
 
-def validate_assignee(db: Session, task: Task, agent_id: int) -> None:
+def validate_assignee(db: Session, task: Task, agent_id: int) -> Agent:
     agent = db.get(Agent, agent_id)
     if agent is None or agent.organization_id != task.organization_id:
         raise TransitionError("invalid_assignee", "Assignee must be an agent in this organization")
-    if agent.status not in ASSIGNABLE_AGENT_STATUSES:
-        raise TransitionError("assignee_not_ready", "Assignee agent must be Ready or Active")
+    if agent.status in UNASSIGNABLE_AGENT_STATUSES:
+        raise TransitionError(
+            "assignee_unavailable", f"Assignee agent is {agent.status.value} and cannot take work"
+        )
     assigned = db.scalar(
         select(ProjectAssignment.id).where(
             ProjectAssignment.project_id == task.project_id,
@@ -85,6 +90,7 @@ def validate_assignee(db: Session, task: Task, agent_id: int) -> None:
     )
     if assigned is None:
         raise TransitionError("assignee_not_in_project", "Assignee agent is not assigned to this project")
+    return agent
 
 
 def transition(
@@ -150,7 +156,9 @@ def _check_forward(
             )
         if task.assignee_id is None:
             raise TransitionError("assignee_required", "Set an assignee before assigning the task")
-        validate_assignee(db, task, task.assignee_id)
+        agent = validate_assignee(db, task, task.assignee_id)
+        if agent.status in AUTO_READY_STATUSES:
+            agent.status = AgentStatus.READY
     elif to == S.FOUNDER_APPROVAL:
         if pr_url:
             task.pr_url = pr_url

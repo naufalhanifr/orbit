@@ -53,7 +53,7 @@ Backlog → Assigned → In Progress → Founder Approval → Done
 * (kecuali Done/Cancelled) → Cancelled (alasan wajib)
 ```
 
-- Assigned: acceptance criteria wajib (kecuali `acceptance_criteria_waived` untuk task eksploratif) dan assignee agent Ready/Active yang ditugaskan ke proyek.
+- Assigned: acceptance criteria wajib (kecuali `acceptance_criteria_waived` untuk task eksploratif) dan assignee agent yang ditugaskan ke proyek. Agent berstatus Draft/Configuring otomatis menjadi Ready saat task di-assign; agent Paused/Error/Archived ditolak.
 - Founder Approval: Founder me-review di PR; `pr_url` wajib. PO Review belum dipakai (MVP §4.4).
 - Revision: feedback wajib (field `reason`); `revision_count` bertambah.
 - Setiap transisi tercatat di `task_status_events`.
