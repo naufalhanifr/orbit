@@ -451,7 +451,7 @@ Task wajib memiliki acceptance criteria sebelum execution, kecuali pekerjaan eks
 - Task boleh bergantung pada task lain dalam organisasi yang sama, termasuk lintas proyek. Dependency tidak boleh membentuk siklus.
 - Dependency hanya dapat ditambahkan ke task yang berstatus Backlog.
 - Task tidak dapat masuk Assigned selama masih ada dependency yang belum Done.
-- Saat dependency terakhir menjadi Done atau dihapus, sistem otomatis memindahkan task ke Assigned dan agent-nya otomatis menjadi Ready, asalkan task memiliki acceptance criteria dan assignee yang tersedia. Jika belum, task menunggu di Backlog dan otomatis maju begitu Founder melengkapinya.
+- Saat dependency terakhir menjadi Done atau dihapus, sistem otomatis memindahkan task ke Assigned, asalkan task memiliki acceptance criteria dan assignee yang tersedia. Jika belum, task menunggu di Backlog dan otomatis maju begitu Founder melengkapinya.
 - Dependency yang Cancelled tidak dihitung Done. Founder memutuskan dengan menghapus dependency tersebut.
 - Task tanpa dependency hanya dipindah secara manual oleh Founder.
 - Perpindahan otomatis berhenti di Assigned. Mulai bekerja (In Progress) menunggu runtime agent (ADR-0001).
