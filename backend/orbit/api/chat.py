@@ -56,6 +56,14 @@ def execution_events(
     ).all()
 
 
+@router.post("/executions/{execution_id}/resume", response_model=ExecutionOut)
+def resume(execution_id: int, user: User = Depends(founder), db: Session = Depends(get_db)):
+    execution = chat.get_execution(db, user.organization_id, execution_id)
+    chat.resume_execution(db, execution)
+    db.commit()
+    return execution
+
+
 @router.post("/executions/{execution_id}/stop", response_model=ExecutionOut)
 def stop(execution_id: int, user: User = Depends(founder), db: Session = Depends(get_db)):
     execution = chat.get_execution(db, user.organization_id, execution_id)

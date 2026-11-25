@@ -268,11 +268,17 @@ class TaskDependency(TimestampMixin, Base):
 
 
 class ExecutionStatus(StrEnum):
+    """PRD 18.3: Queued → Preparing Context → Running → Waiting for Input →
+    Completed / Failed / Cancelled / Suspended."""
+
     QUEUED = "queued"
+    PREPARING = "preparing"  # Preparing Context; UI label "Preparing"
     RUNNING = "running"
+    WAITING_FOR_INPUT = "waiting_for_input"
+    SUSPENDED = "suspended"
     COMPLETED = "completed"
     FAILED = "failed"
-    STOPPED = "stopped"
+    CANCELLED = "cancelled"
 
 
 class ExecutionTrigger(StrEnum):

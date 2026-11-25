@@ -28,7 +28,18 @@ from orbit.models import (
     User,
 )
 
-ACTIVE = {ExecutionStatus.QUEUED, ExecutionStatus.RUNNING}
+E = ExecutionStatus
+# Lifecycle (PRD 18.3). Suspended is resumed by a human back to Queued.
+EXECUTION_TRANSITIONS: dict[ExecutionStatus, set[ExecutionStatus]] = {
+    E.QUEUED: {E.PREPARING, E.CANCELLED},
+    E.PREPARING: {E.RUNNING, E.FAILED, E.CANCELLED},
+    E.RUNNING: {E.WAITING_FOR_INPUT, E.COMPLETED, E.FAILED, E.CANCELLED},
+    E.WAITING_FOR_INPUT: {E.RUNNING, E.SUSPENDED, E.FAILED, E.CANCELLED},
+    E.SUSPENDED: {E.QUEUED, E.CANCELLED},
+}
+TERMINAL = {E.COMPLETED, E.FAILED, E.CANCELLED}
+# The agent is working: a comment mentioning it is an extra instruction, not a new run.
+IN_FLIGHT = {E.PREPARING, E.RUNNING, E.WAITING_FOR_INPUT}
 UNAVAILABLE = {AgentStatus.PAUSED, AgentStatus.ERROR, AgentStatus.ARCHIVED}
 
 
@@ -65,7 +76,7 @@ def running_execution(db: Session, task: Task, agent_id: int) -> Execution | Non
         select(Execution).where(
             Execution.task_id == task.id,
             Execution.agent_id == agent_id,
-            Execution.status == ExecutionStatus.RUNNING,
+            Execution.status.in_(IN_FLIGHT),
         )
     )
 
@@ -91,7 +102,9 @@ def post_message(
     db: Session, user: User, task: Task, body: str, mentions: list[int]
 ) -> ConversationMessage:
     """Store a comment and route its mentions:
-    - the assignee with a running execution on this task: extra instruction to it;
+    - the assignee with an in-flight execution on this task (preparing, running or
+      waiting for input): extra instruction to it — this is also how the Founder
+      answers an agent's question;
     - any other mentioned agent: a new queued execution (chat invocation);
     - no mention: stored as a note only.
     """
@@ -158,8 +171,8 @@ def record_event(
     db: Session, execution: Execution, kind: ExecutionEventKind, payload: dict
 ) -> ExecutionEvent:
     """Append an event. Used by the runtime (later) and for comment instructions."""
-    if execution.status not in ACTIVE:
-        raise ChatError("execution_finished", "Execution has already finished")
+    if execution.status not in IN_FLIGHT:
+        raise ChatError("execution_not_running", "Execution is not in progress")
     seq = (
         db.scalar(
             select(func.max(ExecutionEvent.seq)).where(ExecutionEvent.execution_id == execution.id)
@@ -182,22 +195,29 @@ def record_event(
     return event
 
 
-def start_execution(db: Session, execution: Execution) -> None:
-    """Runtime hook: mark a queued execution as running."""
-    if execution.status != ExecutionStatus.QUEUED:
-        raise ChatError("not_queued", "Only queued executions can start")
-    execution.status = ExecutionStatus.RUNNING
-    execution.started_at = datetime.now(UTC)
+def advance_execution(db: Session, execution: Execution, to: ExecutionStatus) -> None:
+    """Move an execution along its lifecycle. Used by the runtime and by Stop/Resume."""
+    if to not in EXECUTION_TRANSITIONS.get(execution.status, set()):
+        raise ChatError(
+            "invalid_execution_transition",
+            f"Cannot move execution from {execution.status.value} to {to.value}",
+        )
+    now = datetime.now(UTC)
+    if to == E.PREPARING and execution.started_at is None:
+        execution.started_at = now
+    if to in TERMINAL:
+        execution.finished_at = now
+    execution.status = to
     db.flush()
 
 
 def stop_execution(db: Session, execution: Execution) -> None:
-    # shortcut: only marks the record stopped; the runtime must also kill the container once it exists (ADR-0001).
-    if execution.status not in ACTIVE:
-        raise ChatError("execution_finished", "Execution has already finished")
-    execution.status = ExecutionStatus.STOPPED
-    execution.finished_at = datetime.now(UTC)
-    db.flush()
+    # shortcut: only marks the record cancelled; the runtime must also kill the container once it exists (ADR-0001).
+    advance_execution(db, execution, E.CANCELLED)
+
+
+def resume_execution(db: Session, execution: Execution) -> None:
+    advance_execution(db, execution, E.QUEUED)
 
 
 def get_execution(db: Session, org_id: int, execution_id: int) -> Execution:

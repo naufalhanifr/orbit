@@ -73,9 +73,14 @@ Backlog → Assigned → In Progress → Founder Approval → Done
   - Mention agent lain (atau assignee tanpa execution berjalan) → execution baru `queued`, trigger `chat_mention`, dengan snapshot versi instruksi dan batas token agent.
   - Tanpa mention → catatan saja.
   - Agent yang di-mention harus ditugaskan ke proyek dan tidak Paused/Error/Archived.
-- `GET /tasks/{id}/executions` (riwayat), `GET /executions/{id}` (status, `current_step`, `tokens_used`/`token_limit`), `GET /executions/{id}/events?after_seq=N` (step, output, tool, tokens, instruction; polling), `POST /executions/{id}/stop`.
+- `GET /tasks/{id}/executions` (riwayat), `GET /executions/{id}` (status, `current_step`, `tokens_used`/`token_limit`), `GET /executions/{id}/events?after_seq=N` (step, output, tool, tokens, instruction; polling), `POST /executions/{id}/stop` (→ `cancelled`), `POST /executions/{id}/resume` (Suspended → Queued).
 - Endpoint baca tidak memicu aktivitas agent (17.5).
-- Belum ada runtime: execution tetap `queued`. Runtime nanti memakai `chat.start_execution` dan `chat.record_event`; streaming SSE dan Stop yang mematikan container menyusul.
+- Lifecycle (PRD 18.3): `queued → preparing → running ⇄ waiting_for_input → completed | failed | cancelled`, `waiting_for_input → suspended → queued` (resume). `preparing` ditampilkan di UI sebagai "Preparing". Mention assignee saat `preparing`/`running`/`waiting_for_input` menjadi instruksi ke execution itu (termasuk menjawab pertanyaan agent).
+- Belum ada runtime: execution tetap `queued`. Runtime nanti memakai `chat.advance_execution` dan `chat.record_event`; streaming SSE, Stop yang mematikan container, dan Suspended otomatis setelah 30 menit menyusul.
+
+### Waiting on you (PRD 4.4)
+
+`GET /waiting-on-you` — item `pr_review` (task di Founder Approval, dengan `pr_url`), `agent_question` (execution Waiting for Input), `suspended` (perlu di-resume), `blocked` (dengan alasan), urut dari yang paling lama. Konfirmasi run saat budget harian tercapai menyusul bersama budget.
 
 ## Ditunda
 

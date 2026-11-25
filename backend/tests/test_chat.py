@@ -4,7 +4,7 @@ import pytest
 
 from orbit import chat
 from orbit.db import SessionLocal
-from orbit.models import Execution, ExecutionEventKind
+from orbit.models import Execution, ExecutionEventKind, ExecutionStatus
 
 
 @pytest.fixture
@@ -31,11 +31,19 @@ def ctx(api, client):
     return dict(dev=dev, qa=qa, outsider=outsider, task=task, post=post, executions=executions)
 
 
-def run(execution_id, *events):
-    """Simulate the runtime: start an execution and append events."""
+def advance(execution_id, *statuses):
     with SessionLocal() as db:
         ex = db.get(Execution, execution_id)
-        chat.start_execution(db, ex)
+        for status in statuses:
+            chat.advance_execution(db, ex, ExecutionStatus(status))
+        db.commit()
+
+
+def run(execution_id, *events):
+    """Simulate the runtime: start an execution and append events."""
+    advance(execution_id, "preparing", "running")
+    with SessionLocal() as db:
+        ex = db.get(Execution, execution_id)
         for kind, payload in events:
             chat.record_event(db, ex, kind, payload)
         db.commit()
@@ -122,11 +130,11 @@ def test_stop_execution(api, client, ctx):
     ex_id = ctx["executions"]()[0]["id"]
     run(ex_id)
     ex = api.ok(client.post(f"/executions/{ex_id}/stop"))
-    assert ex["status"] == "stopped" and ex["finished_at"] is not None
-    assert client.post(f"/executions/{ex_id}/stop").json()["code"] == "execution_finished"
+    assert ex["status"] == "cancelled" and ex["finished_at"] is not None
+    assert client.post(f"/executions/{ex_id}/stop").json()["code"] == "invalid_execution_transition"
     # A later mention of the assignee starts a new invocation, not an instruction.
     api.ok(ctx["post"]("again", [ctx["dev"]["id"]]))
-    assert [e["status"] for e in ctx["executions"]()] == ["queued", "stopped"]
+    assert [e["status"] for e in ctx["executions"]()] == ["queued", "cancelled"]
 
 
 def test_reading_task_and_panel_triggers_nothing(api, client, ctx):
@@ -139,3 +147,95 @@ def test_reading_task_and_panel_triggers_nothing(api, client, ctx):
 
 def test_unknown_execution_is_404(api, client):
     assert client.get("/executions/1").status_code == 404
+
+
+# --- Lifecycle (PRD 18.3) -------------------------------------------------------
+
+def _queued(api, ctx):
+    api.ok(ctx["post"]("go", [ctx["dev"]["id"]]))
+    return ctx["executions"]()[0]["id"]
+
+
+def test_lifecycle_happy_path_sets_timestamps(api, client, ctx):
+    ex_id = _queued(api, ctx)
+    advance(ex_id, "preparing")
+    ex = api.ok(client.get(f"/executions/{ex_id}"))
+    assert ex["status"] == "preparing" and ex["started_at"] is not None
+    advance(ex_id, "running", "waiting_for_input", "running", "completed")
+    ex = api.ok(client.get(f"/executions/{ex_id}"))
+    assert ex["status"] == "completed" and ex["finished_at"] is not None
+
+
+@pytest.mark.parametrize(
+    "path,bad",
+    [
+        ([], "running"),  # queued must prepare first
+        (["preparing"], "waiting_for_input"),
+        (["preparing", "running"], "suspended"),  # only from waiting_for_input
+        (["preparing", "running", "completed"], "running"),
+        (["preparing", "running", "failed"], "queued"),
+    ],
+)
+def test_invalid_lifecycle_transitions(api, ctx, path, bad):
+    ex_id = _queued(api, ctx)
+    advance(ex_id, *path)
+    with pytest.raises(chat.ChatError):
+        advance(ex_id, bad)
+
+
+def test_answering_agent_question_goes_to_waiting_execution(api, client, ctx):
+    ex_id = _queued(api, ctx)
+    advance(ex_id, "preparing", "running", "waiting_for_input")
+    msg = api.ok(ctx["post"]("Use the blue button", [ctx["dev"]["id"]]))
+    assert len(ctx["executions"]()) == 1
+    events = api.ok(client.get(f"/executions/{ex_id}/events"))
+    assert events[-1]["payload"] == {"message_id": msg["id"]}
+
+
+def test_suspended_execution_can_be_resumed_or_cancelled(api, client, ctx):
+    ex_id = _queued(api, ctx)
+    advance(ex_id, "preparing", "running", "waiting_for_input", "suspended")
+    assert api.ok(client.post(f"/executions/{ex_id}/resume"))["status"] == "queued"
+    assert client.post(f"/executions/{ex_id}/resume").json()["code"] == "invalid_execution_transition"
+    advance(ex_id, "preparing", "running", "waiting_for_input", "suspended")
+    assert api.ok(client.post(f"/executions/{ex_id}/stop"))["status"] == "cancelled"
+
+
+# --- Waiting on you (PRD 4.4) ----------------------------------------------------
+
+def test_waiting_on_you_lists_what_needs_the_founder(api, client, ctx):
+    tid = ctx["task"]["id"]
+    assert api.ok(client.get("/waiting-on-you")) == []
+
+    question = _queued(api, ctx)
+    advance(question, "preparing", "running", "waiting_for_input")
+    api.ok(ctx["post"]("@QA check", [ctx["qa"]["id"]]))
+    suspended = ctx["executions"]()[0]["id"]
+    advance(suspended, "preparing", "running", "waiting_for_input", "suspended")
+
+    pr = "https://github.com/example/sandbox/pull/7"
+    for to in ("assigned", "in_progress", "founder_approval"):
+        api.ok(client.post(f"/tasks/{tid}/transitions", json={"to_status": to, "pr_url": pr}))
+    blocked = api.ok(
+        client.post(f"/projects/{ctx['task']['project_id']}/tasks", json={"title": "Stuck"})
+    )
+    api.ok(client.post(f"/tasks/{blocked['id']}/transitions", json={"to_status": "blocked", "reason": "Need API key"}))
+
+    items = {(i["kind"], i["task_id"], i["execution_id"]): i for i in api.ok(client.get("/waiting-on-you"))}
+    assert set(items) == {
+        ("agent_question", tid, question),
+        ("suspended", tid, suspended),
+        ("pr_review", tid, None),
+        ("blocked", blocked["id"], None),
+    }
+    assert items[("pr_review", tid, None)]["pr_url"] == pr
+    assert items[("blocked", blocked["id"], None)]["reason"] == "Need API key"
+    assert items[("pr_review", tid, None)]["task_key"] == "ORB-1"
+
+
+def test_waiting_on_you_drops_items_once_handled(api, client, ctx):
+    ex_id = _queued(api, ctx)
+    advance(ex_id, "preparing", "running", "waiting_for_input", "suspended")
+    assert len(api.ok(client.get("/waiting-on-you"))) == 1
+    api.ok(client.post(f"/executions/{ex_id}/resume"))
+    assert api.ok(client.get("/waiting-on-you")) == []
