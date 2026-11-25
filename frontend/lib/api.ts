@@ -62,6 +62,8 @@ export type Task = {
   pr_url: string | null
   revision_count: number
   depends_on: number[]
+  from_chat: boolean
+  source_message_id: number | null
 }
 
 export type TaskEvent = {

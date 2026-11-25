@@ -179,6 +179,7 @@ function TaskCard({
     <article className="relative flex flex-col gap-2 rounded-lg bg-card p-3 ring-1 ring-foreground/10 transition-colors has-[button[data-open]]:ring-ring hover:bg-muted/50">
       <div className="flex items-center gap-2">
         <span className="font-mono text-xs text-muted-foreground">{task.key}</span>
+        {task.from_chat ? <span className="text-xs text-muted-foreground">from chat</span> : null}
         <span className="ml-auto" />
         <TaskMenu task={task} all={all} onPick={onPick} />
       </div>
