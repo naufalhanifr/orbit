@@ -25,7 +25,6 @@ def agent_out(agent: Agent) -> AgentOut:
         name=agent.workforce.name,
         title=agent.workforce.title,
         status=agent.status,
-        is_top=agent.is_top,
         fixed_supervisor_id=agent.fixed_supervisor_id,
         model=agent.model,
         tool_preset=agent.tool_preset,
@@ -84,13 +83,6 @@ def set_supervisor(
 ):
     agent = structure.get_agent(db, user.organization_id, agent_id)
     structure.set_fixed_supervisor(db, agent, body.supervisor_id)
-    return _commit_and_out(db, agent)
-
-
-@router.post("/{agent_id}/make-top", response_model=AgentOut)
-def make_top(agent_id: int, user: User = Depends(founder), db: Session = Depends(get_db)):
-    agent = structure.get_agent(db, user.organization_id, agent_id)
-    structure.make_top(db, agent)
     return _commit_and_out(db, agent)
 
 

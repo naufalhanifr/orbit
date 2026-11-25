@@ -39,7 +39,7 @@ dihapus lalu dibuat ulang lewat migrasi Alembic setiap kali test dijalankan.
 | Modul | Isi |
 |---|---|
 | `orbit/security.py` | Hash argon2, kunci 15 menit setelah 5 gagal login, session cookie (`HttpOnly`, `Secure`, `SameSite=Lax`), reset password. |
-| `orbit/structure.py` | Aturan struktur agent (PRD 8.2): tepat satu puncak, atasan tetap + per proyek, tanpa siklus, maks. 4 level (puncak = level 1) dicek per proyek, Ready wajib punya atasan, resolusi atasan task. |
+| `orbit/structure.py` | Struktur agent: Founder adalah akar; agent tanpa atasan agent melapor langsung ke Founder (jumlah dan kedalaman bebas). Atasan tetap + per proyek (matriks), tanpa siklus (dicek per proyek), agent yang masih punya bawahan tidak bisa diarsipkan, resolusi atasan task: per proyek → tetap → Founder. |
 | `orbit/tasks.py` | State machine task. |
 | `orbit/cli.py` | `create-founder`, `reset-password`. |
 

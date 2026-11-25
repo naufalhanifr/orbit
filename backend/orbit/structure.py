@@ -1,4 +1,10 @@
-"""Agent organization structure rules (PRD 8.2).
+"""Agent organization structure rules.
+
+Founder decision (2026-11-25), overriding PRD 8.2's single top agent and depth limit:
+the Founder is the root of the organisation. Any number of agents may report directly
+to the Founder (no agent supervisor = reports to the Founder), and there is no depth
+limit. Reporting lines must still never form a cycle, checked for fixed supervisors
+and per project (matrix model).
 
 Every change to agents, supervisors or project assignments is applied inside a
 transaction and then checked with `validate_structure`; on a violation the caller
@@ -21,16 +27,6 @@ from orbit.models import (
     WorkforceType,
 )
 
-MAX_DEPTH = 4  # levels, counting the top agent as level 1
-
-# Statuses an agent can only hold once it has a supervisor (unless it is the top agent).
-STATUSES_REQUIRING_SUPERVISOR = {
-    AgentStatus.READY,
-    AgentStatus.ACTIVE,
-    AgentStatus.PAUSED,
-    AgentStatus.ERROR,
-}
-
 
 class StructureError(DomainError):
     pass
@@ -51,21 +47,30 @@ def _live_assignments(db: Session, org_id: int, live_ids: set[int]) -> list[Proj
     return [a for a in rows if a.agent_id in live_ids]
 
 
-def _check_chains(graph: dict[int, int | None], starts, scope: str) -> None:
-    """Walk up from each start agent: no cycles, no chain deeper than MAX_DEPTH."""
+def _check_no_cycles(graph: dict[int, int | None], starts, scope: str) -> None:
     for start in starts:
-        seen = [start]
-        node = graph[start]
+        seen = {start}
+        node = graph.get(start)
         while node is not None:
             if node in seen:
                 raise StructureError("cycle", f"Reporting lines form a cycle ({scope})")
-            seen.append(node)
-            if len(seen) > MAX_DEPTH:
-                raise StructureError(
-                    "too_deep",
-                    f"Reporting structure exceeds {MAX_DEPTH} levels from the top agent ({scope})",
-                )
+            seen.add(node)
             node = graph.get(node)
+
+
+def normalize_supervisor(db: Session, org_id: int, supervisor_id: int | None) -> int | None:
+    """The Founder is stored as "no agent supervisor" (NULL)."""
+    if supervisor_id is not None:
+        founder = founder_workforce(db, org_id)
+        if founder is not None and supervisor_id == founder.id:
+            return None
+        agent = db.get(Agent, supervisor_id)
+        if agent is None or agent.organization_id != org_id:
+            raise StructureError(
+                "invalid_supervisor",
+                "Supervisor must be the Founder or an active (non-archived) agent",
+            )
+    return supervisor_id
 
 
 def validate_structure(db: Session, org_id: int) -> None:
@@ -76,15 +81,6 @@ def validate_structure(db: Session, org_id: int) -> None:
     by_id = {a.workforce_id: a for a in agents}
     assignments = _live_assignments(db, org_id, set(by_id))
 
-    tops = [a for a in agents if a.is_top]
-    if len(tops) != 1:
-        raise StructureError("top_count", "The agent structure must have exactly one top agent")
-    top = tops[0]
-    if top.fixed_supervisor_id is not None or any(
-        pa.agent_id == top.workforce_id and pa.supervisor_id is not None for pa in assignments
-    ):
-        raise StructureError("top_has_supervisor", "The top agent reports to the Founder only")
-
     for sup_id, owner in [(a.fixed_supervisor_id, a.workforce_id) for a in agents] + [
         (pa.supervisor_id, pa.agent_id) for pa in assignments
     ]:
@@ -94,31 +90,18 @@ def validate_structure(db: Session, org_id: int) -> None:
             raise StructureError("cycle", "An agent cannot supervise itself")
         if sup_id not in by_id:
             raise StructureError(
-                "invalid_supervisor", "Supervisor must be an active (non-archived) agent"
-            )
-
-    has_project_supervisor = {pa.agent_id for pa in assignments if pa.supervisor_id is not None}
-    for a in agents:
-        if (
-            not a.is_top
-            and a.status in STATUSES_REQUIRING_SUPERVISOR
-            and a.fixed_supervisor_id is None
-            and a.workforce_id not in has_project_supervisor
-        ):
-            raise StructureError(
-                "supervisor_required",
-                f"Agent {a.workforce_id} needs a supervisor before it can be {a.status.value}",
+                "invalid_supervisor",
+                "Supervisor must be the Founder or an active (non-archived) agent",
             )
 
     base = {a.workforce_id: a.fixed_supervisor_id for a in agents}
-    _check_chains(base, base, "fixed supervisors")
-    # Per project: the chains of agents assigned to the project, where each agent's
-    # per-project supervisor (if any) overrides its fixed supervisor.
+    _check_no_cycles(base, base, "fixed supervisors")
+    # Per project: each assigned agent's per-project supervisor overrides its fixed one.
     for pid in {pa.project_id for pa in assignments}:
         members = [pa for pa in assignments if pa.project_id == pid]
         graph = dict(base)
         graph.update({pa.agent_id: pa.supervisor_id for pa in members if pa.supervisor_id})
-        _check_chains(graph, [pa.agent_id for pa in members], f"project {pid}")
+        _check_no_cycles(graph, [pa.agent_id for pa in members], f"project {pid}")
 
 
 def get_agent(db: Session, org_id: int, agent_id: int) -> Agent:
@@ -139,15 +122,13 @@ def create_agent(
     **profile,
 ) -> Agent:
     org_id = user.organization_id
-    is_first = not _live_agents(db, org_id)
     wf = Workforce(organization_id=org_id, type=WorkforceType.AGENT, name=name, title=title)
     db.add(wf)
     db.flush()
     agent = Agent(
         workforce_id=wf.id,
         organization_id=org_id,
-        is_top=is_first,
-        fixed_supervisor_id=fixed_supervisor_id,
+        fixed_supervisor_id=normalize_supervisor(db, org_id, fixed_supervisor_id),
         **profile,
     )
     db.add(agent)
@@ -178,7 +159,7 @@ def save_instructions(db: Session, user: User, agent: Agent, content: str) -> Ag
 
 
 def set_fixed_supervisor(db: Session, agent: Agent, supervisor_id: int | None) -> None:
-    agent.fixed_supervisor_id = supervisor_id
+    agent.fixed_supervisor_id = normalize_supervisor(db, agent.organization_id, supervisor_id)
     validate_structure(db, agent.organization_id)
 
 
@@ -210,32 +191,8 @@ def archive_agent(db: Session, agent: Agent) -> None:
         raise StructureError(
             "has_subordinates", "Move this agent's subordinates to another supervisor first"
         )
-    if agent.is_top and len(_live_agents(db, agent.organization_id)) > 1:
-        raise StructureError(
-            "top_in_use", "Make another agent the top agent before archiving this one"
-        )
-    agent.is_top = False
     agent.status = AgentStatus.ARCHIVED
     validate_structure(db, agent.organization_id)
-
-
-def make_top(db: Session, agent: Agent) -> None:
-    """Replace the top agent. The previous top moves directly under the new one,
-    and the new top's own supervisor lines are cleared, so there is always one top."""
-    if agent.status == AgentStatus.ARCHIVED:
-        raise StructureError("archived", "An archived agent cannot be the top agent")
-    if agent.is_top:
-        return
-    org_id = agent.organization_id
-    old_top = next(a for a in _live_agents(db, org_id) if a.is_top)
-    old_top.is_top = False
-    db.flush()  # release the one-top unique index
-    agent.is_top = True
-    agent.fixed_supervisor_id = None
-    for pa in db.scalars(select(ProjectAssignment).where(ProjectAssignment.agent_id == agent.workforce_id)):
-        pa.supervisor_id = None
-    old_top.fixed_supervisor_id = agent.workforce_id
-    validate_structure(db, org_id)
 
 
 def founder_workforce(db: Session, org_id: int) -> Workforce:

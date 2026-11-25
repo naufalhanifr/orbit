@@ -6,13 +6,11 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
-    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
     func,
-    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -141,23 +139,13 @@ class UserSession(TimestampMixin, Base):
 
 class Agent(TimestampMixin, Base):
     __tablename__ = "agents"
-    __table_args__ = (
-        # At most one non-archived top agent per organization (PRD 8.2).
-        Index(
-            "uq_agents_one_top_per_org",
-            "organization_id",
-            unique=True,
-            postgresql_where=text("is_top"),
-        ),
-    )
-
     workforce_id: Mapped[int] = mapped_column(ForeignKey("workforce.id"), primary_key=True)
     organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
     status: Mapped[AgentStatus] = mapped_column(
         _enum(AgentStatus, "agent_status"), default=AgentStatus.DRAFT
     )
-    is_top: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
-    # Fixed supervisor (atasan tetap). Per-project supervisors live on ProjectAssignment.
+    # Fixed supervisor (atasan tetap); NULL means the agent reports to the Founder.
+    # Per-project supervisors live on ProjectAssignment.
     fixed_supervisor_id: Mapped[int | None] = mapped_column(ForeignKey("workforce.id"))
     model: Mapped[str | None] = mapped_column(String(100))
     tool_preset: Mapped[ToolPreset] = mapped_column(
