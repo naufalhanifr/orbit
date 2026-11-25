@@ -1,0 +1,260 @@
+from datetime import datetime
+from enum import StrEnum
+
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+def _enum(cls: type[StrEnum], name: str) -> Enum:
+    return Enum(cls, name=name, values_callable=lambda e: [m.value for m in e])
+
+
+class WorkforceType(StrEnum):
+    HUMAN = "human"
+    AGENT = "agent"
+
+
+class UserRole(StrEnum):
+    FOUNDER = "founder"
+    MEMBER = "member"
+
+
+class AgentStatus(StrEnum):
+    DRAFT = "draft"
+    CONFIGURING = "configuring"
+    READY = "ready"
+    ACTIVE = "active"
+    PAUSED = "paused"
+    ERROR = "error"
+    ARCHIVED = "archived"
+
+
+class ToolPreset(StrEnum):
+    READ_ONLY = "read-only"
+    CODING = "coding"
+
+
+class TaskStatus(StrEnum):
+    BACKLOG = "backlog"
+    ASSIGNED = "assigned"
+    IN_PROGRESS = "in_progress"
+    FOUNDER_APPROVAL = "founder_approval"
+    REVISION = "revision"
+    BLOCKED = "blocked"
+    DONE = "done"
+    CANCELLED = "cancelled"
+
+
+class TaskType(StrEnum):
+    INITIATIVE = "initiative"
+    EPIC = "epic"
+    FEATURE = "feature"
+    STORY = "story"
+    TASK = "task"
+    SUBTASK = "subtask"
+    BUG = "bug"
+    TECH_DEBT = "technical_debt"
+    IMPROVEMENT = "improvement"
+    RESEARCH = "research"
+    MILESTONE = "milestone"
+
+
+class TaskPriority(StrEnum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class TimestampMixin:
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class Organization(TimestampMixin, Base):
+    __tablename__ = "organizations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+
+
+class Workforce(TimestampMixin, Base):
+    """Human and AI agent workforce (PRD 7). Agents have a 1:1 `Agent` profile."""
+
+    __tablename__ = "workforce"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    type: Mapped[WorkforceType] = mapped_column(_enum(WorkforceType, "workforce_type"))
+    name: Mapped[str] = mapped_column(String(200))
+    title: Mapped[str | None] = mapped_column(String(200))
+
+    agent: Mapped["Agent | None"] = relationship(
+        back_populates="workforce", foreign_keys="Agent.workforce_id", uselist=False
+    )
+
+
+class User(TimestampMixin, Base):
+    """Login identity of a human workforce member."""
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    workforce_id: Mapped[int] = mapped_column(ForeignKey("workforce.id"), unique=True)
+    email: Mapped[str] = mapped_column(String(320), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    role: Mapped[UserRole] = mapped_column(_enum(UserRole, "user_role"))
+    failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    workforce: Mapped[Workforce] = relationship()
+
+
+class UserSession(TimestampMixin, Base):
+    __tablename__ = "user_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    user: Mapped[User] = relationship()
+
+
+class Agent(TimestampMixin, Base):
+    __tablename__ = "agents"
+    __table_args__ = (
+        # At most one non-archived top agent per organization (PRD 8.2).
+        Index(
+            "uq_agents_one_top_per_org",
+            "organization_id",
+            unique=True,
+            postgresql_where=text("is_top"),
+        ),
+    )
+
+    workforce_id: Mapped[int] = mapped_column(ForeignKey("workforce.id"), primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    status: Mapped[AgentStatus] = mapped_column(
+        _enum(AgentStatus, "agent_status"), default=AgentStatus.DRAFT
+    )
+    is_top: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Fixed supervisor (atasan tetap). Per-project supervisors live on ProjectAssignment.
+    fixed_supervisor_id: Mapped[int | None] = mapped_column(ForeignKey("workforce.id"))
+    model: Mapped[str | None] = mapped_column(String(100))
+    tool_preset: Mapped[ToolPreset] = mapped_column(
+        _enum(ToolPreset, "tool_preset"), default=ToolPreset.READ_ONLY
+    )
+    token_limit_per_execution: Mapped[int] = mapped_column(Integer, default=300_000)
+
+    workforce: Mapped[Workforce] = relationship(
+        back_populates="agent", foreign_keys=[workforce_id]
+    )
+    instruction_versions: Mapped[list["AgentInstructionVersion"]] = relationship(
+        order_by="AgentInstructionVersion.version"
+    )
+
+
+class AgentInstructionVersion(TimestampMixin, Base):
+    """Immutable instruction snapshot. Every save creates a new version."""
+
+    __tablename__ = "agent_instruction_versions"
+    __table_args__ = (UniqueConstraint("agent_id", "version"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    agent_id: Mapped[int] = mapped_column(ForeignKey("agents.workforce_id"))
+    version: Mapped[int] = mapped_column(Integer)
+    content: Mapped[str] = mapped_column(Text)
+    created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+
+
+class Project(TimestampMixin, Base):
+    __tablename__ = "projects"
+    __table_args__ = (UniqueConstraint("organization_id", "key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    key: Mapped[str] = mapped_column(String(10))
+    name: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str | None] = mapped_column(Text)
+    next_task_number: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+
+
+class ProjectAssignment(TimestampMixin, Base):
+    __tablename__ = "project_assignments"
+    __table_args__ = (UniqueConstraint("project_id", "agent_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    agent_id: Mapped[int] = mapped_column(ForeignKey("agents.workforce_id"))
+    # Per-project supervisor (atasan per proyek); overrides the fixed supervisor.
+    supervisor_id: Mapped[int | None] = mapped_column(ForeignKey("workforce.id"))
+
+
+class Task(TimestampMixin, Base):
+    __tablename__ = "tasks"
+    __table_args__ = (UniqueConstraint("project_id", "number"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    number: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(String(300))
+    description: Mapped[str | None] = mapped_column(Text)
+    type: Mapped[TaskType] = mapped_column(_enum(TaskType, "task_type"), default=TaskType.TASK)
+    priority: Mapped[TaskPriority] = mapped_column(
+        _enum(TaskPriority, "task_priority"), default=TaskPriority.MEDIUM
+    )
+    status: Mapped[TaskStatus] = mapped_column(
+        _enum(TaskStatus, "task_status"), default=TaskStatus.BACKLOG
+    )
+    # Status to return to when a Blocked task is unblocked.
+    status_before_block: Mapped[TaskStatus | None] = mapped_column(_enum(TaskStatus, "task_status"))
+    acceptance_criteria: Mapped[str | None] = mapped_column(Text)
+    # Exploratory work explicitly marked as not needing acceptance criteria (PRD 14.2).
+    acceptance_criteria_waived: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
+    assignee_id: Mapped[int | None] = mapped_column(ForeignKey("workforce.id"))
+    reporter_id: Mapped[int | None] = mapped_column(ForeignKey("workforce.id"))
+    pr_url: Mapped[str | None] = mapped_column(String(500))
+    revision_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    project: Mapped[Project] = relationship()
+
+
+class TaskStatusEvent(TimestampMixin, Base):
+    """History of task status transitions, including reasons and feedback."""
+
+    __tablename__ = "task_status_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id", ondelete="CASCADE"), index=True)
+    from_status: Mapped[TaskStatus] = mapped_column(_enum(TaskStatus, "task_status"))
+    to_status: Mapped[TaskStatus] = mapped_column(_enum(TaskStatus, "task_status"))
+    reason: Mapped[str | None] = mapped_column(Text)
+    actor_id: Mapped[int | None] = mapped_column(ForeignKey("workforce.id"))
