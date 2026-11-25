@@ -9,7 +9,7 @@
 | Product Category | AI Workforce & Project Operating System |
 | Initial Organization | EVORA Studio |
 | Architecture | Custom-built, Paperclip-independent (tidak dibangun di atas atau bergantung pada Paperclip; seluruh domain model dan orkestrasi dibangun sendiri) |
-| Execution Runtime | Claude Code (via Claude Agent SDK atau headless CLI — lihat ADR-001) |
+| Execution Runtime | Claude Agent SDK di container Docker per execution (lihat [ADR-0001](adr/0001-agent-execution-runtime.md), status Proposed) |
 | Workforce Model | Human + AI Agents dalam satu struktur organisasi |
 | Deployment Strategy | Internal-first, multi-organization ready |
 | Primary Domain | orbit.evora-studio.com |
@@ -492,7 +492,7 @@ Chat menampilkan dengan jelas agent yang dipanggil, task yang menjadi konteks, d
 ## 18. Agent Execution Management
 
 ### 18.1 Runtime
-Execution runtime menggunakan Claude Code — melalui Claude Agent SDK atau headless CLI, diputuskan dalam **ADR-001** — di dalam container Docker yang terisolasi per execution.
+Execution runtime menggunakan **Claude Agent SDK (Python)** yang dijalankan oleh ORBIT Runner di dalam container Docker terisolasi per execution — lihat [ADR-0001](adr/0001-agent-execution-runtime.md). UI ORBIT tidak menyebut dirinya "Claude Code"; label yang diperbolehkan misalnya "Powered by Claude".
 
 - Autentikasi menggunakan **API key organisasi** (Claude API, atau penyedia cloud yang mendukung), bukan akun langganan pribadi.
 - Permission ORBIT dipetakan ke tool allowlist, MCP allowlist, dan network egress allowlist di runtime.
@@ -802,7 +802,7 @@ Seluruh interface, dokumentasi, branding, dan notifikasi menggunakan nama ORBIT.
 
 ## 35. Open Questions
 
-1. **ADR-001:** runtime menggunakan Claude Agent SDK atau wrapper headless Claude Code CLI?
+1. **ADR-0001:** usulan memakai Claude Agent SDK (status Proposed; menunggu spike validasi dan persetujuan Founder).
 2. Penyedia model: Claude API langsung atau melalui penyedia cloud?
 3. Apakah folder `documents/` juga di-commit ke repository proyek?
 4. Hosting workspace: single host atau cluster?
