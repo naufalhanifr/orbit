@@ -39,25 +39,25 @@ const COLUMNS: TaskStatus[] = ["backlog", "assigned", "in-progress", "founder-ap
 
 type Action = { label: string; to: TaskStatus | "restore"; reason?: "alasan" | "feedback" }
 
-/** Aksi Founder per status, sesuai PRD 15.1 (MVP). Transisi milik assignee/system tidak ditawarkan. */
+/** Founder actions per status, per PRD 15.1 (MVP). Assignee/system transitions are not offered. */
 function founderActions(t: Task, all: Task[]): Action[] {
   const end = t.status === "done" || t.status === "cancelled"
   const a: Action[] = []
   if (t.status === "founder-approval") {
-    a.push({ label: "Setujui, tandai Done", to: "done" }, { label: "Minta revisi", to: "revision", reason: "feedback" })
+    a.push({ label: "Approve, mark Done", to: "done" }, { label: "Request revision", to: "revision", reason: "feedback" })
   }
-  if (t.status === "backlog" && readiness(t, all).ok) a.push({ label: "Pindah ke Assigned", to: "assigned" })
-  if (t.status === "blocked") a.push({ label: "Buka blokir", to: "restore" })
-  if (!end && t.status !== "blocked") a.push({ label: "Tandai Blocked", to: "blocked", reason: "alasan" })
-  if (!end) a.push({ label: "Batalkan task", to: "cancelled", reason: "alasan" })
+  if (t.status === "backlog" && readiness(t, all).ok) a.push({ label: "Move to Assigned", to: "assigned" })
+  if (t.status === "blocked") a.push({ label: "Unblock", to: "restore" })
+  if (!end && t.status !== "blocked") a.push({ label: "Mark Blocked", to: "blocked", reason: "alasan" })
+  if (!end) a.push({ label: "Cancel task", to: "cancelled", reason: "alasan" })
   return a
 }
 
 function readiness(t: Task, all: Task[]) {
   const waitingOn = (t.dependsOn ?? []).filter((id) => byId(all, id)?.status !== "done")
-  if (!t.criteria.length) return { ok: false, why: "Tambahkan acceptance criteria dulu." }
-  if (!t.assigneeId) return { ok: false, why: "Pilih assignee dulu." }
-  if (waitingOn.length) return { ok: false, why: `Maju otomatis setelah ${waitingOn.join(", ")} Done.` }
+  if (!t.criteria.length) return { ok: false, why: "Add acceptance criteria first." }
+  if (!t.assigneeId) return { ok: false, why: "Pick an assignee first." }
+  if (waitingOn.length) return { ok: false, why: `Moves on automatically once ${waitingOn.join(", ")} is Done.` }
   return { ok: true, why: "" }
 }
 
@@ -116,16 +116,16 @@ function ReasonDialog({
           <DialogHeader>
             <DialogTitle>{pending?.action.label} {pending?.task.id}</DialogTitle>
             <DialogDescription>
-              {feedback ? "Feedback dikirim ke agent sebagai dasar revisi dan dihitung sebagai satu siklus revisi." : "Alasan wajib diisi dan tersimpan di riwayat task."}
+              {feedback ? "Feedback goes to the agent as the basis for the revision and counts as one revision cycle." : "A reason is required and is saved in the task history."}
             </DialogDescription>
           </DialogHeader>
           <Field data-invalid={error || undefined}>
-            <FieldLabel htmlFor="reason">{feedback ? "Feedback revisi" : "Alasan"}</FieldLabel>
+            <FieldLabel htmlFor="reason">{feedback ? "Revision feedback" : "Reason"}</FieldLabel>
             <Textarea id="reason" value={text} onChange={(e) => setText(e.target.value)} aria-invalid={error || undefined} rows={4} />
-            {error ? <FieldError>{feedback ? "Tulis feedback yang bisa dikerjakan agent." : "Alasan wajib diisi."}</FieldError> : null}
+            {error ? <FieldError>{feedback ? "Write feedback the agent can act on." : "Enter a reason."}</FieldError> : null}
           </Field>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" type="button" />}>Batal</DialogClose>
+            <DialogClose render={<Button variant="outline" type="button" />}>Cancel</DialogClose>
             <Button type="submit" variant={pending?.action.to === "cancelled" ? "destructive" : "default"}>
               {pending?.action.label}
             </Button>
@@ -142,7 +142,7 @@ function TaskMenu({ task, all, onPick }: { task: Task; all: Task[]; onPick: (a: 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="ghost" size="icon-sm" className="relative z-10 -mr-1" aria-label={`Aksi untuk ${task.id}`} />}
+        render={<Button variant="ghost" size="icon-sm" className="relative z-10 -mr-1" aria-label={`Actions for ${task.id}`} />}
       >
         <MoreHorizontal aria-hidden="true" />
       </DropdownMenuTrigger>
@@ -170,7 +170,7 @@ function TaskCard({ task, all, onOpen, onPick }: { task: Task; all: Task[]; onOp
     <article className="relative flex flex-col gap-2 bg-card p-3 ring-1 ring-foreground/10 transition-colors has-[button[data-open]]:ring-ring hover:bg-muted/50">
       <div className="flex items-center gap-2">
         <span className="font-mono text-xs text-muted-foreground">{task.id}</span>
-        {task.fromChat ? <span className="text-xs text-muted-foreground">dari chat</span> : null}
+        {task.fromChat ? <span className="text-xs text-muted-foreground">from chat</span> : null}
         <span className="ml-auto" />
         <TaskMenu task={task} all={all} onPick={onPick} />
       </div>
@@ -203,7 +203,7 @@ function TaskCard({ task, all, onOpen, onPick }: { task: Task; all: Task[]; onOp
             <span className="truncate">{assignee.name}</span>
           </>
         ) : (
-          <span>Belum ada assignee</span>
+          <span>No assignee yet</span>
         )}
         <span className="ml-auto flex shrink-0 items-center gap-2 font-mono whitespace-nowrap tabular-nums">
           {task.pr ? (
@@ -236,9 +236,9 @@ function TaskSheet({ task, all, onClose, onPick }: { task: Task | null; all: Tas
               </div>
               <SheetTitle className="text-base">{task.title}</SheetTitle>
               <SheetDescription>
-                {assignee ? `Dikerjakan ${assignee.name}` : "Belum ada assignee"}
+                {assignee ? `Assigned to ${assignee.name}` : "No assignee yet"}
                 {task.pr ? ` · PR #${task.pr}` : ""}
-                {task.tokens ? ` · ${formatTokens(task.tokens)} token` : ""}
+                {task.tokens ? ` · ${formatTokens(task.tokens)} tokens` : ""}
               </SheetDescription>
             </SheetHeader>
             <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 text-sm">
@@ -247,7 +247,7 @@ function TaskSheet({ task, all, onClose, onPick }: { task: Task | null; all: Tas
               ) : null}
               {task.status === "in-progress" ? (
                 <section aria-labelledby="live" className="flex flex-col gap-2">
-                  <h2 id="live" className="text-sm font-medium">Execution berjalan</h2>
+                  <h2 id="live" className="text-sm font-medium">Running execution</h2>
                   <ExecutionCard showLog />
                 </section>
               ) : null}
@@ -260,12 +260,12 @@ function TaskSheet({ task, all, onClose, onPick }: { task: Task | null; all: Tas
                     ))}
                   </ol>
                 ) : (
-                  <p className="text-muted-foreground">Belum ada. Task tidak bisa masuk Assigned tanpa acceptance criteria.</p>
+                  <p className="text-muted-foreground">None yet. A task can’t move to Assigned without acceptance criteria.</p>
                 )}
               </section>
               {task.dependsOn?.length ? (
                 <section aria-labelledby="dep" className="flex flex-col gap-2">
-                  <h2 id="dep" className="text-sm font-medium">Bergantung pada</h2>
+                  <h2 id="dep" className="text-sm font-medium">Depends on</h2>
                   {task.dependsOn.map((id) => {
                     const d = byId(all, id)
                     return d ? (
@@ -276,7 +276,7 @@ function TaskSheet({ task, all, onClose, onPick }: { task: Task | null; all: Tas
                       </div>
                     ) : null
                   })}
-                  <p className="text-xs text-muted-foreground">Task ini pindah ke Assigned otomatis saat semua dependency Done.</p>
+                  <p className="text-xs text-muted-foreground">This task moves to Assigned automatically once every dependency is Done.</p>
                 </section>
               ) : null}
               <TaskThread key={task.id} task={task} />
@@ -316,24 +316,24 @@ function CreateTaskDialog({ open, onOpenChange, onCreate }: { open: boolean; onO
           }}
         >
           <DialogHeader>
-            <DialogTitle>Buat task</DialogTitle>
-            <DialogDescription>Task baru masuk Backlog. Agent hanya bisa mengerjakan task yang punya acceptance criteria.</DialogDescription>
+            <DialogTitle>Create task</DialogTitle>
+            <DialogDescription>New tasks start in Backlog. Agents only work on tasks with acceptance criteria.</DialogDescription>
           </DialogHeader>
           <FieldGroup>
             <Field data-invalid={error || undefined}>
-              <FieldLabel htmlFor="title">Judul</FieldLabel>
+              <FieldLabel htmlFor="title">Title</FieldLabel>
               <Input id="title" name="title" aria-invalid={error || undefined} />
-              {error ? <FieldError>Judul wajib diisi.</FieldError> : null}
+              {error ? <FieldError>Enter a title.</FieldError> : null}
             </Field>
             <Field>
               <FieldLabel htmlFor="criteria">Acceptance criteria</FieldLabel>
               <Textarea id="criteria" name="criteria" rows={4} />
-              <FieldDescription>Satu kriteria per baris. Bisa dilengkapi nanti.</FieldDescription>
+              <FieldDescription>One criterion per line. You can add them later.</FieldDescription>
             </Field>
           </FieldGroup>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" type="button" />}>Batal</DialogClose>
-            <Button type="submit">Buat task</Button>
+            <DialogClose render={<Button variant="outline" type="button" />}>Cancel</DialogClose>
+            <Button type="submit">Create task</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -358,13 +358,13 @@ export function Board() {
     <div className="flex flex-col gap-4 p-4 md:p-6">
       {approvals.length ? (
         <section aria-labelledby="needs-you" className="flex flex-col gap-2 bg-task-founder-approval-subtle p-3 text-task-founder-approval-foreground sm:flex-row sm:items-center sm:gap-4">
-          <h2 id="needs-you" className="text-sm font-medium">Menunggu keputusanmu</h2>
+          <h2 id="needs-you" className="text-sm font-medium">Waiting on you</h2>
           <ul className="flex flex-1 flex-col gap-1 text-sm text-foreground sm:flex-row sm:gap-4">
             {approvals.map((t) => (
               <li key={t.id} className="flex items-center gap-2">
                 <GitPullRequest aria-hidden="true" className="size-3.5" />
                 <span>
-                  <span className="font-mono text-xs">{t.id}</span> PR #{t.pr} siap di-review
+                  <span className="font-mono text-xs">{t.id}</span> PR #{t.pr} ready for review
                 </span>
                 <Button size="sm" variant="outline" onClick={() => setOpenId(t.id)}>
                   Review {t.id}
@@ -373,9 +373,9 @@ export function Board() {
             ))}
             <li className="flex items-center gap-2">
               <MessageCircleQuestion aria-hidden="true" className="size-3.5" />
-              <span>Shared Specialist bertanya di ORB-14</span>
+              <span>Shared Specialist asked a question on ORB-14</span>
               <Button size="sm" variant="outline" render={<Link href="/chat" />}>
-                Jawab di chat
+                Answer in chat
               </Button>
             </li>
           </ul>
@@ -383,28 +383,28 @@ export function Board() {
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <ToggleGroup value={[view]} onValueChange={(v) => v[0] && setView(v[0])} variant="outline" aria-label="Tampilan">
+        <ToggleGroup value={[view]} onValueChange={(v) => v[0] && setView(v[0])} variant="outline" aria-label="View">
           <ToggleGroupItem value="kanban">Kanban</ToggleGroupItem>
           <ToggleGroupItem value="list">List</ToggleGroupItem>
         </ToggleGroup>
         <Button variant="ghost" aria-pressed={showCancelled} onClick={() => setShowCancelled((v) => !v)}>
-          {showCancelled ? "Sembunyikan" : "Tampilkan"} Cancelled ({cancelledCount})
+          {showCancelled ? "Hide" : "Show"} Cancelled ({cancelledCount})
         </Button>
         <Button className="ml-auto" onClick={() => setCreating(true)}>
           <Plus aria-hidden="true" />
-          Buat task
+          Create task
         </Button>
       </div>
 
       {view === "kanban" ? (
-        <div className="-mx-4 overflow-x-auto px-4 pb-2 md:-mx-6 md:px-6" role="region" aria-label="Kanban, geser horizontal" tabIndex={0}>
+        <div className="-mx-4 overflow-x-auto px-4 pb-2 md:-mx-6 md:px-6" role="region" aria-label="Kanban board, scrolls horizontally" tabIndex={0}>
           <div className="flex w-max snap-x gap-3">
             {columns.map((status) => {
               const list = items.filter((t) => t.status === status)
               const def = TASK_STATUS[status]
               const needsYou = status === "founder-approval" && list.length > 0
               return (
-                <section key={status} aria-label={`${def.label}, ${list.length} task`} className="flex w-[264px] shrink-0 snap-start flex-col gap-2">
+                <section key={status} aria-label={`${def.label}, ${list.length} tasks`} className="flex w-[264px] shrink-0 snap-start flex-col gap-2">
                   <h2 className="flex h-8 items-center gap-1.5 px-1 text-xs font-medium">
                     <StatusIcon def={def} className={needsYou ? "text-task-founder-approval-foreground" : "text-muted-foreground"} />
                     {def.label}
@@ -416,7 +416,7 @@ export function Board() {
                     {list.length ? (
                       list.map((t) => <TaskCard key={t.id} task={t} all={items} onOpen={() => setOpenId(t.id)} onPick={pick(t)} />)
                     ) : (
-                      <p className="px-1 py-2 text-xs text-muted-foreground">Kosong</p>
+                      <p className="px-1 py-2 text-xs text-muted-foreground">Empty</p>
                     )}
                   </div>
                 </section>
@@ -430,11 +430,11 @@ export function Board() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-24">ID</TableHead>
-                <TableHead>Judul</TableHead>
+                <TableHead>Title</TableHead>
                 <TableHead className="w-44">Status</TableHead>
                 <TableHead className="w-44">Assignee</TableHead>
-                <TableHead className="w-24 text-right">Token</TableHead>
-                <TableHead className="w-12"><span className="sr-only">Aksi</span></TableHead>
+                <TableHead className="w-24 text-right">Tokens</TableHead>
+                <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -455,7 +455,7 @@ export function Board() {
                         {a ? (
                           <span className="flex items-center gap-2"><ActorAvatar actor={a} size="sm" className="size-5" />{a.name}</span>
                         ) : (
-                          <span className="text-muted-foreground">Belum ada</span>
+                          <span className="text-muted-foreground">None</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums">{t.tokens ? formatTokens(t.tokens) : ""}</TableCell>
@@ -482,7 +482,7 @@ export function Board() {
         onOpenChange={setCreating}
         onCreate={(title, criteria) => {
           const n = Math.max(...items.map((t) => Number(t.id.split("-")[1]))) + 1
-          setItems((prev) => [{ id: `ORB-${n}`, title, status: "backlog", criteria, note: criteria.length ? undefined : "Belum ada acceptance criteria" }, ...prev])
+          setItems((prev) => [{ id: `ORB-${n}`, title, status: "backlog", criteria, note: criteria.length ? undefined : "No acceptance criteria yet" }, ...prev])
           setCreating(false)
         }}
       />

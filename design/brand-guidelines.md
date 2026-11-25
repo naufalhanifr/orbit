@@ -34,87 +34,86 @@ Tema visual dan verbal: **minimalis**. ORBIT terasa seperti ruang kendali yang t
 
 ## 3. Tone of Voice
 
-**Bahasa.** Teks UI ditulis dalam Bahasa Indonesia baku yang santai. Pengguna disapa "kamu". Nama status, peran, dan istilah domain mengikuti PRD dan tidak diterjemahkan: Backlog, In Progress, Founder Approval, Revision, Execution, Agent, Founder, PR.
+**Bahasa UI: Inggris penuh** (keputusan Founder, 2026-11-25). Semua teks di antarmuka, notifikasi, dan pesan error memakai bahasa Inggris. Nama status, peran, dan istilah domain ditulis persis seperti di PRD: Backlog, In Progress, Founder Approval, Revision, Execution, Agent, Founder, PR. Dokumen internal seperti file ini boleh tetap berbahasa Indonesia.
 
 **Prinsip menulis:**
-1. **Subjek jelas.** Sebut pelakunya: "Agent *Backend Dev* membuka PR #42", bukan "PR dibuka".
+1. **Subjek jelas.** Sebut pelakunya: "Shared Specialist opened PR #18", bukan "PR opened".
 2. **Satu kalimat, satu fakta.** Detail teknis (log, stack trace) diletakkan di panel yang bisa dibuka, bukan di pesan utama.
-3. **Angka konkret.** "128.400 / 300.000 token", bukan "hampir habis".
-4. **Kata kerja di tombol.** "Hentikan execution", "Buat agent". Hindari "OK", "Ya", "Submit".
-5. **Tanpa hype dan tanpa emoji.** Hindari kata seperti *revolusioner*, *seamless*, *supercharge*, *unleash*, ✨🚀.
-6. **Agent tidak berpura-pura manusia.** Agent tidak memakai "saya merasa". Status agent ditulis sebagai fakta sistem.
-7. **Tidak menyalahkan pengguna.** Pesan error menjelaskan keadaan dan jalan keluarnya.
+3. **Angka konkret** dengan format en-US: "84,200 / 300,000 tokens", bukan "almost out".
+4. **Kata kerja spesifik di tombol:** "Stop execution", "Create agent", "Review ORB-9". Hindari "OK", "Submit", "Learn more", "Get started".
+5. **Tanpa hype, tanpa emoji, tanpa em dash.** Hindari *revolutionary*, *seamless*, *supercharge*, *AI-powered*.
+6. **Sentence case** untuk judul dan tombol ("Create task", bukan "Create Task"). Nama status tetap seperti di PRD.
+7. **Agent tidak berpura-pura manusia.** Status agent ditulis sebagai fakta sistem.
+8. **Tidak menyalahkan pengguna.** Pesan error menjelaskan apa yang terjadi dan apa yang bisa dilakukan.
 
-### 3.1 Microcopy: status agent
+### 3.1 Microcopy: status
 
-| Status | Label | Teks bantu (tooltip / baris kedua) |
-|---|---|---|
-Label status ditulis persis seperti di PRD (Draft, Ready, Active, dan seterusnya). Teks bantu di bawah ini dipakai untuk tooltip atau baris kedua.
+Label status memakai nama dari PRD. Teks bantu di bawah ini dipakai untuk tooltip atau baris kedua.
 
 | Status agent (PRD 10) | Teks bantu |
 |---|---|
-| Draft / Configuring | Belum pernah bekerja. Menjadi Ready otomatis saat task pertamanya masuk Assigned. |
-| Ready | Siap menerima task. Tidak memakai token sampai dipanggil. |
-| Active | Mengerjakan *ORB-11 Streaming execution log* · 18 m 40 d · 84.200 token |
-| Paused | Dijeda oleh Founder. Tidak bisa menerima task sampai dilanjutkan. |
-| Error | Execution terakhir gagal. Lihat log sebelum memberi task baru. |
-| Archived | Tidak aktif. Agent yang masih punya bawahan tidak bisa diarsipkan. |
+| Draft / Configuring | Hasn’t worked yet. Becomes Ready automatically when its first task moves to Assigned. |
+| Ready | Ready for tasks. Uses no tokens until invoked. |
+| Active | Working on *ORB-11 Stream execution logs to the web UI* · 18m 40s · 84,200 tokens |
+| Paused | Paused by the Founder. Can’t take tasks until resumed. |
+| Error | The last execution failed. Check the log before assigning new work. |
+| Archived | Inactive. Agents that still have reports can’t be archived. |
 
 | Status execution | Teks bantu |
 |---|---|
-| Waiting for Input | Agent butuh keputusanmu untuk lanjut. Ditangguhkan otomatis dalam 30 menit. |
-| Suspended | Tidak ada jawaban dalam 30 menit. State disimpan, lanjutkan kapan saja. |
-| Failed | Test gagal setelah 3 percobaan. PR dibuka sebagai draft. |
+| Waiting for Input | The agent needs your decision to continue. Suspends automatically after 30 minutes. |
+| Suspended | No answer within 30 minutes. State is saved; resume any time. |
+| Failed | 2 tests still fail after 3 attempts. PR opened as draft. |
 
 ### 3.2 Microcopy: empty state "belum ada agent"
 
-Ingat: org selalu dimulai dengan 0 agent (PRD §4.4). Empty state ini adalah layar pertama yang dilihat Founder.
+Organisasi selalu dimulai dengan 0 agent (PRD 4.4), jadi ini layar pertama yang dilihat Founder.
 
-> **Belum ada agent**
-> Organisasi dimulai kosong, dan kamu yang menentukan siapa saja yang bekerja di sini. Agent tanpa atasan melapor langsung kepadamu.
-> [ Buat agent pertama ]
+> **No agents yet**
+> Your organization starts empty, and you decide who works here. Agents without a manager report directly to you.
+> [ Create your first agent ]
 
-Variasi singkat (di panel atau dropdown @mention):
-> Belum ada agent di proyek ini. **Tambahkan agent** ke proyek untuk memanggilnya di chat.
+Variasi singkat (daftar @mention tanpa hasil): *No agent with that name in this project.*
 
 ### 3.3 Microcopy: error
 
 | Situasi | Judul | Isi | Aksi |
 |---|---|---|---|
-| Budget harian habis | Budget harian tercapai | 3.000.000 dari 3.000.000 token sudah terpakai hari ini. Execution otomatis dijeda sampai 00.00. | Jalankan tetap (perlu konfirmasi) · Lihat pemakaian |
-| Execution gagal | Execution gagal | *Backend Dev* berhenti di langkah "Menjalankan test": 2 test gagal. PR dibuka sebagai draft dan task ditandai Blocked. | Lihat log · Buka PR draft |
-| Timeout | Execution melewati 60 menit | Execution dihentikan otomatis. Perubahan sampai titik ini tersimpan di branch `orb-12-login`. | Lihat log · Jalankan ulang |
-| Koneksi GitHub | Tidak bisa terhubung ke GitHub | ORBIT tidak bisa mengakses repo *sandbox*. Periksa instalasi GitHub App. | Coba lagi |
-| Validasi form | (inline, di bawah field) | Instruksi wajib diisi. Agent bekerja hanya dari instruksi ini. | (tidak ada) |
-| Login terkunci | Terlalu banyak percobaan | Login dikunci sementara selama 15 menit. | (tidak ada) |
+| Budget harian habis | Daily budget reached | 3,000,000 of 3,000,000 tokens used today. Automatic executions are paused until 00:00. | Run anyway (needs confirmation) · View usage |
+| Execution gagal | Execution failed | Shared Specialist stopped at "Running tests": 2 tests failed. PR opened as draft and the task is Blocked. | View log · Open draft PR |
+| Timeout | Execution passed 60 minutes | The execution was stopped automatically. Changes up to this point are on branch `orb-12-login`. | View log · Run again |
+| GitHub | Can’t reach GitHub | ORBIT can’t access the *sandbox* repo. Check the GitHub App installation. | Try again |
+| Papan gagal dimuat | Tasks couldn’t load | The server didn’t respond within 10 seconds. Tasks already on screen are unchanged. | Reload board |
+| Validasi form | (inline, di bawah field) | Enter instructions. The agent works only from these. | (tidak ada) |
+| Login terkunci | Too many attempts | Sign-in is locked for 15 minutes. | (tidak ada) |
 
-Pola error: **apa yang terjadi → dampaknya → apa yang bisa dilakukan.** Jangan menampilkan kode error mentah tanpa penjelasan.
+Pola error: **apa yang terjadi, dampaknya, lalu apa yang bisa dilakukan.** Jangan menampilkan kode error mentah tanpa penjelasan.
 
-### 3.4 Microcopy: konfirmasi "Stop execution"
+### 3.4 Microcopy: konfirmasi Stop execution
 
-Pakai `AlertDialog` (`StopExecutionDialog`, lihat design-system §5). Angka di contoh microcopy ini adalah ilustrasi; di UI selalu diisi data execution yang sebenarnya. Tombol aksi bertuliskan kata kerja yang spesifik, dengan varian `destructive`.
+Pakai `AlertDialog` (`StopExecutionDialog`, lihat design-system §5). Angka di contoh ini hanya ilustrasi; di UI selalu diisi data execution yang sebenarnya. Tombol aksi memakai kata kerja spesifik dengan varian `destructive`.
 
-> **Hentikan execution ini?**
-> *Shared Specialist* sedang mengerjakan **ORB-11 Streaming execution log ke Web UI** (18 m 40 d, 84.200 token terpakai). Execution berhenti sekarang dan berstatus Cancelled. Perubahan yang belum di-commit hilang. Token yang sudah terpakai tetap tercatat.
+> **Stop this execution?**
+> Shared Specialist is working on ORB-11 Stream execution logs to the web UI (18m 40s, 84,200 tokens used). The execution stops now and becomes Cancelled. Uncommitted changes are lost. Tokens already used stay on record.
 >
-> [ Batal ]  [ Hentikan execution ]
+> [ Cancel ]  [ Stop execution ]
 
-Setelah berhasil, kartu execution menampilkan: *Dihentikan oleh Founder. Task kembali ke Assigned.*
+Setelah berhasil, kartu execution menampilkan: *Stopped by the Founder. Task returned to Assigned.*
 
-### 3.5 Microcopy lain yang sering dipakai
+### 3.5 Microcopy lain
 
-- Konfirmasi run saat budget habis: **"Jalankan meski budget harian tercapai?"** · "Execution ini bisa memakai hingga 300.000 token di atas batas harian." · [Batal] [Jalankan]
-- Empty Kanban kolom: *Kosong*. (Cukup satu kata. Kolom kosong bukan masalah.)
-- Empty chat (placeholder composer): *Panggil agent dengan @nama. Agent hanya bekerja saat kamu panggil.*
-- Pesan tanpa @mention: *Tidak ada agent yang dipanggil. Pesan tersimpan tanpa memulai execution.*
-- Komentar task (PRD 17.4), keterangan di bawah setiap komentar Founder:
-  - Mention assignee yang sedang bekerja: *Dikirim ke execution yang sedang berjalan sebagai instruksi tambahan.*
-  - Mention agent lain: *Memulai invocation baru untuk PO 1.*
-  - Tanpa mention: *Catatan. Agent tidak membacanya sampai dipanggil berikutnya.*
-- Strip fokus di papan: *Menunggu keputusanmu* · tombol *Review ORB-9* · *Jawab di chat*.
-- Dependency: *Maju otomatis setelah ORB-11 Done.*
-- Task dari chat: label *dari chat*.
-- Atribusi runtime: *Powered by Claude* (jangan menyebut "Claude Code" di UI, PRD §18.1).
+- Strip fokus di papan: *Waiting on you* · tombol *Review ORB-9* · *Answer in chat*.
+- Placeholder composer chat: *Mention an agent with @name. Agents only work when you invoke them.*
+- Pesan tanpa @mention: *No agent mentioned. Saved without starting an execution.*
+- Keterangan komentar task (PRD 17.4):
+  - Mention assignee yang sedang bekerja: *Sent to the running execution as an extra instruction.*
+  - Mention agent lain: *Started a new invocation for PO 1.*
+  - Tanpa mention: *Note only. Agents won’t read it until they are next invoked.*
+- Dependency: *Moves on automatically once ORB-11 is Done.*
+- Kolom Kanban kosong: *Empty*.
+- Task dari chat: label *from chat*.
+- Konfirmasi run saat budget habis: **Run despite the daily budget?** · *This execution can use up to 300,000 tokens over the daily limit.* · [Cancel] [Run]
+- Atribusi runtime: *Powered by Claude* (jangan menyebut "Claude Code" di UI, PRD 18.1).
 
 ## 4. Logo
 
@@ -213,5 +212,5 @@ Daftar ikon per status ada di design-system §2.3. Status yang sedang berjalan (
 | Tanda baca biasa: koma, titik, titik dua, kurung. | Em dash (tanda pisah panjang) di teks UI dan dokumen. |
 | Teks bantu pakai `muted-foreground`. | Menurunkan opacity teks untuk membuat teks bantu (bisa gagal kontras). |
 | Gerak hanya untuk hover, focus, dan transisi overlay bawaan. | Animasi berulang (spinner, denyut skeleton), confetti, efek ketik. |
-| Microcopy yang menyebut pelaku, angka, dan langkah berikutnya. | "Oops!", "Something went wrong", emoji, CTA generik ("Pelajari", "Mulai", "Get Started"). |
+| Microcopy yang menyebut pelaku, angka, dan langkah berikutnya. | "Oops!", "Something went wrong", emoji, CTA generik ("Learn more", "Get started", "Explore"). |
 | Konfirmasi untuk aksi yang tidak bisa dibatalkan atau memakan budget besar. | Konfirmasi untuk hal kecil yang bisa di-undo. |

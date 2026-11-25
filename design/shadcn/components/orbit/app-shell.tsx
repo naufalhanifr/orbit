@@ -30,33 +30,33 @@ const waiting = tasks.filter((t) => t.status === "founder-approval").length
 
 const NAV = [
   {
-    label: "Proyek ORBIT",
+    label: "ORBIT project",
     items: [
-      { href: "/board", label: "Papan task", icon: KanbanSquare, badge: waiting },
+      { href: "/board", label: "Task board", icon: KanbanSquare, badge: waiting },
       { href: "/chat", label: "Project chat", icon: MessagesSquare },
     ],
   },
   {
-    label: "Organisasi",
+    label: "Organization",
     items: [
-      { href: "/agents", label: "Agent", icon: Bot },
-      { href: "/org", label: "Struktur org", icon: Network },
+      { href: "/agents", label: "Agents", icon: Bot },
+      { href: "/org", label: "Org chart", icon: Network },
     ],
   },
   {
-    label: "Biaya",
-    items: [{ href: "/dashboard", label: "Token dan execution", icon: ChartColumn }],
+    label: "Cost",
+    items: [{ href: "/dashboard", label: "Tokens and executions", icon: ChartColumn }],
   },
 ]
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
-  // Ikon dipilih lewat CSS (kelas dark:) agar render server dan klien sama.
+  // Icon is picked in CSS (dark: classes) so server and client render the same markup.
   return (
     <Button
       variant="ghost"
       size="icon"
-      aria-label="Ganti tema terang atau gelap"
+      aria-label="Toggle light or dark theme"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
     >
       <Moon aria-hidden="true" className="dark:hidden" />
@@ -71,7 +71,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader className="px-4 py-4">
-          <Link href="/board" aria-label="ORBIT, ke papan task" className="w-fit">
+          <Link href="/board" aria-label="ORBIT, go to task board" className="w-fit">
             <OrbitWordmark />
           </Link>
         </SidebarHeader>
@@ -96,7 +96,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
                         </SidebarMenuButton>
                         {item.badge ? (
                           <SidebarMenuBadge
-                            aria-label={`${item.badge} task menunggu approval kamu`}
+                            aria-label={`${item.badge} task waiting for your approval`}
                             className="bg-task-founder-approval-subtle text-task-founder-approval-foreground"
                           >
                             {item.badge}
@@ -123,11 +123,11 @@ export function AppShell({ title, actions, children }: { title: string; actions?
       </Sidebar>
       <SidebarInset className="min-w-0">
         <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4">
-          <SidebarTrigger className="-ml-1" aria-label="Buka atau tutup navigasi" />
+          <SidebarTrigger className="-ml-1" aria-label="Open or close navigation" />
           <h1 className="min-w-0 truncate text-sm font-medium">{title}</h1>
           <p className="ml-2 shrink-0 text-xs text-muted-foreground">
-            <span className="md:hidden">Data contoh</span>
-            <span className="hidden md:inline">Data contoh untuk review desain, bukan data nyata.</span>
+            <span className="md:hidden">Sample data</span>
+            <span className="hidden md:inline">Sample data for design review, not real data.</span>
           </p>
           <div className="ml-auto flex items-center gap-2">{actions}</div>
         </header>

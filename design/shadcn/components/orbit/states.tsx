@@ -14,13 +14,13 @@ export function NoAgents() {
         <EmptyMedia>
           <OrbitMark mono className="size-10 text-muted-foreground" />
         </EmptyMedia>
-        <EmptyTitle>Belum ada agent</EmptyTitle>
+        <EmptyTitle>No agents yet</EmptyTitle>
         <EmptyDescription>
-          Organisasi dimulai kosong, dan kamu yang menentukan siapa saja yang bekerja di sini. Agent tanpa atasan melapor langsung kepadamu.
+          Your organization starts empty, and you decide who works here. Agents without a manager report directly to you.
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button render={<Link href="/agents/new" />}>Buat agent pertama</Button>
+        <Button render={<Link href="/agents/new" />}>Create your first agent</Button>
       </EmptyContent>
     </Empty>
   )
@@ -28,7 +28,7 @@ export function NoAgents() {
 
 export function BoardLoading() {
   return (
-    <div className="flex gap-3" aria-busy="true" aria-label="Memuat task">
+    <div className="flex gap-3" aria-busy="true" aria-label="Loading tasks">
       {[0, 1, 2].map((c) => (
         <div key={c} className="flex w-[264px] flex-col gap-2">
           <Skeleton className="h-8 w-32 animate-none" />
@@ -47,12 +47,12 @@ export function BoardError() {
   return (
     <Alert variant="destructive">
       <OctagonAlert aria-hidden="true" />
-      <AlertTitle>Task tidak bisa dimuat</AlertTitle>
+      <AlertTitle>Tasks couldn’t load</AlertTitle>
       <AlertDescription>
-        <p>ORBIT tidak mendapat jawaban dari server dalam 10 detik. Task yang sudah tampil tidak berubah.</p>
+        <p>The server didn’t respond within 10 seconds. Tasks already on screen are unchanged.</p>
         <Button variant="outline" size="sm" className="mt-2 text-foreground no-underline" render={<Link href="/board" />}>
           <RotateCw aria-hidden="true" />
-          Muat ulang papan
+          Reload board
         </Button>
       </AlertDescription>
     </Alert>

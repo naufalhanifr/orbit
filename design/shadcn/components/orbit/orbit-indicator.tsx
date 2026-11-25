@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils"
 
 /**
- * Motif identitas ORBIT untuk pekerjaan yang sedang berjalan (In Progress, Running, Active).
- * Lintasan = batas token per execution; posisi satelit = porsi yang sudah terpakai
- * (searah jarum jam dari atas). Statis (MOTION 1): berubah hanya saat data berubah.
+ * ORBIT identity motif for work in progress (In Progress, Running, Active).
+ * Orbit = per-execution token limit; satellite position = share already used
+ * (clockwise from the top). Static (MOTION 1): it only moves when the data changes.
  */
 export function OrbitIndicator({
   progress = 0.15,

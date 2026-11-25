@@ -25,21 +25,21 @@ const spec = byId(agents, "spec")!
 const projectAgents = agents.filter((a) => ["spec", "po1", "cto"].includes(a.id))
 
 const seedMessages: Msg[] = [
-  { id: 1, author: founder, time: "10:31", text: "@Shared Specialist kerjakan revisi ORB-14 sesuai feedback di PR #19." },
-  { id: 2, author: spec, time: "10:31", text: "Mulai revisi ORB-14 di branch orb-14-org-chart.", exec: { id: "EXE-477", status: "running", tokens: 3100 } },
+  { id: 1, author: founder, time: "10:31", text: "@Shared Specialist please work on the ORB-14 revision from the feedback on PR #19." },
+  { id: 2, author: spec, time: "10:31", text: "Starting the ORB-14 revision on branch orb-14-org-chart.", exec: { id: "EXE-477", status: "running", tokens: 3100 } },
   {
     id: 3,
     author: spec,
     time: "10:40",
-    text: "Label proyek bisa diletakkan di tengah garis atau di ujung dekat node bawahan. Di tengah garis, label bertumpuk saat dua garis bersilangan. Mana yang dipakai?",
+    text: "Project labels can sit at the middle of the line or at the end near the report node. At the middle, labels overlap where two lines cross. Which one should I use?",
     exec: { id: "EXE-477", status: "waiting", tokens: 52300 },
   },
 ]
 
 const conversations = [
-  { id: "c1", title: "ORB-14 Org chart matriks", meta: "Menunggu jawabanmu", needsYou: true },
-  { id: "c2", title: "Umum, proyek ORBIT", meta: "Kemarin" },
-  { id: "c3", title: "ORB-10 Rate limit login", meta: "Senin" },
+  { id: "c1", title: "ORB-14 Matrix org chart", meta: "Waiting for your answer", needsYou: true },
+  { id: "c2", title: "General, ORBIT project", meta: "Yesterday" },
+  { id: "c3", title: "ORB-10 Login lockout", meta: "Monday" },
 ]
 
 export function Chat() {
@@ -72,7 +72,7 @@ export function Chat() {
         author: founder,
         time: "10:44",
         text,
-        note: mentioned ? undefined : "Tidak ada agent yang dipanggil. Pesan tersimpan tanpa memulai execution.",
+        note: mentioned ? undefined : "No agent mentioned. Saved without starting an execution.",
       },
     ])
     setDraft("")
@@ -80,12 +80,12 @@ export function Chat() {
 
   return (
     <div className="grid h-[calc(100svh-3rem)] grid-cols-1 md:grid-cols-[272px_1fr]">
-      <aside aria-label="Percakapan" className="hidden flex-col gap-2 border-r p-3 md:flex">
+      <aside aria-label="Conversations" className="hidden flex-col gap-2 border-r p-3 md:flex">
         <InputGroup>
           <InputGroupAddon>
             <Search aria-hidden="true" />
           </InputGroupAddon>
-          <InputGroupInput aria-label="Cari percakapan" placeholder="Cari percakapan" />
+          <InputGroupInput aria-label="Search conversations" placeholder="Search conversations" />
         </InputGroup>
         <nav className="flex flex-col gap-1">
           {conversations.map((c) => (
@@ -105,7 +105,7 @@ export function Chat() {
         </nav>
       </aside>
 
-      <section aria-label="Percakapan ORB-14" className="flex min-h-0 flex-col">
+      <section aria-label="Conversation ORB-14" className="flex min-h-0 flex-col">
         <ol className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 md:p-6" aria-live="polite">
           {messages.map((m) => (
             <li key={m.id} className="flex gap-3">
@@ -129,7 +129,7 @@ export function Chat() {
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <StatusBadge def={EXEC_STATUS[m.exec.status]} progress={m.exec.tokens / 300000} />
                     <span className="font-mono">{m.exec.id}</span>
-                    <span className="font-mono tabular-nums">{m.exec.tokens.toLocaleString("id-ID")} token</span>
+                    <span className="font-mono tabular-nums">{m.exec.tokens.toLocaleString("en-US")} tokens</span>
                   </div>
                 ) : null}
                 {m.note ? <p className="text-xs text-muted-foreground">{m.note}</p> : null}
@@ -157,10 +157,10 @@ export function Chat() {
                   }
                 }}
               >
-                <CommandInput autoFocus placeholder="Cari agent di proyek ini" aria-label="Cari agent untuk dipanggil" />
+                <CommandInput autoFocus placeholder="Search agents in this project" aria-label="Search agents to mention" />
                 <CommandList>
-                  <CommandEmpty>Tidak ada agent dengan nama itu di proyek ini.</CommandEmpty>
-                  <CommandGroup heading="Agent di proyek ORBIT">
+                  <CommandEmpty>No agent with that name in this project.</CommandEmpty>
+                  <CommandGroup heading="Agents in ORBIT">
                     {projectAgents.map((a) => (
                       <CommandItem key={a.id} value={a.name} onSelect={() => insertMention(a.name)} className="gap-2">
                         <ActorAvatar actor={a} size="sm" className="size-5" />
@@ -174,9 +174,9 @@ export function Chat() {
             </div>
           ) : null}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>Konteks task</span>
+            <span>Task context</span>
             <Select value={context} onValueChange={(v) => setContext(v as string | null)}>
-              <SelectTrigger size="sm" aria-label="Task yang menjadi konteks" className="w-auto min-w-40">
+              <SelectTrigger size="sm" aria-label="Task used as context" className="w-auto min-w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -194,15 +194,20 @@ export function Chat() {
             <InputGroupTextarea
               ref={textRef}
               value={draft}
-              aria-label="Tulis pesan"
-              placeholder="Panggil agent dengan @nama. Agent hanya bekerja saat kamu panggil."
+              aria-label="Write a message"
+              placeholder="Mention an agent with @name. Agents only work when you invoke them."
               rows={2}
               onChange={(e) => {
                 setDraft(e.target.value)
                 if (e.target.value.endsWith("@")) setMentionOpen(true)
               }}
               onKeyDown={(e) => {
-                // Enter kirim, Shift+Enter baris baru. Abaikan Enter yang sedang dipakai IME.
+                if (e.key === "Escape" && mentionOpen) {
+                  e.preventDefault()
+                  setMentionOpen(false)
+                  return
+                }
+                // Enter sends, Shift+Enter adds a line. Ignore Enter while an IME is composing.
                 if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
                   e.preventDefault()
                   send()
@@ -212,9 +217,9 @@ export function Chat() {
             <InputGroupAddon align="block-end">
               <InputGroupButton variant="ghost" size="sm" type="button" onClick={() => setMentionOpen(true)}>
                 <AtSign aria-hidden="true" />
-                Panggil agent
+                Mention agent
               </InputGroupButton>
-              <InputGroupButton variant="default" size="icon-sm" type="submit" className="ml-auto" aria-label="Kirim pesan">
+              <InputGroupButton variant="default" size="icon-sm" type="submit" className="ml-auto" aria-label="Send message">
                 <ArrowUp aria-hidden="true" />
               </InputGroupButton>
             </InputGroupAddon>

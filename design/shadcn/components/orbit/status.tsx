@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils"
 
 type Def = { label: string; icon: LucideIcon | "orbit"; cls: string; dot: string }
 
-// Kelas ditulis utuh agar terbaca oleh Tailwind.
+// Classes are written out in full so Tailwind can see them.
 export const TASK_STATUS: Record<TaskStatus, Def> = {
   backlog: { label: "Backlog", icon: CircleDashed, cls: "bg-task-backlog-subtle text-task-backlog-foreground", dot: "bg-task-backlog" },
   assigned: { label: "Assigned", icon: Circle, cls: "bg-task-assigned-subtle text-task-assigned-foreground", dot: "bg-task-assigned" },
@@ -63,7 +63,7 @@ export function StatusIcon({ def, progress, className }: { def: Def; progress?: 
   return <Icon aria-hidden="true" className={cn("size-3.5", className)} />
 }
 
-/** Badge status: ikon + label + warna. Tanpa border, tanpa uppercase, tanpa glow. */
+/** Status badge: icon + label + color. No border, no uppercase, no glow. */
 export function StatusBadge({ def, progress, className }: { def: Def; progress?: number; className?: string }) {
   return (
     <Badge className={cn("gap-1 border-transparent font-normal", def.cls, className)}>

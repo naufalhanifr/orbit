@@ -1,5 +1,5 @@
-// Data contoh untuk review desain. Bukan data nyata: angka token, waktu, dan isi task
-// hanya ilustrasi agar layout bisa dinilai. Nama agent mengikuti contoh di PRD Bagian 8.
+// Sample data for design review. Not real data: token counts, times and task content
+// only illustrate the layout. Agent names follow the example in PRD section 8.
 
 export type TaskStatus =
   | "backlog"
@@ -38,8 +38,8 @@ export type Agent = Actor & {
   status: AgentStatus
   model: string
   preset: "read-only" | "coding"
-  managerId: string // atasan tetap; "founder" bila langsung ke Founder
-  projectManagers?: Record<string, string> // atasan per proyek (matriks)
+  managerId: string // fixed manager; "founder" when reporting directly to the Founder
+  projectManagers?: Record<string, string> // per-project manager (matrix)
   instructionVersion: number
 }
 
@@ -64,24 +64,24 @@ export type Task = {
   pr?: number
   dependsOn?: string[]
   fromChat?: boolean
-  note?: string // satu baris konteks: alasan blocked, feedback revisi, dsb.
+  note?: string // one line of context: blocked reason, revision feedback, etc.
   criteria: string[]
   tokens?: number
   previousStatus?: TaskStatus
 }
 
 export const tasks: Task[] = [
-  { id: "ORB-15", title: "Halaman Agent Builder", status: "backlog", criteria: [], note: "Belum ada acceptance criteria" },
-  { id: "ORB-13", title: "Blokir execution otomatis saat budget harian tercapai", status: "backlog", assigneeId: "spec", dependsOn: ["ORB-11"], criteria: ["Execution otomatis ditolak saat pemakaian hari ini mencapai batas", "Execution dari Founder meminta konfirmasi"] },
-  { id: "ORB-12", title: "Tombol Stop execution dengan konfirmasi", status: "assigned", assigneeId: "spec", criteria: ["Stop menghentikan container", "Status execution menjadi Cancelled"] },
-  { id: "ORB-16", title: "Perbaiki pesan error login terkunci", status: "assigned", assigneeId: "spec", fromChat: true, criteria: ["Pesan menyebut durasi kunci 15 menit"] },
-  { id: "ORB-11", title: "Streaming execution log ke Web UI", status: "in-progress", assigneeId: "spec", tokens: 84200, criteria: ["Log tampil per baris tanpa reload", "Koneksi terputus disambung ulang otomatis", "Test integrasi lulus"] },
-  { id: "ORB-9", title: "Dependency antar-task dengan perpindahan otomatis", status: "founder-approval", assigneeId: "spec", pr: 18, tokens: 212400, criteria: ["Task maju ke Assigned saat dependency terakhir Done", "Siklus dependency ditolak", "Test lulus"] },
-  { id: "ORB-14", title: "Org chart matriks dengan garis per proyek", status: "revision", assigneeId: "spec", pr: 19, note: "Feedback: label proyek tertutup node saat garis bersilangan", criteria: ["Garis atasan per proyek berlabel nama proyek"] },
-  { id: "ORB-10", title: "Rate limit login 5 kali gagal", status: "blocked", previousStatus: "in-progress", assigneeId: "spec", pr: 17, note: "2 test gagal setelah 3 percobaan. PR dibuka sebagai draft.", criteria: ["Akun dikunci 15 menit setelah 5 kali gagal"] },
-  { id: "ORB-7", title: "State machine task MVP", status: "done", assigneeId: "spec", pr: 12, tokens: 188900, criteria: [] },
-  { id: "ORB-1", title: "Login email dan password", status: "done", assigneeId: "spec", pr: 4, tokens: 143100, criteria: [] },
-  { id: "ORB-8", title: "Reset password lewat email", status: "cancelled", note: "Diganti perintah di server (PRD 4.4)", criteria: [] },
+  { id: "ORB-15", title: "Agent Builder page", status: "backlog", criteria: [], note: "No acceptance criteria yet" },
+  { id: "ORB-13", title: "Block automatic executions when the daily budget is reached", status: "backlog", assigneeId: "spec", dependsOn: ["ORB-11"], criteria: ["Automatic executions are rejected once today's usage hits the limit", "Founder-triggered executions ask for confirmation"] },
+  { id: "ORB-12", title: "Stop execution button with confirmation", status: "assigned", assigneeId: "spec", criteria: ["Stop shuts down the container", "Execution status becomes Cancelled"] },
+  { id: "ORB-16", title: "Fix the locked-login error message", status: "assigned", assigneeId: "spec", fromChat: true, criteria: ["Message states the 15-minute lockout"] },
+  { id: "ORB-11", title: "Stream execution logs to the web UI", status: "in-progress", assigneeId: "spec", tokens: 84200, criteria: ["Log lines appear without a reload", "Dropped connections reconnect automatically", "Integration tests pass"] },
+  { id: "ORB-9", title: "Task dependencies with automatic advance", status: "founder-approval", assigneeId: "spec", pr: 18, tokens: 212400, criteria: ["Task moves to Assigned when its last dependency is Done", "Dependency cycles are rejected", "Tests pass"] },
+  { id: "ORB-14", title: "Matrix org chart with per-project lines", status: "revision", assigneeId: "spec", pr: 19, note: "Feedback: project labels hide behind nodes where lines cross", criteria: ["Per-project manager lines are labeled with the project"] },
+  { id: "ORB-10", title: "Lock login after 5 failed attempts", status: "blocked", previousStatus: "in-progress", assigneeId: "spec", pr: 17, note: "2 tests still fail after 3 attempts. PR opened as draft.", criteria: ["Account locks for 15 minutes after 5 failures"] },
+  { id: "ORB-7", title: "MVP task state machine", status: "done", assigneeId: "spec", pr: 12, tokens: 188900, criteria: [] },
+  { id: "ORB-1", title: "Email and password login", status: "done", assigneeId: "spec", pr: 4, tokens: 143100, criteria: [] },
+  { id: "ORB-8", title: "Password reset by email", status: "cancelled", note: "Replaced by a server command (PRD 4.4)", criteria: [] },
 ]
 
 export const budget = { perExecution: 300000, perDay: 3000000, usedToday: 1284300 }
@@ -91,57 +91,57 @@ export const runningExecution = {
   taskId: "ORB-11",
   agentId: "spec",
   status: "running" as ExecStatus,
-  elapsed: "18 m 40 d",
+  elapsed: "18m 40s",
   tokens: 84200,
   limit: 300000,
-  step: "Menjalankan test integrasi (pnpm test)",
+  step: "Running integration tests (pnpm test)",
   tools: [
-    { kind: "Ubah file", detail: "backend/app/executions/stream.py" },
-    { kind: "Ubah file", detail: "web/components/execution-log.tsx" },
-    { kind: "Perintah", detail: "pnpm test (unit): 41 lulus" },
-    { kind: "Perintah", detail: "pnpm test (integrasi): berjalan" },
+    { kind: "Edit file", detail: "backend/app/executions/stream.py" },
+    { kind: "Edit file", detail: "web/components/execution-log.tsx" },
+    { kind: "Command", detail: "pnpm test (unit): 41 passed" },
+    { kind: "Command", detail: "pnpm test (integration): running" },
   ],
   log: [
-    "10:42:03  Mengambil branch orb-11-log-stream",
-    "10:42:09  Membaca instruksi agent v7",
-    "10:43:51  Mengubah backend/app/executions/stream.py",
-    "10:51:12  Mengubah web/components/execution-log.tsx",
-    "10:58:30  pnpm test: 41 lulus, 0 gagal (unit)",
-    "11:00:43  Menjalankan test integrasi (pnpm test)",
+    "10:42:03  Checked out branch orb-11-log-stream",
+    "10:42:09  Read agent instructions v7",
+    "10:43:51  Edited backend/app/executions/stream.py",
+    "10:51:12  Edited web/components/execution-log.tsx",
+    "10:58:30  pnpm test: 41 passed, 0 failed (unit)",
+    "11:00:43  Running integration tests (pnpm test)",
   ],
 }
 
 export const recentExecutions: { id: string; taskId: string; status: ExecStatus; tokens: number; duration: string }[] = [
-  { id: "EXE-482", taskId: "ORB-11", status: "running", tokens: 84200, duration: "18 m" },
-  { id: "EXE-479", taskId: "ORB-9", status: "completed", tokens: 212400, duration: "41 m" },
-  { id: "EXE-477", taskId: "ORB-14", status: "waiting", tokens: 52300, duration: "9 m" },
-  { id: "EXE-471", taskId: "ORB-10", status: "failed", tokens: 296800, duration: "57 m" },
-  { id: "EXE-468", taskId: "ORB-12", status: "suspended", tokens: 12100, duration: "30 m" },
+  { id: "EXE-482", taskId: "ORB-11", status: "running", tokens: 84200, duration: "18m" },
+  { id: "EXE-479", taskId: "ORB-9", status: "completed", tokens: 212400, duration: "41m" },
+  { id: "EXE-477", taskId: "ORB-14", status: "waiting", tokens: 52300, duration: "9m" },
+  { id: "EXE-471", taskId: "ORB-10", status: "failed", tokens: 296800, duration: "57m" },
+  { id: "EXE-468", taskId: "ORB-12", status: "suspended", tokens: 12100, duration: "30m" },
 ]
 
 export const tokensPerDay = [
-  { day: "Kam", tokens: 1840200 },
-  { day: "Jum", tokens: 2410900 },
-  { day: "Sab", tokens: 620400 },
-  { day: "Min", tokens: 0 },
-  { day: "Sen", tokens: 2950100 },
-  { day: "Sel", tokens: 2120700 },
-  { day: "Rab", tokens: 1284300 },
+  { day: "Thu", tokens: 1840200 },
+  { day: "Fri", tokens: 2410900 },
+  { day: "Sat", tokens: 620400 },
+  { day: "Sun", tokens: 0 },
+  { day: "Mon", tokens: 2950100 },
+  { day: "Tue", tokens: 2120700 },
+  { day: "Wed", tokens: 1284300 },
 ]
 
 export type Comment = { id: number; authorId: string; time: string; text: string; note?: string }
 
-// Thread task = kolom komentar = chat terkait task (PRD 17.4, v1.12).
+// Task thread = comments = task-linked chat (PRD 17.4, v1.12).
 export const taskThreads: Record<string, Comment[]> = {
   "ORB-11": [
-    { id: 1, authorId: "founder", time: "10:41", text: "@Shared Specialist kerjakan ORB-11. Pakai Server-Sent Events, bukan WebSocket." },
-    { id: 2, authorId: "spec", time: "10:42", text: "Mulai di branch orb-11-log-stream dengan SSE. Execution EXE-482." },
+    { id: 1, authorId: "founder", time: "10:41", text: "@Shared Specialist please take ORB-11. Use Server-Sent Events, not WebSockets." },
+    { id: 2, authorId: "spec", time: "10:42", text: "Starting on branch orb-11-log-stream with SSE. Execution EXE-482." },
   ],
   "ORB-9": [
-    { id: 1, authorId: "spec", time: "Kemarin", text: "PR #18 siap di-review. Test: 58 lulus, 0 gagal. Siklus dependency ditolak dengan pesan yang menyebut task penyebabnya." },
+    { id: 1, authorId: "spec", time: "Yesterday", text: "PR #18 is ready for review. Tests: 58 passed, 0 failed. Dependency cycles are rejected with a message naming the task that causes them." },
   ],
 }
 
 export const byId = <T extends { id: string }>(list: T[], id?: string) => list.find((x) => x.id === id)
 export const actorById = (id?: string): Actor | undefined => (id === "founder" ? founder : byId(agents, id))
-export const formatTokens = (n: number) => n.toLocaleString("id-ID")
+export const formatTokens = (n: number) => n.toLocaleString("en-US")

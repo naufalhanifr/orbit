@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 
 const W = 208
 const H = 64
-// Posisi tengah-atas tiap node. Tata letak tetap untuk contoh; implementasi nyata memakai layout otomatis.
+// Top-center position of each node. Fixed for the sample; the real build uses automatic layout.
 const POS: Record<string, [number, number]> = {
   founder: [520, 24],
   cto: [340, 164],
@@ -50,33 +50,33 @@ export function OrgChart() {
     <div className="flex flex-col gap-4 p-4 md:p-6">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
         <label className="flex items-center gap-2">
-          <span className="text-muted-foreground">Sorot proyek</span>
+          <span className="text-muted-foreground">Highlight project</span>
           <Select value={project} onValueChange={(v) => setProject((v as string) ?? "all")}>
-            <SelectTrigger size="sm" className="w-40" aria-label="Sorot garis atasan proyek">
-              <SelectValue>{(v: string) => (v === "all" ? "Semua proyek" : projects.find((p) => p.key === v)?.name)}</SelectValue>
+            <SelectTrigger size="sm" className="w-40" aria-label="Highlight project manager lines">
+              <SelectValue>{(v: string) => (v === "all" ? "All projects" : projects.find((p) => p.key === v)?.name)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua proyek</SelectItem>
+              <SelectItem value="all">All projects</SelectItem>
               {projects.map((p) => (
                 <SelectItem key={p.key} value={p.key}>{p.name} ({p.key})</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </label>
-        <ul aria-label="Legenda garis" className="flex flex-wrap items-center gap-x-5 gap-y-1 text-muted-foreground">
+        <ul aria-label="Line legend" className="flex flex-wrap items-center gap-x-5 gap-y-1 text-muted-foreground">
           <li className="flex items-center gap-2">
             <svg width="28" height="2" aria-hidden="true"><line x1="0" y1="1" x2="28" y2="1" className="stroke-muted-foreground" strokeWidth="1.5" /></svg>
-            Atasan tetap
+            Fixed manager
           </li>
           <li className="flex items-center gap-2">
             <svg width="28" height="2" aria-hidden="true"><line x1="0" y1="1" x2="28" y2="1" className="stroke-muted-foreground" strokeWidth="1.5" strokeDasharray="6 4" /></svg>
-            Atasan per proyek (berlabel)
+            Per-project manager (labeled)
           </li>
-          <li>Kotak = agent, lingkaran = human</li>
+          <li>Square = agent, circle = human</li>
         </ul>
       </div>
 
-      <div className="overflow-x-auto bg-muted/40 ring-1 ring-foreground/10" role="region" aria-label="Struktur organisasi, geser horizontal" tabIndex={0}>
+      <div className="overflow-x-auto bg-muted/40 ring-1 ring-foreground/10" role="region" aria-label="Org chart, scrolls horizontally" tabIndex={0}>
         <div className="relative" style={{ width: 920, height: 540 }}>
           <svg className="absolute inset-0" width={920} height={540} aria-hidden="true">
             {EDGES.map((e) => {
@@ -113,7 +113,7 @@ export function OrgChart() {
             <ActorAvatar actor={founder} />
             <div className="min-w-0 text-xs">
               <p className="font-medium">Founder</p>
-              <p className="text-muted-foreground">Puncak struktur, human</p>
+              <p className="text-muted-foreground">Top of the structure, human</p>
             </div>
           </div>
 
@@ -125,7 +125,7 @@ export function OrgChart() {
                 key={a.id}
                 type="button"
                 onClick={() => setSelected(a)}
-                aria-label={`${a.name}, ${a.title}, status ${AGENT_STATUS[a.status].label}. Buka detail.`}
+                aria-label={`${a.name}, ${a.title}, status ${AGENT_STATUS[a.status].label}. Open details.`}
                 className="absolute flex items-center gap-2 bg-card p-2 text-left ring-1 ring-foreground/10 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
                 style={{ left: x - W / 2, top: y, width: W, height: H }}
               >
@@ -134,7 +134,7 @@ export function OrgChart() {
                   <span className="truncate font-medium">{a.name}</span>
                   <span className="flex items-center gap-1.5">
                     <StatusBadge def={AGENT_STATUS[a.status]} progress={0.28} className="h-4 px-1" />
-                    {matrix ? <span className="text-muted-foreground">{matrix} atasan</span> : null}
+                    {matrix ? <span className="text-muted-foreground">{matrix} managers</span> : null}
                   </span>
                 </span>
               </button>
@@ -159,19 +159,19 @@ export function OrgChart() {
               <dl className="grid grid-cols-[8rem_1fr] gap-x-3 gap-y-3 p-4 text-sm">
                 <dt className="text-muted-foreground">Status</dt>
                 <dd><StatusBadge def={AGENT_STATUS[selected.status]} progress={0.28} /></dd>
-                <dt className="text-muted-foreground">Atasan tetap</dt>
+                <dt className="text-muted-foreground">Fixed manager</dt>
                 <dd>{actorById(selected.managerId)?.name}</dd>
-                <dt className="text-muted-foreground">Atasan per proyek</dt>
+                <dt className="text-muted-foreground">Per-project managers</dt>
                 <dd>
                   {selected.projectManagers
                     ? Object.entries(selected.projectManagers).map(([p, m]) => (
                         <p key={p}><span className="font-mono text-xs text-muted-foreground">{p}</span> {byId(agents, m)?.name}</p>
                       ))
-                    : "Tidak ada"}
+                    : "None"}
                 </dd>
                 <dt className="text-muted-foreground">Model</dt>
                 <dd>{selected.model}</dd>
-                <dt className="text-muted-foreground">Izin</dt>
+                <dt className="text-muted-foreground">Permissions</dt>
                 <dd className="font-mono">{selected.preset}</dd>
               </dl>
             </>

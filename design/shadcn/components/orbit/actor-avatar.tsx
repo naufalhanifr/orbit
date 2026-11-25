@@ -10,7 +10,7 @@ const initials = (name: string) =>
     .slice(0, 2)
     .toUpperCase()
 
-/** Human = lingkaran terang berbingkai. Agent = kotak tinta. Bentuk + warna + label, bukan warna saja. */
+/** Human = light outlined circle. Agent = ink square. Shape + color + label, never color alone. */
 export function ActorAvatar({
   actor,
   size = "default",

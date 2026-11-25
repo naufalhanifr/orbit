@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 
-// Logo ORBIT 2D (design/logo). Inti + lintasan = currentColor, satelit = --primary.
+// ORBIT 2D logo (design/logo). Core + orbit = currentColor, satellite = --primary.
 export function OrbitMark({ className, mono = false }: { className?: string; mono?: boolean }) {
   return (
     <svg viewBox="0 0 32 32" aria-hidden="true" className={cn("size-6 shrink-0", className)}>

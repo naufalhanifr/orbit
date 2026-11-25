@@ -1,7 +1,7 @@
 # ORBIT Design System
 
-Versi 2.0 · 2026-11-25 · Mengikuti PRD v1.12
-Implementasi: [`design/shadcn/`](shadcn/) · Brand: [`brand-guidelines.md`](brand-guidelines.md) · Logo: [`logo/`](logo/) · Mockup: [`mockups/`](mockups/)
+Versi 2.1 · 2026-11-25 · Mengikuti PRD v1.12
+Bahasa UI: Inggris penuh. Implementasi: [`design/shadcn/`](shadcn/) · Brand: [`brand-guidelines.md`](brand-guidelines.md) · Logo: [`logo/`](logo/) · Mockup: [`mockups/`](mockups/)
 
 Design system ini **adalah kode di `design/shadcn`**. Dokumen ini menjelaskan keputusan dan aturannya. Kalau dokumen dan kode berbeda, yang dianggap benar adalah kode, lalu dokumen ini diperbaiki.
 
@@ -173,33 +173,33 @@ Transisi milik assignee atau system tidak muncul sebagai tombol.
 
 ## 5. Pola khusus ORBIT
 
-- **Strip "Menunggu keputusanmu"** (`/board`): titik fokus halaman. Berlatar amber subtle dan memuat setiap item yang menunggu Founder, masing-masing dengan tombol aksi yang spesifik ("Review ORB-9", "Jawab di chat"). Hanya tampil bila ada isinya.
+- **Strip "Waiting on you"** (`/board`): titik fokus halaman. Berlatar amber subtle dan memuat setiap item yang menunggu Founder, masing-masing dengan tombol aksi yang spesifik ("Review ORB-9", "Answer in chat"). Hanya tampil bila ada isinya.
 - **StatusBadge**: ikon + label + tone, tanpa border, uppercase, atau glow. Untuk status yang sedang berjalan, ikonnya `OrbitIndicator` dengan posisi satelit sesuai porsi token.
 - **ActorAvatar**: human berupa lingkaran `bg-human` dengan `ring-1 ring-input`; agent berupa kotak `bg-agent`. Isinya inisial. Di chat, nama agent diberi label "Agent".
-- **TaskCard**: baris atas berisi ID mono, penanda "dari chat", dan menu aksi. Lalu judul (sebuah `<button>` yang area kliknya menutupi seluruh kartu), satu baris konteks (alasan blocked, feedback revisi, atau dependency yang ditunggu), dan footer berisi assignee, PR, dan token. Menu aksi adalah alternatif drag (WCAG 2.5.7). Tidak ada garis warna di tepi kartu.
+- **TaskCard**: baris atas berisi ID mono, penanda "from chat", dan menu aksi. Lalu judul (sebuah `<button>` yang area kliknya menutupi seluruh kartu), satu baris konteks (alasan blocked, feedback revisi, atau dependency yang ditunggu), dan footer berisi assignee, PR, dan token. Menu aksi adalah alternatif drag (WCAG 2.5.7). Tidak ada garis warna di tepi kartu.
 - **Detail task** (`TaskSheet`, PRD 17.4 v1.12): status, judul, assignee, PR, dan token di header. Bila ada execution berjalan, panel live (`ExecutionCard` dengan log) tampil paling atas. Di bawahnya acceptance criteria, dependency, lalu thread komentar. Aksi Founder di footer.
 - **TaskThread**: komentar task sekaligus chat dengan agent. Setiap komentar Founder diberi keterangan rute, sesuai PRD 17.4:
-  - Mention assignee yang sedang bekerja: "Dikirim ke execution yang sedang berjalan sebagai instruksi tambahan."
-  - Mention agent lain: "Memulai invocation baru untuk …"
-  - Tanpa mention: "Catatan. Agent tidak membacanya sampai dipanggil berikutnya."
+  - Mention assignee yang sedang bekerja: "Sent to the running execution as an extra instruction."
+  - Mention agent lain: "Started a new invocation for …"
+  - Tanpa mention: "Note only. Agents won’t read it until they are next invoked."
 - **ExecutionCard**: agent dan task, status, execution ID, durasi, token / batas, `progress`, langkah terakhir, dan (di detail task dan dashboard) daftar tool yang dipanggil serta log. Tombol Stop memakai varian `destructive` dan membuka `AlertDialog` (copy di brand-guidelines §3.4). Setelah dihentikan, status menjadi Cancelled.
 - **Node org chart**: Founder di puncak sebagai human (PRD 8.1, v1.11) dan tidak bisa diklik. Node agent adalah `<button>` yang membuka sheet detail.
   - Garis atasan tetap: solid.
   - Garis atasan per proyek: putus-putus dengan label kode proyek.
-  - Filter "Sorot proyek" menebalkan garis proyek terpilih dengan warna primary dan meredupkan garis lain.
-  - Jumlah atasan ditampilkan sebagai teks ("3 atasan").
+  - Filter "Highlight project" menebalkan garis proyek terpilih dengan warna primary dan meredupkan garis lain.
+  - Jumlah atasan ditampilkan sebagai teks ("3 managers").
 - **Kosong, memuat, gagal**: empty state menyebut penyebab dan satu aksi. Skeleton berbentuk seperti konten aslinya. Pesan error menyebut apa yang gagal dan cara memulihkannya.
 
 ## 6. State wajib
 
 | Layar | Kosong | Memuat | Gagal |
 |---|---|---|---|
-| Papan | Kolom: "Kosong". Proyek tanpa task: empty state + Buat task | Skeleton kolom dan kartu, tanpa animasi | Alert + "Muat ulang papan", data lama tetap tampil |
-| Detail task | Tanpa acceptance criteria: penjelasan syarat Assigned | Skeleton di sheet | "Task ORB-xx tidak ada atau sudah dihapus" + kembali ke papan |
-| Chat | Placeholder composer menjelaskan @mention; pesan tanpa mention diberi catatan "tanpa memulai execution" | Skeleton pesan | Pesan gagal terkirim + kirim ulang |
-| Agent | 0 agent: empty state `orbit-mark` + "Buat agent pertama" | Skeleton tabel | Error inline per field, isian tidak hilang |
+| Papan | Kolom: "Empty". Proyek tanpa task: empty state + Create task | Skeleton kolom dan kartu, tanpa animasi | Alert + "Reload board", data lama tetap tampil |
+| Detail task | Tanpa acceptance criteria: penjelasan syarat Assigned | Skeleton di sheet | "Task ORB-xx doesn’t exist or was deleted" + kembali ke papan |
+| Chat | Placeholder composer menjelaskan @mention; pesan tanpa mention diberi catatan "Saved without starting an execution" | Skeleton pesan | Pesan gagal terkirim + kirim ulang |
+| Agent | 0 agent: empty state `orbit-mark` + "Create your first agent" | Skeleton tabel | Error inline per field, isian tidak hilang |
 | Org chart | 0 agent: sama dengan Agent | Skeleton node | Alert + coba lagi; siklus reporting line ditolak dengan pesan inline |
-| Dashboard | "Belum ada execution. Token belum terpakai." | Skeleton angka dan grafik | Log terputus: banner + muat ulang; Stop gagal: alert di dalam dialog |
+| Dashboard | "No executions yet. No tokens used." | Skeleton angka dan grafik | Log terputus: banner + muat ulang; Stop gagal: alert di dalam dialog |
 
 Yang sudah diimplementasikan di `/states`: empty state 0 agent, skeleton papan, dan error papan. Validasi form dan state Cancelled bisa dicoba langsung di `/board`, `/agents/new`, dan `/dashboard`.
 
@@ -218,7 +218,7 @@ Yang sudah diimplementasikan di `/states`: empty state 0 agent, skeleton papan, 
 - **Affordance:** `cursor: pointer` untuk kontrol aktif dan `not-allowed` untuk yang disabled, diatur sekali di `globals.css`.
 - **Target sentuh:** di `pointer: coarse` semua kontrol minimal 44 × 44 px (aturan di `globals.css`). Di mouse, kepadatan lyra 32 px dipertahankan.
 - **Chat:** Enter mengirim, Shift+Enter membuat baris baru, dan Enter saat IME sedang menyusun teks diabaikan. Mengetik `@` memindahkan fokus ke daftar agent; Escape mengembalikan fokus ke composer.
-- **Dokumen:** `<html lang="id">`, judul unik per halaman, landmark `nav`, `main`, `aside`, dan satu `h1` per halaman.
+- **Dokumen:** `<html lang="en">` (UI full bahasa Inggris, keputusan Founder), judul unik per halaman, landmark `nav`, `main`, `aside`, dan satu `h1` per halaman.
 - **Gerak:** tidak ada animasi berulang. `prefers-reduced-motion` mematikan transisi overlay.
 
 ### 7.2 Token yang diubah dari default proyek

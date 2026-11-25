@@ -23,10 +23,10 @@ export function AgentList() {
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6">
       <div className="flex items-center gap-2">
-        <p className="text-sm text-muted-foreground">{agents.length} agent. Agent tanpa atasan agent melapor langsung ke Founder.</p>
+        <p className="text-sm text-muted-foreground">{agents.length} agents. Agents without an agent manager report directly to the Founder.</p>
         <Button className="ml-auto" render={<Link href="/agents/new" />}>
           <Plus aria-hidden="true" />
-          Buat agent
+          Create agent
         </Button>
       </div>
       <div className="overflow-x-auto ring-1 ring-foreground/10">
@@ -35,11 +35,11 @@ export function AgentList() {
             <TableRow>
               <TableHead>Agent</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Atasan tetap</TableHead>
-              <TableHead>Atasan per proyek</TableHead>
+              <TableHead>Fixed manager</TableHead>
+              <TableHead>Per-project managers</TableHead>
               <TableHead>Model</TableHead>
-              <TableHead>Izin</TableHead>
-              <TableHead className="text-right">Instruksi</TableHead>
+              <TableHead>Permissions</TableHead>
+              <TableHead className="text-right">Instructions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -59,7 +59,7 @@ export function AgentList() {
                 <TableCell className="text-muted-foreground">
                   {a.projectManagers
                     ? Object.entries(a.projectManagers).map(([p, m]) => `${p} → ${actorById(m)?.name}`).join(", ")
-                    : "Tidak ada"}
+                    : "None"}
                 </TableCell>
                 <TableCell>{a.model}</TableCell>
                 <TableCell className="font-mono">{a.preset}</TableCell>
@@ -73,7 +73,7 @@ export function AgentList() {
   )
 }
 
-const managers = [{ id: "founder", name: "Founder (langsung)" }, ...agents.map((a) => ({ id: a.id, name: `${a.name}, ${a.title}` }))]
+const managers = [{ id: "founder", name: "Founder (direct)" }, ...agents.map((a) => ({ id: a.id, name: `${a.name}, ${a.title}` }))]
 
 export function AgentBuilder() {
   const [errors, setErrors] = React.useState<Record<string, string>>({})
@@ -89,11 +89,11 @@ export function AgentBuilder() {
         e.preventDefault()
         const f = new FormData(e.currentTarget)
         const next: Record<string, string> = {}
-        if (!String(f.get("name") ?? "").trim()) next.name = "Nama wajib diisi."
-        if (!String(f.get("title") ?? "").trim()) next.title = "Jabatan wajib diisi."
-        if (!instructions.trim()) next.instructions = "Instruksi wajib diisi. Agent bekerja hanya dari instruksi ini."
+        if (!String(f.get("name") ?? "").trim()) next.name = "Enter a name."
+        if (!String(f.get("title") ?? "").trim()) next.title = "Enter a title."
+        if (!instructions.trim()) next.instructions = "Enter instructions. The agent works only from these."
         const limit = Number(String(f.get("limit") ?? "").replace(/\D/g, ""))
-        if (!limit || limit > 300000) next.limit = "Isi angka 1 sampai 300.000 (batas default per execution)."
+        if (!limit || limit > 300000) next.limit = "Enter a number from 1 to 300,000 (the default per-execution limit)."
         setErrors(next)
         setSaved(Object.keys(next).length === 0)
       }}
@@ -101,21 +101,21 @@ export function AgentBuilder() {
       {saved ? (
         <Alert>
           <CircleCheck aria-hidden="true" />
-          <AlertTitle>Agent tersimpan sebagai Draft, instruksi v1.</AlertTitle>
-          <AlertDescription>Agent menjadi Ready otomatis saat task pertamanya masuk Assigned.</AlertDescription>
+          <AlertTitle>Agent saved as Draft, instructions v1.</AlertTitle>
+          <AlertDescription>It becomes Ready automatically when its first task moves to Assigned.</AlertDescription>
         </Alert>
       ) : null}
 
       <FieldSet>
-        <FieldLegend>Identitas</FieldLegend>
+        <FieldLegend>Identity</FieldLegend>
         <FieldGroup className="grid gap-4 md:grid-cols-2">
           <Field data-invalid={!!errors.name || undefined}>
-            <FieldLabel htmlFor="name">Nama</FieldLabel>
+            <FieldLabel htmlFor="name">Name</FieldLabel>
             <Input id="name" name="name" aria-invalid={!!errors.name || undefined} />
             {errors.name ? <FieldError>{errors.name}</FieldError> : null}
           </Field>
           <Field data-invalid={!!errors.title || undefined}>
-            <FieldLabel htmlFor="title">Jabatan</FieldLabel>
+            <FieldLabel htmlFor="title">Title</FieldLabel>
             <Input id="title" name="title" aria-invalid={!!errors.title || undefined} />
             {errors.title ? <FieldError>{errors.title}</FieldError> : null}
           </Field>
@@ -123,10 +123,10 @@ export function AgentBuilder() {
       </FieldSet>
 
       <FieldSet>
-        <FieldLegend>Struktur</FieldLegend>
+        <FieldLegend>Structure</FieldLegend>
         <FieldGroup className="grid gap-4 md:grid-cols-2">
           <Field>
-            <FieldLabel htmlFor="manager">Atasan tetap</FieldLabel>
+            <FieldLabel htmlFor="manager">Fixed manager</FieldLabel>
             <Select value={manager} onValueChange={(v) => setManager(v as string | null)}>
               <SelectTrigger id="manager" className="w-full">
                 <SelectValue>{(v: string) => managers.find((m) => m.id === v)?.name}</SelectValue>
@@ -137,20 +137,20 @@ export function AgentBuilder() {
                 ))}
               </SelectContent>
             </Select>
-            <FieldDescription>Kosongkan atau pilih Founder bila agent melapor langsung ke Founder.</FieldDescription>
+            <FieldDescription>Choose Founder if the agent reports directly to the Founder.</FieldDescription>
           </Field>
           <Field>
-            <FieldLabel>Atasan per proyek</FieldLabel>
+            <FieldLabel>Per-project managers</FieldLabel>
             <div className="flex flex-col gap-2">
               {projects.map((p) => (
                 <div key={p.key} className="flex items-center gap-2">
                   <Label htmlFor={`pm-${p.key}`} className="w-20 shrink-0 font-mono text-muted-foreground">{p.key}</Label>
                   <Select defaultValue={null}>
                     <SelectTrigger id={`pm-${p.key}`} className="w-full">
-                      <SelectValue>{(v: string | null) => (v ? managers.find((m) => m.id === v)?.name : "Ikuti atasan tetap")}</SelectValue>
+                      <SelectValue>{(v: string | null) => (v ? managers.find((m) => m.id === v)?.name : "Use fixed manager")}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={null}>Ikuti atasan tetap</SelectItem>
+                      <SelectItem value={null}>Use fixed manager</SelectItem>
                       {managers.slice(1).map((m) => (
                         <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                       ))}
@@ -159,7 +159,7 @@ export function AgentBuilder() {
                 </div>
               ))}
             </div>
-            <FieldDescription>Atasan per proyek menentukan ke mana work report dikirim untuk task di proyek itu.</FieldDescription>
+            <FieldDescription>A per-project manager decides where work reports go for tasks in that project.</FieldDescription>
           </Field>
         </FieldGroup>
       </FieldSet>
@@ -178,20 +178,20 @@ export function AgentBuilder() {
             </Select>
           </Field>
           <Field data-invalid={!!errors.limit || undefined}>
-            <FieldLabel htmlFor="limit">Batas token per execution</FieldLabel>
+            <FieldLabel htmlFor="limit">Token limit per execution</FieldLabel>
             <InputGroup>
-              <InputGroupInput id="limit" name="limit" inputMode="numeric" defaultValue="300.000" className="font-mono tabular-nums" aria-invalid={!!errors.limit || undefined} />
-              <InputGroupAddon align="inline-end"><InputGroupText>token</InputGroupText></InputGroupAddon>
+              <InputGroupInput id="limit" name="limit" inputMode="numeric" defaultValue="300,000" className="font-mono tabular-nums" aria-invalid={!!errors.limit || undefined} />
+              <InputGroupAddon align="inline-end"><InputGroupText>tokens</InputGroupText></InputGroupAddon>
             </InputGroup>
-            {errors.limit ? <FieldError>{errors.limit}</FieldError> : <FieldDescription>Execution dihentikan otomatis saat batas ini tercapai.</FieldDescription>}
+            {errors.limit ? <FieldError>{errors.limit}</FieldError> : <FieldDescription>The execution stops automatically when it reaches this limit.</FieldDescription>}
           </Field>
         </FieldGroup>
         <Field>
-          <FieldLabel id="preset-label">Preset izin tool</FieldLabel>
+          <FieldLabel id="preset-label">Tool permission preset</FieldLabel>
           <RadioGroup defaultValue="read-only" aria-labelledby="preset-label" className="grid gap-2 md:grid-cols-2">
             {[
-              { v: "read-only", t: "read-only", d: "Membaca repo dan dokumen. Tidak bisa mengubah kode." },
-              { v: "coding", t: "coding", d: "Mengubah kode, menjalankan test, membuka PR di repo proyek." },
+              { v: "read-only", t: "read-only", d: "Reads the repo and documents. Cannot change code." },
+              { v: "coding", t: "coding", d: "Changes code, runs tests and opens PRs in the project repo." },
             ].map((o) => (
               <Label key={o.v} htmlFor={`preset-${o.v}`} className="flex items-start gap-3 p-3 ring-1 ring-input has-data-checked:ring-ring">
                 <RadioGroupItem id={`preset-${o.v}`} value={o.v} className="mt-0.5" />
@@ -206,38 +206,38 @@ export function AgentBuilder() {
       </FieldSet>
 
       <FieldSet>
-        <FieldLegend>Instruksi</FieldLegend>
+        <FieldLegend>Instructions</FieldLegend>
         <Field data-invalid={!!errors.instructions || undefined}>
           <Tabs defaultValue="write">
             <TabsList>
-              <TabsTrigger value="write">Tulis</TabsTrigger>
-              <TabsTrigger value="preview">Pratinjau</TabsTrigger>
+              <TabsTrigger value="write">Write</TabsTrigger>
+              <TabsTrigger value="preview">Preview</TabsTrigger>
             </TabsList>
             <TabsContent value="write">
               <Textarea
                 id="instructions"
-                aria-label="Instruksi agent dalam markdown"
+                aria-label="Agent instructions in markdown"
                 aria-invalid={!!errors.instructions || undefined}
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
                 rows={10}
                 className="font-mono"
-                placeholder={"# Peran\nTulis tanggung jawab, batasan, dan definisi selesai."}
+                placeholder={"# Role\nDescribe responsibilities, limits and the definition of done."}
               />
             </TabsContent>
             <TabsContent value="preview">
               <div className="min-h-40 p-3 text-sm whitespace-pre-wrap ring-1 ring-input">
-                {instructions || <span className="text-muted-foreground">Belum ada instruksi.</span>}
+                {instructions || <span className="text-muted-foreground">No instructions yet.</span>}
               </div>
             </TabsContent>
           </Tabs>
-          {errors.instructions ? <FieldError>{errors.instructions}</FieldError> : <FieldDescription>Setiap simpan membuat versi baru. Setiap execution mencatat versi yang dipakai.</FieldDescription>}
+          {errors.instructions ? <FieldError>{errors.instructions}</FieldError> : <FieldDescription>Every save creates a new version. Every execution records the version it used.</FieldDescription>}
         </Field>
       </FieldSet>
 
       <div className="flex items-center gap-2 border-t pt-4">
-        <Button type="submit">Simpan agent</Button>
-        <Button variant="ghost" render={<Link href="/agents" />}>Batal</Button>
+        <Button type="submit">Save agent</Button>
+        <Button variant="ghost" render={<Link href="/agents" />}>Cancel</Button>
       </div>
     </form>
   )

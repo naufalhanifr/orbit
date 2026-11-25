@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Project chat" }
 
 export default function Page() {
   return (
-    <AppShell title="Project chat, proyek ORBIT">
+    <AppShell title="Project chat, ORBIT project">
       <Chat />
     </AppShell>
   )

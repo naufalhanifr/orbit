@@ -1,8 +1,8 @@
 /*
- * ORBIT globals.css: sumber kebenaran token desain (shadcn/ui base-lyra, Tailwind v4, oklch).
- * Dokumentasi: design/design-system.md. Cek kontras: python3 design/scripts/contrast.py
+ * ORBIT globals.css: single source of design tokens (shadcn/ui base-lyra, Tailwind v4, oklch).
+ * Docs: design/design-system.md. Contrast check: python3 design/scripts/contrast.py
  *
- * Palet: netral tinta + satu aksen (--primary) + tiga sinyal (amber, merah, hijau).
+ * Palette: neutral ink + one accent (--primary) + three signals (amber, red, green).
  * Token ORBIT: --tone-*, --task-*, --exec-*, --agent-status-*, --human*, --agent*.
  */
 
@@ -57,7 +57,7 @@
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
 
-    /* ORBIT: status task (PRD 15.1). Kelas: bg-task-done-subtle text-task-done-foreground; titik: bg-task-done */
+    /* ORBIT: task status (PRD 15.1). Classes: bg-task-done-subtle text-task-done-foreground; dot: bg-task-done */
     --color-task-backlog: var(--task-backlog);
     --color-task-backlog-subtle: var(--task-backlog-subtle);
     --color-task-backlog-foreground: var(--task-backlog-foreground);
@@ -83,7 +83,7 @@
     --color-task-cancelled-subtle: var(--task-cancelled-subtle);
     --color-task-cancelled-foreground: var(--task-cancelled-foreground);
 
-    /* ORBIT: status execution (PRD 18.3) */
+    /* ORBIT: execution status (PRD 18.3) */
     --color-exec-queued: var(--exec-queued);
     --color-exec-queued-subtle: var(--exec-queued-subtle);
     --color-exec-queued-foreground: var(--exec-queued-foreground);
@@ -106,7 +106,7 @@
     --color-exec-suspended-subtle: var(--exec-suspended-subtle);
     --color-exec-suspended-foreground: var(--exec-suspended-foreground);
 
-    /* ORBIT: status agent (PRD 10, lifecycle) */
+    /* ORBIT: agent status (PRD 10, lifecycle) */
     --color-agent-status-draft: var(--agent-status-draft);
     --color-agent-status-draft-subtle: var(--agent-status-draft-subtle);
     --color-agent-status-draft-foreground: var(--agent-status-draft-foreground);
@@ -129,7 +129,7 @@
     --color-agent-status-archived-subtle: var(--agent-status-archived-subtle);
     --color-agent-status-archived-foreground: var(--agent-status-archived-foreground);
 
-    /* ORBIT: pelaku */
+    /* ORBIT: actors */
     --color-human: var(--human);
     --color-human-foreground: var(--human-foreground);
     --color-agent: var(--agent);
@@ -143,18 +143,18 @@
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.46 0.23 264.376);         /* default 0.488: teks di atas hover primary/80 hanya 4.21:1 */
+    --primary: oklch(0.46 0.23 264.376);         /* default 0.488: text on hover primary/80 only 4.21:1 */
     --primary-foreground: oklch(0.97 0.014 254.604);
     --secondary: oklch(0.967 0.001 286.375);
     --secondary-foreground: oklch(0.21 0.006 285.885);
     --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.52 0 0);          /* default 0.556 → 4.34:1 di atas --muted, gagal AA */
+    --muted-foreground: oklch(0.52 0 0);          /* default 0.556: 4.34:1 on --muted, fails AA */
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.53 0.21 27);           /* default 0.577 → teks di atas destructive/10 hanya 3.99:1 */
+    --destructive: oklch(0.53 0.21 27);           /* default 0.577: text on destructive/10 only 3.99:1 */
     --border: oklch(0.922 0 0);
     --input: oklch(0.64 0 0);                     /* batas input ≥ 3:1 (WCAG 1.4.11) */
-    --ring: oklch(0.46 0.23 264.376);           /* fokus ≥ 3:1; default 0.708 hanya 2.59:1 */
+    --ring: oklch(0.46 0.23 264.376);           /* focus >= 3:1; default 0.708 only 2.59:1 */
     --chart-1: oklch(0.623 0.214 259.815);
     --chart-2: oklch(0.546 0.245 262.881);
     --chart-3: oklch(0.488 0.243 264.376);
@@ -170,7 +170,7 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.46 0.23 264.376);
 
-    /* ORBIT tones. solid = titik/ikon (>=3:1), subtle = latar badge, foreground = teks (>=4.5:1) */
+    /* ORBIT tones. solid = dot/icon (>=3:1), subtle = badge background, foreground = text (>=4.5:1) */
     --tone-neutral: oklch(0.6 0 0);
     --tone-neutral-subtle: oklch(0.96 0 0);
     --tone-neutral-foreground: oklch(0.47 0 0);
@@ -200,7 +200,7 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.205 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.707 0.165 254.624);        /* default 0.424: teks link hanya 2.24:1 di atas background */
+    --primary: oklch(0.707 0.165 254.624);        /* default 0.424: link text only 2.24:1 on background */
     --primary-foreground: oklch(0.145 0 0);
     --secondary: oklch(0.274 0.006 286.033);
     --secondary-foreground: oklch(0.985 0 0);
@@ -248,9 +248,9 @@
     --agent-foreground: oklch(0.145 0 0);
 }
 
-/* Pemetaan status ke tone. Selektor ganda agar var() di-resolve ulang bila .dark dipasang pada subtree.
-   Aturan warna: netral = belum/tidak jalan, tinta = sedang dikerjakan, amber = menunggu Founder,
-   merah = bermasalah, hijau = selesai. Warna selalu ditemani ikon + label. */
+/* Status to tone mapping. Double selector so var() re-resolves when .dark is set on a subtree.
+   Color rule: neutral = not running, ink = in progress, amber = waiting on the Founder,
+   red = problem, green = done. Color always comes with an icon + label. */
 :root, .dark {
     --task-backlog: var(--tone-neutral);
     --task-backlog-subtle: var(--tone-neutral-subtle);
@@ -335,7 +335,7 @@
     code, kbd, samp, pre {
         @apply font-mono;
     }
-    /* Affordance klik (Tailwind v4 me-reset cursor tombol ke default). */
+    /* Click affordance (Tailwind v4 resets the button cursor to default). */
     button:not(:disabled),
     [role="button"]:not([aria-disabled="true"]),
     [role="tab"], [role="switch"], [role="checkbox"], [role="option"], [role="menuitem"],
@@ -347,8 +347,8 @@
     }
 }
 
-/* Target sentuh (antislop R-03, WCAG 2.5.5): di perangkat sentuh semua kontrol minimal 44 x 44 px.
-   Di mouse, kepadatan base-lyra (32 px) dipertahankan. */
+/* Touch targets (antislop R-03, WCAG 2.5.5): on touch devices every control is at least 44 x 44 px.
+   With a mouse, base-lyra density (32 px) is kept. */
 @media (pointer: coarse) {
     :where([data-slot="button"], [data-slot="toggle-group-item"], [data-slot="select-trigger"],
            [data-slot="input-group-button"], [data-slot="sidebar-menu-button"], [data-slot="dropdown-menu-item"],
@@ -361,7 +361,7 @@
     }
 }
 
-/* Gerak (MOTION 1): tidak ada animasi berulang. Transisi overlay bawaan shadcn dimatikan bila pengguna meminta reduced motion. */
+/* Motion (MOTION 1): no looping animation. shadcn overlay transitions are disabled under reduced motion. */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;

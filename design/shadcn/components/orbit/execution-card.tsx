@@ -35,13 +35,13 @@ export function StopExecutionDialog({ exec, onConfirm, defaultOpen }: { exec: Ex
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Hentikan execution ini?</AlertDialogTitle>
+          <AlertDialogTitle>Stop this execution?</AlertDialogTitle>
           <AlertDialogDescription>
-            {agent.name} sedang mengerjakan {task.id} {task.title} ({exec.elapsed}, {formatTokens(exec.tokens)} token terpakai). Execution berhenti sekarang dan berstatus Cancelled. Perubahan yang belum di-commit hilang. Token yang sudah terpakai tetap tercatat.
+            {agent.name} is working on {task.id} {task.title} ({exec.elapsed}, {formatTokens(exec.tokens)} tokens used). The execution stops now and becomes Cancelled. Uncommitted changes are lost. Tokens already used stay on record.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Batal</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             onClick={() => {
@@ -49,7 +49,7 @@ export function StopExecutionDialog({ exec, onConfirm, defaultOpen }: { exec: Ex
               onConfirm()
             }}
           >
-            Hentikan execution
+            Stop execution
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -70,7 +70,7 @@ export function ExecutionCard({ className, showLog = false, stopOpen }: { classN
         <ActorAvatar actor={agent} size="sm" />
         <p className="min-w-0 flex-1 truncate text-sm">
           <span className="font-medium">{agent.name}</span>
-          <span className="text-muted-foreground"> mengerjakan </span>
+          <span className="text-muted-foreground"> working on </span>
           <span className="font-mono text-xs">{task.id}</span> {task.title}
         </p>
         {running ? <StopExecutionDialog exec={exec} onConfirm={() => setStatus("cancelled")} defaultOpen={stopOpen} /> : null}
@@ -80,16 +80,16 @@ export function ExecutionCard({ className, showLog = false, stopOpen }: { classN
         <span className="font-mono text-muted-foreground">{exec.id}</span>
         <span className="font-mono tabular-nums text-muted-foreground">{exec.elapsed}</span>
         <span className="ml-auto font-mono tabular-nums">
-          {formatTokens(exec.tokens)} <span className="text-muted-foreground">/ {formatTokens(exec.limit)} token</span>
+          {formatTokens(exec.tokens)} <span className="text-muted-foreground">/ {formatTokens(exec.limit)} tokens</span>
         </span>
       </div>
-      <Progress value={Math.round(progress * 100)} aria-label="Token terpakai dari batas per execution" />
+      <Progress value={Math.round(progress * 100)} aria-label="Tokens used of the per-execution limit" />
       <p className="font-mono text-xs text-muted-foreground">
-        {running ? <>Langkah terakhir: {exec.step}</> : <>Dihentikan oleh Founder. Task kembali ke Assigned.</>}
+        {running ? <>Last step: {exec.step}</> : <>Stopped by the Founder. Task returned to Assigned.</>}
       </p>
       {showLog ? (
-        <section aria-label="Tool yang dipanggil" className="flex flex-col gap-1 text-xs">
-          <h3 className="text-muted-foreground">Tool yang dipanggil</h3>
+        <section aria-label="Tools called" className="flex flex-col gap-1 text-xs">
+          <h3 className="text-muted-foreground">Tools called</h3>
           <ul className="flex flex-col gap-0.5 font-mono">
             {exec.tools.map((t) => (
               <li key={t.detail} className="flex gap-2">
@@ -103,7 +103,7 @@ export function ExecutionCard({ className, showLog = false, stopOpen }: { classN
       {showLog ? (
         <pre aria-label="Execution log" className="max-h-56 overflow-auto bg-muted p-3 font-mono text-xs leading-5 text-foreground">
           {exec.log.join("\n")}
-          {running ? "" : "\n11:02:10  Dihentikan oleh Founder"}
+          {running ? "" : "\n11:02:10  Stopped by the Founder"}
         </pre>
       ) : null}
     </section>
