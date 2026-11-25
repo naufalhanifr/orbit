@@ -23,6 +23,7 @@ from orbit.models import (
     ExecutionEventKind,
     ExecutionStatus,
     ExecutionTrigger,
+    Project,
     ProjectAssignment,
     Task,
     User,
@@ -58,8 +59,21 @@ def task_conversation(db: Session, task: Task, *, create: bool) -> Conversation 
     return conv
 
 
-def list_messages(db: Session, task: Task) -> list[ConversationMessage]:
-    conv = task_conversation(db, task, create=False)
+def project_conversation(db: Session, project: Project, *, create: bool) -> Conversation | None:
+    """The project's own chat thread (not linked to a task)."""
+    conv = db.scalar(
+        select(Conversation).where(
+            Conversation.project_id == project.id, Conversation.task_id.is_(None)
+        )
+    )
+    if conv is None and create:
+        conv = Conversation(organization_id=project.organization_id, project_id=project.id)
+        db.add(conv)
+        db.flush()
+    return conv
+
+
+def list_messages(db: Session, conv: Conversation | None) -> list[ConversationMessage]:
     if conv is None:
         return []
     return list(
@@ -81,15 +95,15 @@ def running_execution(db: Session, task: Task, agent_id: int) -> Execution | Non
     )
 
 
-def _check_mentionable(db: Session, task: Task, agent_id: int) -> Agent:
+def _check_mentionable(db: Session, conv: Conversation, agent_id: int) -> Agent:
     agent = db.get(Agent, agent_id)
-    if agent is None or agent.organization_id != task.organization_id:
+    if agent is None or agent.organization_id != conv.organization_id:
         raise ChatError("invalid_mention", f"Mentioned agent {agent_id} does not exist")
     if agent.status in UNAVAILABLE:
         raise ChatError("agent_unavailable", f"Agent {agent_id} is {agent.status.value}")
     in_project = db.scalar(
         select(ProjectAssignment.id).where(
-            ProjectAssignment.project_id == task.project_id,
+            ProjectAssignment.project_id == conv.project_id,
             ProjectAssignment.agent_id == agent_id,
         )
     )
@@ -98,21 +112,41 @@ def _check_mentionable(db: Session, task: Task, agent_id: int) -> Agent:
     return agent
 
 
-def post_message(
+def post_task_message(
     db: Session, user: User, task: Task, body: str, mentions: list[int]
 ) -> ConversationMessage:
-    """Store a comment and route its mentions:
+    """Task comment (PRD 17.4). Mentions route as:
     - the assignee with an in-flight execution on this task (preparing, running or
       waiting for input): extra instruction to it — this is also how the Founder
       answers an agent's question;
     - any other mentioned agent: a new queued execution (chat invocation);
     - no mention: stored as a note only.
     """
+    return _post(db, user, task_conversation(db, task, create=True), task, body, mentions)
+
+
+def post_project_message(
+    db: Session, user: User, project: Project, body: str, mentions: list[int]
+) -> ConversationMessage:
+    """Project Chat. Each mentioned agent gets a new queued execution without a task.
+    # shortcut: the "from chat" light task (PRD 4.4) is created once the runtime sees
+    # code changes; tasks already carry `from_chat` and `source_message_id` for it.
+    """
+    return _post(db, user, project_conversation(db, project, create=True), None, body, mentions)
+
+
+def _post(
+    db: Session,
+    user: User,
+    conv: Conversation,
+    task: Task | None,
+    body: str,
+    mentions: list[int],
+) -> ConversationMessage:
     mentions = list(dict.fromkeys(mentions))  # dedupe, keep order
-    agents = [_check_mentionable(db, task, agent_id) for agent_id in mentions]
-    conv = task_conversation(db, task, create=True)
+    agents = [_check_mentionable(db, conv, agent_id) for agent_id in mentions]
     msg = ConversationMessage(
-        organization_id=task.organization_id,
+        organization_id=conv.organization_id,
         conversation_id=conv.id,
         author_id=user.workforce_id,
         body=body,
@@ -123,21 +157,22 @@ def post_message(
     for agent in agents:
         running = (
             running_execution(db, task, agent.workforce_id)
-            if agent.workforce_id == task.assignee_id
+            if task is not None and agent.workforce_id == task.assignee_id
             else None
         )
         if running is not None:
             record_event(db, running, ExecutionEventKind.INSTRUCTION, {"message_id": msg.id})
         else:
             queue_execution(
-                db, task, agent, ExecutionTrigger.CHAT_MENTION, user=user, message=msg
+                db, conv, task, agent, ExecutionTrigger.CHAT_MENTION, user=user, message=msg
             )
     return msg
 
 
 def queue_execution(
     db: Session,
-    task: Task,
+    conv: Conversation,
+    task: Task | None,
     agent: Agent,
     trigger: ExecutionTrigger,
     *,
@@ -151,9 +186,9 @@ def queue_execution(
         .limit(1)
     )
     execution = Execution(
-        organization_id=task.organization_id,
-        project_id=task.project_id,
-        task_id=task.id,
+        organization_id=conv.organization_id,
+        project_id=conv.project_id,
+        task_id=task.id if task else None,
         agent_id=agent.workforce_id,
         status=ExecutionStatus.QUEUED,
         trigger=trigger,

@@ -7,11 +7,13 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -228,6 +230,11 @@ class Task(TimestampMixin, Base):
     assignee_id: Mapped[int | None] = mapped_column(ForeignKey("workforce.id"))
     reporter_id: Mapped[int | None] = mapped_column(ForeignKey("workforce.id"))
     pr_url: Mapped[str | None] = mapped_column(String(500))
+    # Light task created from a chat message that changed code (PRD 4.4).
+    from_chat: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    source_message_id: Mapped[int | None] = mapped_column(
+        ForeignKey("conversation_messages.id", use_alter=True, name="fk_tasks_source_message_id")
+    )
     revision_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -296,9 +303,18 @@ class ExecutionEventKind(StrEnum):
 
 
 class Conversation(TimestampMixin, Base):
-    """Chat thread. A task's thread is also its comment section (PRD 17.4)."""
+    """Chat thread: one per task (its comment section, PRD 17.4) and one per
+    project (Project Chat, task_id NULL)."""
 
     __tablename__ = "conversations"
+    __table_args__ = (
+        Index(
+            "uq_conversations_project_chat",
+            "project_id",
+            unique=True,
+            postgresql_where=text("task_id IS NULL"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)

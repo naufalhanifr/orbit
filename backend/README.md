@@ -78,11 +78,17 @@ Backlog → Assigned → In Progress → Founder Approval → Done
 - Lifecycle (PRD 18.3): `queued → preparing → running ⇄ waiting_for_input → completed | failed | cancelled`, `waiting_for_input → suspended → queued` (resume). `preparing` ditampilkan di UI sebagai "Preparing". Mention assignee saat `preparing`/`running`/`waiting_for_input` menjadi instruksi ke execution itu (termasuk menjawab pertanyaan agent).
 - Belum ada runtime: execution tetap `queued`. Runtime nanti memakai `chat.advance_execution` dan `chat.record_event`; streaming SSE, Stop yang mematikan container, dan Suspended otomatis setelah 30 menit menyusul.
 
+### Project Chat
+
+- `GET/POST /projects/{id}/messages` — satu thread per proyek (terpisah dari thread task). Mention agent → execution `queued` tanpa task (`task_id = null`), trigger `chat_mention`. Tanpa mention → pesan biasa.
+- `GET /projects/{id}/executions` — semua execution di proyek, termasuk dari chat.
+- Task punya `from_chat` dan `source_message_id` untuk task ringan "dari chat" (PRD 4.4). Pembuatannya otomatis menyusul bersama runtime, saat agent mengubah kode.
+
 ### Waiting on you (PRD 4.4)
 
 `GET /waiting-on-you` — item `pr_review` (task di Founder Approval, dengan `pr_url`), `agent_question` (execution Waiting for Input), `suspended` (perlu di-resume), `blocked` (dengan alasan), urut dari yang paling lama. Konfirmasi run saat budget harian tercapai menyusul bersama budget.
 
 ## Ditunda
 
-Redis/Dramatiq, Row-Level Security, agent execution runtime, integrasi GitHub, Project Chat di luar task, frontend,
+Redis/Dramatiq, Row-Level Security, agent execution runtime, integrasi GitHub, frontend,
 2FA, audit trail perubahan reporting line, otorisasi per pelaku transisi (di MVP semua aksi oleh Founder).

@@ -40,6 +40,8 @@ def task_out(db: Session, task: Task) -> TaskOut:
         pr_url=task.pr_url,
         revision_count=task.revision_count,
         depends_on=svc.dependency_ids(db, task),
+        from_chat=task.from_chat,
+        source_message_id=task.source_message_id,
     )
 
 

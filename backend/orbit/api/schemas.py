@@ -152,6 +152,8 @@ class TaskOut(BaseModel):
     pr_url: str | None
     revision_count: int
     depends_on: list[int]
+    from_chat: bool
+    source_message_id: int | None
 
 
 class DependencyIn(BaseModel):
