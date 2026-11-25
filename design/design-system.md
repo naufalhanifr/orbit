@@ -1,6 +1,6 @@
 # ORBIT Design System
 
-Versi 3.1 · 2026-11-25 · Mengikuti PRD v1.15 · shadcn preset `b1ZzrZc6S` (`base-mira`)
+Versi 3.2 · 2026-11-25 · Mengikuti PRD v1.16 · shadcn preset `b1ZzrZc6S` (`base-mira`)
 Bahasa UI: Inggris penuh. Implementasi: [`design/shadcn/`](shadcn/) · Brand: [`brand-guidelines.md`](brand-guidelines.md) · Logo: [`logo/`](logo/) · Mockup: [`mockups/`](mockups/)
 
 Design system ini **adalah kode di `design/shadcn`**. Dokumen ini menjelaskan keputusan dan aturannya. Kalau dokumen dan kode berbeda, yang dianggap benar adalah kode, lalu dokumen ini diperbaiki.
@@ -161,7 +161,7 @@ Berat font hanya 400 dan 500. Tidak ada uppercase dengan tracking lebar.
 | Layar (PRD 4.4) | Route | Pola ORBIT | Komponen shadcn |
 |---|---|---|---|
 | Kanban, List, detail task (dengan panel execution live dan thread komentar/chat, PRD 17.4) | `/board` | `Board`, `TaskCard`, `TaskSheet`, `TaskThread`, `ExecutionCard`, `ReasonDialog`, `CreateTaskDialog` | `toggle-group`, `button`, `dropdown-menu`, `sheet`, `dialog`, `field`, `input`, `textarea`, `table`, `badge`, `avatar` |
-| Project Chat dengan @mention | `/chat` | `Chat` | `input-group`, `command`, `select`, `item`, `avatar`, `badge` |
+| Project Chat dengan @mention dan planning with PO (PRD 17.10) | `/chat` | `Chat`, `ProposalCard` | `input-group`, `command`, `select`, `item`, `avatar`, `badge` |
 | Daftar agent | `/agents` | `AgentList` | `table`, `badge`, `avatar`, `button` |
 | Agent Builder | `/agents/new` | `AgentBuilder` | `field`, `input`, `select`, `radio-group`, `checkbox`, `tabs`, `textarea`, `alert` |
 | Org chart matriks | `/org` | `OrgChart` | `select`, `sheet`, `avatar`, `badge` (garis memakai SVG) |
@@ -198,6 +198,13 @@ Transisi milik assignee atau system tidak muncul sebagai tombol.
   - Mention assignee yang sedang bekerja: "Sent to the running execution as an extra instruction."
   - Mention agent lain: "Started a new invocation for …"
   - Tanpa mention: "Note only. Agents won’t read it until they are next invoked."
+- **ProposalCard** (PRD 17.10, v1.16): usulan breakdown task dari PO, tampil di dalam balasan PO di Project Chat.
+  - Header: "Proposed breakdown", jumlah task, kalimat "Nothing is created until you approve", lalu "Reject all" (ghost) dan "Approve all (n)" (primary, satu-satunya tombol primary di kartu).
+  - Per task: nomor urut, judul, deskripsi, acceptance criteria, usulan assignee (avatar + nama, atau "No assignee proposed"), dependency ("Depends on task 1"). Aksi per task: Reject (ghost), Edit, Approve (outline).
+  - Edit membuka form inline: Title (wajib), acceptance criteria (satu per baris), Assignee. Pilihan assignee hanya agent yang Works in proyek itu dan yang atasan berlakunya di proyek itu adalah PO tersebut.
+  - Setelah Approve, baris berubah menjadi "Created as ORB-17 in Backlog" (hijau) dan dependency task lain ikut menampilkan ID nyata ("Depends on ORB-17"). Reject mencoret judul.
+  - Task yang bergantung pada task yang ditolak tidak bisa di-approve dan menampilkan "Depends on rejected task 1. Edit or reject this task." Approve all melewati task seperti itu.
+  - Usulan tidak pernah tampil di papan; hanya task yang sudah disetujui yang dibuat.
 - **AgentBuilder** (PRD 4.4, v1.15): Identity (Name, Title), Structure, Runtime (Model, preset izin `read-only`/`coding`), Instructions (Write/Preview, setiap simpan = versi baru). Tidak ada batas token. Structure berisi dua pilihan terpisah:
   - **Reports to**: `Select` berisi agent yang ada, default "No agent manager" yang berarti langsung di bawah Founder. Tidak ada pilihan "Founder" (Founder adalah human). Atasan per proyek diatur di penugasan proyek, bukan di sini.
   - **Works in**: radio "Selected projects" (dengan checkbox proyek, minimal satu) atau "All projects, including ones created later".
@@ -268,7 +275,7 @@ Preset `b1ZzrZc6S` memakai warna default shadcn, dan sebagian gagal AA. ORBIT me
 
 ### 7.4 Bukti click-through (R-35)
 
-Setiap mockup dijalankan dari `next build` + `next start`, lalu diuji otomatis dengan Playwright. Hasilnya 45 cek lulus dan 0 error di console. Yang diuji:
+Setiap mockup dijalankan dari `next build` + `next start`, lalu diuji otomatis dengan Playwright. Hasilnya 51 cek lulus dan 0 error di console. Yang diuji:
 - Navigasi sidebar ke 5 halaman.
 - Kanban ↔ List dan tampilkan Cancelled.
 - Waiting on you: 4 item di papan; Review blocker membuka detail; Resume mengubah status; di `/states`, Review tanpa papan menjadi link ke `/board`.
@@ -279,6 +286,7 @@ Setiap mockup dijalankan dari `next build` + `next start`, lalu diuji otomatis d
 - Setujui memindahkan task ke Done.
 - Buat task: validasi, lalu task muncul di Backlog.
 - Chat: pesan tanpa mention diberi catatan; `@` membuka daftar; Enter menyisipkan nama; Escape menutup daftar.
+- Planning with PO: kartu usulan 3 task tampil; Edit menyimpan assignee; Approve task 1 membuat ORB-17; Approve all membuat ORB-18 dan ORB-19 dengan dependency ORB-17; Reject task 1 menonaktifkan Approve task 2; usulan tidak muncul di papan.
 - Agent Builder: 4 error saat kosong (termasuk Works in tanpa proyek); All projects menyembunyikan daftar proyek; simpan valid menampilkan "It starts as Idle and reports to CTO."
 - Org chart: node membuka sheet, filter proyek berfungsi.
 - Tema: terang ↔ gelap.

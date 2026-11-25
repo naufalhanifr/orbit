@@ -1,6 +1,6 @@
 # ORBIT Brand Guidelines
 
-Versi 2.0 · 2026-11-25 · Pemilik: Founder (EVORA Studio) · Mengikuti PRD v1.15
+Versi 2.0 · 2026-11-25 · Pemilik: Founder (EVORA Studio) · Mengikuti PRD v1.16
 Berlaku untuk: Web UI ORBIT, dokumentasi produk, notifikasi, dan materi tentang ORBIT.
 Pendamping: [`design-system.md`](design-system.md) (spesifikasi), implementasi di [`shadcn/`](shadcn/), token di [`shadcn/app/globals.css`](shadcn/app/globals.css), dan mockup di [`mockups/`](mockups/).
 
@@ -114,6 +114,7 @@ Setelah berhasil, kartu execution menampilkan: *Stopped by the Founder. Task ret
 - Kolom Kanban kosong: *Empty*.
 - Task dari chat: label *from chat*.
 - Request revision (dialog): *The task returns to In Progress. Feedback goes to the agent and counts as one revision cycle.*
+- Usulan PO (PRD 17.10): *Proposed breakdown* · *3 tasks in ORB. Nothing is created until you approve.* · [Reject all] [Approve all (3)]. Per task: [Reject] [Edit] [Approve]. Setelah disetujui: *Created as ORB-17 in Backlog*. Dependency pada task yang ditolak: *Depends on rejected task 1. Edit or reject this task.*
 - Agent Builder, Reports to kosong: *No agent manager* · *Without an agent manager, the agent sits directly under the Founder.*
 - Atribusi runtime: *Powered by Claude* (jangan menyebut "Claude Code" di UI, PRD 18.1).
 

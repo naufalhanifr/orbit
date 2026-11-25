@@ -150,6 +150,42 @@ export const waitingExecutions = [
 export const waitingCount = (list: Task[]) =>
   list.filter((t) => t.status === "founder-approval" || t.status === "blocked").length + waitingExecutions.length
 
+// PRD 17.10 (v1.16): a PO's proposed task breakdown. Nothing reaches the board until the Founder approves it.
+export type ProposedTask = {
+  key: number // position in the proposal; dependencies point at these keys
+  title: string
+  description: string
+  criteria: string[]
+  dependsOn: number[]
+  assigneeId?: string
+}
+
+export const sampleProposal: ProposedTask[] = [
+  {
+    key: 1,
+    title: "Aggregate token usage per week",
+    description: "Sum execution tokens per agent and per ISO week from execution records.",
+    criteria: ["Weekly totals per agent come from execution records", "Totals equal the sum of execution tokens for that week"],
+    dependsOn: [],
+    assigneeId: "spec",
+  },
+  {
+    key: 2,
+    title: "Weekly usage chart on the dashboard",
+    description: "Show the last 8 weeks as a bar chart next to the daily chart.",
+    criteria: ["Chart shows 8 weeks with a label per week", "Hovering a bar shows the exact total"],
+    dependsOn: [1],
+    assigneeId: "spec",
+  },
+  {
+    key: 3,
+    title: "Export weekly usage as CSV",
+    description: "Download the weekly totals from the dashboard.",
+    criteria: ["CSV has one row per agent per week", "File name includes the date range"],
+    dependsOn: [1],
+  },
+]
+
 export const byId = <T extends { id: string }>(list: T[], id?: string) => list.find((x) => x.id === id)
 export const actorById = (id?: string): Actor | undefined => (id === "founder" ? founder : byId(agents, id))
 export const formatTokens = (n: number) => n.toLocaleString("en-US")

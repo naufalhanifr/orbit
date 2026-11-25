@@ -8,8 +8,9 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, InputGr
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ActorAvatar } from "@/components/orbit/actor-avatar"
+import { ProposalCard } from "@/components/orbit/proposal-card"
 import { EXEC_STATUS, StatusBadge } from "@/components/orbit/status"
-import { agents, byId, founder, tasks, type Actor, type ExecStatus } from "@/lib/orbit-data"
+import { agents, byId, founder, sampleProposal, tasks, type Actor, type ExecStatus } from "@/lib/orbit-data"
 import { cn } from "@/lib/utils"
 
 type Msg = {
@@ -19,12 +20,14 @@ type Msg = {
   time: string
   exec?: { id: string; status: ExecStatus; tokens: number }
   note?: string
+  proposal?: boolean // PO task breakdown proposal (PRD 17.10)
 }
 
 const spec = byId(agents, "spec")!
+const po1 = byId(agents, "po1")!
 const projectAgents = agents.filter((a) => ["spec", "po1", "cto"].includes(a.id))
 
-const seedMessages: Msg[] = [
+const orb14: Msg[] = [
   { id: 1, author: founder, time: "10:31", text: "@Shared Specialist please work on the ORB-14 revision from the feedback on PR #19." },
   { id: 2, author: spec, time: "10:31", text: "Starting the ORB-14 revision on branch orb-14-org-chart.", exec: { id: "EXE-477", status: "running", tokens: 3100 } },
   {
@@ -36,14 +39,24 @@ const seedMessages: Msg[] = [
   },
 ]
 
+const planning: Msg[] = [
+  { id: 1, author: founder, time: "09:12", text: "@PO 1 I want a weekly token usage report on the dashboard." },
+  { id: 2, author: po1, time: "09:13", text: "Should the report cover every agent, or only agents working in ORBIT?" },
+  { id: 3, author: founder, time: "09:15", text: "@PO 1 Every agent in ORBIT. A CSV export would help too." },
+  { id: 4, author: po1, time: "09:16", text: "Here is a breakdown into 3 tasks. Approve, edit or reject each one.", proposal: true },
+]
+
+const seedThreads: Record<string, Msg[]> = { c1: orb14, c4: planning, c2: [], c3: [] }
+
 const conversations = [
   { id: "c1", title: "ORB-14 Matrix org chart", meta: "Waiting for your answer", needsYou: true },
+  { id: "c4", title: "Planning: weekly token report", meta: "Proposal waiting for you", needsYou: true },
   { id: "c2", title: "General, ORBIT project", meta: "Yesterday" },
   { id: "c3", title: "ORB-10 Login lockout", meta: "Monday" },
 ]
 
 export function Chat() {
-  const [messages, setMessages] = React.useState(seedMessages)
+  const [threads, setThreads] = React.useState(seedThreads)
   const [draft, setDraft] = React.useState("")
   const [mentionOpen, setMentionOpen] = React.useState(false)
   const [context, setContext] = React.useState<string | null>("ORB-14")
@@ -51,9 +64,20 @@ export function Chat() {
   const textRef = React.useRef<HTMLTextAreaElement>(null)
   const endRef = React.useRef<HTMLLIElement>(null)
 
+  const messages = threads[active] ?? []
+  const setMessages = (f: (m: Msg[]) => Msg[]) => setThreads((t) => ({ ...t, [active]: f(t[active] ?? []) }))
+  const current = conversations.find((c) => c.id === active)!
+  // Draft and task context belong to one conversation.
+  const switchTo = (id: string) => {
+    setActive(id)
+    setDraft("")
+    setMentionOpen(false)
+    setContext(id === "c1" ? "ORB-14" : null)
+  }
+
   React.useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" })
-  }, [messages.length])
+  }, [messages.length, active])
 
   const insertMention = (name: string) => {
     setDraft((d) => d.replace(/@$/, "") + `@${name} `)
@@ -93,7 +117,7 @@ export function Chat() {
               key={c.id}
               size="sm"
               variant={active === c.id ? "muted" : "default"}
-              render={<button type="button" onClick={() => setActive(c.id)} aria-current={active === c.id ? "true" : undefined} />}
+              render={<button type="button" onClick={() => switchTo(c.id)} aria-current={active === c.id ? "true" : undefined} />}
               className="text-left"
             >
               <ItemContent>
@@ -105,12 +129,13 @@ export function Chat() {
         </nav>
       </aside>
 
-      <section aria-label="Conversation ORB-14" className="flex min-h-0 flex-col">
+      <section aria-label={`Conversation: ${current.title}`} className="flex min-h-0 flex-col">
         <ol className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 md:p-6" aria-live="polite">
+          {!messages.length ? <li className="text-sm text-muted-foreground">No messages yet. Mention an agent with @name to start.</li> : null}
           {messages.map((m) => (
             <li key={m.id} className="flex gap-3">
               <ActorAvatar actor={m.author} size="sm" />
-              <div className="flex min-w-0 max-w-prose flex-col gap-1.5">
+              <div className={cn("flex min-w-0 flex-col gap-1.5", m.proposal ? "w-full max-w-3xl" : "max-w-prose")}>
                 <p className="flex items-baseline gap-2 text-xs">
                   <span className="font-medium">{m.author.name}</span>
                   {m.author.kind === "agent" ? <span className="text-muted-foreground">Agent</span> : null}
@@ -133,6 +158,7 @@ export function Chat() {
                   </div>
                 ) : null}
                 {m.note ? <p className="text-xs text-muted-foreground">{m.note}</p> : null}
+                {m.proposal ? <ProposalCard proposal={sampleProposal} project="ORB" po="po1" firstId={17} /> : null}
               </div>
             </li>
           ))}
@@ -177,9 +203,10 @@ export function Chat() {
             <span>Task context</span>
             <Select value={context} onValueChange={(v) => setContext(v as string | null)}>
               <SelectTrigger size="sm" aria-label="Task used as context" className="w-auto min-w-40">
-                <SelectValue />
+                <SelectValue>{(v: string | null) => v ?? "None"}</SelectValue>
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value={null}>None</SelectItem>
                 {tasks
                   .filter((t) => t.status !== "cancelled")
                   .map((t) => (
