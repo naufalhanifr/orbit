@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from orbit.api import agents, auth, chat, projects, tasks, waiting
+from orbit.api import agents, auth, chat, projects, proposals, tasks, waiting
 from orbit.errors import DomainError
 
 app = FastAPI(title="ORBIT API", version="0.1.0")
@@ -19,5 +19,5 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-for module in (auth, agents, projects, tasks, chat, waiting):
+for module in (auth, agents, projects, tasks, chat, waiting, proposals):
     app.include_router(module.router)

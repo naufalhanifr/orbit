@@ -91,6 +91,15 @@ Backlog → Assigned → In Progress ⇄ Founder Approval → Done
 - `GET /projects/{id}/executions` — semua execution di proyek, termasuk dari chat.
 - Task punya `from_chat` dan `source_message_id` untuk task ringan "dari chat" (PRD 4.4). Pembuatannya otomatis menyusul bersama runtime, saat agent mengubah kode.
 
+### Planning with PO (PRD 17.10)
+
+- Usulan breakdown task dari PO: `GET /projects/{id}/proposals` (default hanya yang masih punya item pending; `?pending_only=false` untuk semua), `GET /proposals/{id}`.
+- Founder: `PATCH /proposals/{id}/items/{item_id}` (edit), `POST /proposals/{id}/approve` dan `/reject` dengan `{"item_ids": [...]}` (kosongkan untuk semua item pending).
+- Approve membuat task asli (dengan assignee dan dependency) lalu mengikuti aturan biasa; task yang dependency-nya sudah Done langsung Assigned. Usulan pending tidak muncul di board.
+- Item hanya bisa di-approve bersama atau setelah item yang ia butuhkan. Jika item itu ditolak, edit dulu dependency-nya.
+- Validasi PO: pengusul harus bekerja di proyek; usulan assignee harus bekerja di proyek dan atasan berlakunya di proyek itu = PO pengusul. Founder bebas mengganti assignee ke agent yang bekerja di proyek.
+- Runtime nanti membuat usulan lewat `proposals.create_proposal` (tool `orbit_propose_tasks`, ADR-0001 §3.4).
+
 ### Waiting on you (PRD 4.4)
 
 `GET /waiting-on-you` — item `pr_review` (task di Founder Approval, dengan `pr_url`), `agent_question` (execution Waiting for Input), `suspended` (perlu di-resume), `blocked` (dengan alasan), urut dari yang paling lama. Konfirmasi run saat budget harian tercapai menyusul bersama budget.

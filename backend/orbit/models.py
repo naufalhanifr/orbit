@@ -370,3 +370,51 @@ class ExecutionEvent(TimestampMixin, Base):
     seq: Mapped[int] = mapped_column(Integer)
     kind: Mapped[ExecutionEventKind] = mapped_column(_enum(ExecutionEventKind, "execution_event_kind"))
     payload: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+
+class ProposalItemStatus(StrEnum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
+class TaskProposal(TimestampMixin, Base):
+    """Task breakdown proposed by a PO agent in Project Chat (PRD 17.10)."""
+
+    __tablename__ = "task_proposals"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    proposer_id: Mapped[int] = mapped_column(ForeignKey("agents.workforce_id"))
+    execution_id: Mapped[int | None] = mapped_column(ForeignKey("executions.id"))
+    message_id: Mapped[int | None] = mapped_column(ForeignKey("conversation_messages.id"))
+
+    items: Mapped[list["TaskProposalItem"]] = relationship(order_by="TaskProposalItem.position")
+
+
+class TaskProposalItem(TimestampMixin, Base):
+    __tablename__ = "task_proposal_items"
+    __table_args__ = (UniqueConstraint("proposal_id", "position"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    proposal_id: Mapped[int] = mapped_column(
+        ForeignKey("task_proposals.id", ondelete="CASCADE"), index=True
+    )
+    position: Mapped[int] = mapped_column(Integer)  # 1-based; referenced by depends_on_positions
+    title: Mapped[str] = mapped_column(String(300))
+    description: Mapped[str | None] = mapped_column(Text)
+    acceptance_criteria: Mapped[str | None] = mapped_column(Text)
+    assignee_id: Mapped[int | None] = mapped_column(ForeignKey("agents.workforce_id"))
+    # Dependencies on other items of the same proposal, and on existing tasks.
+    depends_on_positions: Mapped[list[int]] = mapped_column(
+        ARRAY(Integer), default=list, server_default="{}"
+    )
+    depends_on_task_ids: Mapped[list[int]] = mapped_column(
+        ARRAY(Integer), default=list, server_default="{}"
+    )
+    status: Mapped[ProposalItemStatus] = mapped_column(
+        _enum(ProposalItemStatus, "proposal_item_status"), default=ProposalItemStatus.PENDING
+    )
+    task_id: Mapped[int | None] = mapped_column(ForeignKey("tasks.id", ondelete="SET NULL"))

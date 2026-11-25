@@ -201,20 +201,25 @@ def founder_workforce(db: Session, org_id: int) -> Workforce:
     )
 
 
+def effective_supervisor_id(db: Session, agent_id: int, project_id: int) -> int | None:
+    """Agent supervisor in a project: per-project → fixed; None means the Founder (PRD 8.2)."""
+    pa = db.scalar(
+        select(ProjectAssignment).where(
+            ProjectAssignment.project_id == project_id, ProjectAssignment.agent_id == agent_id
+        )
+    )
+    if pa is not None and pa.supervisor_id is not None:
+        return pa.supervisor_id
+    agent = db.get(Agent, agent_id)
+    return agent.fixed_supervisor_id if agent is not None else None
+
+
 def resolve_supervisor(db: Session, task: Task) -> Workforce:
     """Effective supervisor for a task: per-project → fixed → Founder (PRD 8.2)."""
     if task.assignee_id is not None:
-        pa = db.scalar(
-            select(ProjectAssignment).where(
-                ProjectAssignment.project_id == task.project_id,
-                ProjectAssignment.agent_id == task.assignee_id,
-            )
-        )
-        if pa is not None and pa.supervisor_id is not None:
-            return db.get(Workforce, pa.supervisor_id)
-        agent = db.get(Agent, task.assignee_id)
-        if agent is not None and agent.fixed_supervisor_id is not None:
-            return db.get(Workforce, agent.fixed_supervisor_id)
+        sup_id = effective_supervisor_id(db, task.assignee_id, task.project_id)
+        if sup_id is not None:
+            return db.get(Workforce, sup_id)
     return founder_workforce(db, task.organization_id)
 
 

@@ -209,3 +209,41 @@ class ExecutionEventOut(ORM):
     kind: ExecutionEventKind
     payload: dict
     created_at: datetime
+
+
+class ProposalItemOut(ORM):
+    id: int
+    position: int
+    title: str
+    description: str | None
+    acceptance_criteria: str | None
+    assignee_id: int | None
+    depends_on_positions: list[int]
+    depends_on_task_ids: list[int]
+    status: str
+    task_id: int | None
+
+
+class ProposalOut(ORM):
+    id: int
+    project_id: int
+    proposer_id: int
+    execution_id: int | None
+    message_id: int | None
+    created_at: datetime
+    items: list[ProposalItemOut]
+
+
+class ProposalItemUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=300)
+    description: str | None = None
+    acceptance_criteria: str | None = None
+    assignee_id: int | None = None
+    depends_on_positions: list[int] | None = None
+    depends_on_task_ids: list[int] | None = None
+
+
+class ProposalDecisionIn(BaseModel):
+    item_ids: list[int] | None = Field(
+        default=None, description="Items to approve/reject; omit for every pending item."
+    )
