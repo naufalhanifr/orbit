@@ -4,7 +4,7 @@
 |---|---|
 | Product | ORBIT |
 | Brand | ORBIT by EVORA Studio |
-| Version | 1.16 |
+| Version | 1.17 |
 | Status | Approved Product Direction |
 | Product Category | AI Workforce & Project Operating System |
 | Initial Organization | EVORA Studio |
@@ -15,6 +15,9 @@
 | Primary Domain | orbit.evora-studio.com |
 
 ## Changelog
+
+### v1.17
+- **Baru:** Aturan persetujuan usulan PO: task yang dependency-nya ditolak tidak dapat disetujui; task yang disetujui langsung masuk Assigned bila syaratnya terpenuhi (Bagian 17.10).
 
 ### v1.16
 - **Baru:** Perencanaan proyek bersama PO di Project Chat: PO mengusulkan breakdown task, Founder menyetujui sebelum task dibuat dan di-assign (Bagian 17.10).
@@ -621,13 +624,17 @@ Alur:
 2. PO boleh bertanya balik di chat bila kebutuhan belum jelas.
 3. PO membalas dengan **usulan breakdown task** berbentuk terstruktur. Setiap task berisi judul, deskripsi, acceptance criteria, dependency antar-task, dan usulan assignee.
 4. Founder dapat **menyetujui**, **mengedit**, atau **menolak** usulan, seluruhnya atau per task.
-5. Setelah disetujui, sistem membuat task di proyek tersebut. Task yang punya assignee dan acceptance criteria berjalan sesuai aturan biasa (Bagian 14.3 dan 15.1).
+5. Setelah disetujui, sistem membuat task di proyek tersebut. Persetujuan Founder dihitung sebagai perintah assign:
+   - Task yang memiliki assignee dan acceptance criteria, dan seluruh dependency-nya sudah Done, langsung masuk **Assigned**.
+   - Task yang dependency-nya belum Done masuk Backlog dan maju otomatis sesuai Bagian 14.3.
+   - Task tanpa assignee atau acceptance criteria masuk Backlog sampai Founder melengkapinya.
 
 Ketentuan:
 - PO hanya boleh mengusulkan assignee yang bekerja di proyek tersebut (Works in) dan yang atasan berlakunya untuk proyek itu adalah PO tersebut (Bagian 8.2).
 - PO tidak dapat membuat atau meng-assign task tanpa persetujuan Founder di MVP.
 - PO hanya bekerja saat di-mention secara eksplisit (Bagian 17.5).
 - Usulan yang belum disetujui tidak muncul di board.
+- Task usulan yang bergantung pada task usulan lain yang ditolak tidak dapat disetujui sampai diedit (dependency dihapus) atau ikut ditolak.
 - Fitur ini membutuhkan endpoint Project Chat tingkat proyek dan runtime agent (ADR-0001).
 
 ## 18. Agent Execution Management
