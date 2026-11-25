@@ -1,8 +1,7 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
-import { GitPullRequest, Link2, MessageCircleQuestion, MoreHorizontal, Plus } from "lucide-react"
+import { GitPullRequest, Link2, MoreHorizontal, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -31,8 +30,9 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { ActorAvatar } from "@/components/orbit/actor-avatar"
 import { ExecutionCard } from "@/components/orbit/execution-card"
 import { TaskThread } from "@/components/orbit/task-thread"
+import { WaitingOnYou } from "@/components/orbit/waiting-on-you"
 import { StatusBadge, StatusIcon, TASK_STATUS } from "@/components/orbit/status"
-import { actorById, byId, formatTokens, tasks as seed, type Task, type TaskStatus } from "@/lib/orbit-data"
+import { actorById, byId, formatTokens, tasks as seed, waitingExecutions, type Task, type TaskStatus } from "@/lib/orbit-data"
 import { cn } from "@/lib/utils"
 
 const COLUMNS: TaskStatus[] = ["backlog", "assigned", "in-progress", "founder-approval", "revision", "blocked", "done"]
@@ -167,7 +167,7 @@ function TaskCard({ task, all, onOpen, onPick }: { task: Task; all: Task[]; onOp
   const noteTone =
     task.status === "blocked" ? "text-task-blocked-foreground" : task.status === "revision" ? "text-foreground" : "text-muted-foreground"
   return (
-    <article className="relative flex flex-col gap-2 bg-card p-3 ring-1 ring-foreground/10 transition-colors has-[button[data-open]]:ring-ring hover:bg-muted/50">
+    <article className="relative flex flex-col gap-2 rounded-lg bg-card p-3 ring-1 ring-foreground/10 transition-colors has-[button[data-open]]:ring-ring hover:bg-muted/50">
       <div className="flex items-center gap-2">
         <span className="font-mono text-xs text-muted-foreground">{task.id}</span>
         {task.fromChat ? <span className="text-xs text-muted-foreground">from chat</span> : null}
@@ -178,7 +178,7 @@ function TaskCard({ task, all, onOpen, onPick }: { task: Task; all: Task[]; onOp
         type="button"
         onClick={onOpen}
         className={cn(
-          "text-left text-sm leading-snug font-medium outline-none after:absolute after:inset-0 focus-visible:after:ring-1 focus-visible:after:ring-ring",
+          "text-left text-sm leading-snug font-medium outline-none after:absolute after:inset-0 focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring",
           task.status === "cancelled" && "text-muted-foreground line-through"
         )}
       >
@@ -356,31 +356,16 @@ export function Board() {
 
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6">
-      {approvals.length ? (
-        <section aria-labelledby="needs-you" className="flex flex-col gap-2 bg-task-founder-approval-subtle p-3 text-task-founder-approval-foreground sm:flex-row sm:items-center sm:gap-4">
-          <h2 id="needs-you" className="text-sm font-medium">Waiting on you</h2>
-          <ul className="flex flex-1 flex-col gap-1 text-sm text-foreground sm:flex-row sm:gap-4">
-            {approvals.map((t) => (
-              <li key={t.id} className="flex items-center gap-2">
-                <GitPullRequest aria-hidden="true" className="size-3.5" />
-                <span>
-                  <span className="font-mono text-xs">{t.id}</span> PR #{t.pr} ready for review
-                </span>
-                <Button size="sm" variant="outline" onClick={() => setOpenId(t.id)}>
-                  Review {t.id}
-                </Button>
-              </li>
-            ))}
-            <li className="flex items-center gap-2">
-              <MessageCircleQuestion aria-hidden="true" className="size-3.5" />
-              <span>Shared Specialist asked a question on ORB-14</span>
-              <Button size="sm" variant="outline" render={<Link href="/chat" />}>
-                Answer in chat
-              </Button>
-            </li>
-          </ul>
-        </section>
-      ) : null}
+      <WaitingOnYou
+        items={[
+          ...approvals.map((t) => ({ kind: "approval" as const, taskId: t.id, pr: t.pr ?? 0 })),
+          ...waitingExecutions,
+          ...items
+            .filter((t) => t.status === "blocked")
+            .map((t) => ({ kind: "blocked" as const, taskId: t.id, reason: t.note ?? "no reason recorded" })),
+        ]}
+        onOpenTask={setOpenId}
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         <ToggleGroup value={[view]} onValueChange={(v) => v[0] && setView(v[0])} variant="outline" aria-label="View">
@@ -412,7 +397,7 @@ export function Board() {
                       {list.length}
                     </span>
                   </h2>
-                  <div className="flex min-h-24 flex-col gap-2 bg-muted/60 p-2">
+                  <div className="flex min-h-24 flex-col gap-2 rounded-lg bg-muted/60 p-2">
                     {list.length ? (
                       list.map((t) => <TaskCard key={t.id} task={t} all={items} onOpen={() => setOpenId(t.id)} onPick={pick(t)} />)
                     ) : (
@@ -425,7 +410,7 @@ export function Board() {
           </div>
         </div>
       ) : (
-        <div className="ring-1 ring-foreground/10">
+        <div className="overflow-hidden rounded-lg ring-1 ring-foreground/10">
           <Table>
             <TableHeader>
               <TableRow>

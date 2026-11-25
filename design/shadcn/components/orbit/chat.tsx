@@ -119,7 +119,7 @@ export function Chat() {
                 <p className="text-sm leading-relaxed">
                   {m.text.split(/(@(?:Shared Specialist|PO 1|CTO))/).map((part, i) =>
                     part.startsWith("@") ? (
-                      <span key={i} className="bg-muted px-0.5 font-medium">{part}</span>
+                      <span key={i} className="rounded-sm bg-muted px-0.5 font-medium">{part}</span>
                     ) : (
                       <React.Fragment key={i}>{part}</React.Fragment>
                     )
@@ -147,7 +147,7 @@ export function Chat() {
           }}
         >
           {mentionOpen ? (
-            <div className="absolute bottom-full left-3 z-20 mb-1 w-72 bg-popover shadow-md ring-1 ring-foreground/10 md:left-4">
+            <div className="absolute bottom-full left-3 z-20 mb-1 w-72 overflow-hidden rounded-lg bg-popover shadow-md ring-1 ring-foreground/10 md:left-4">
               <Command
                 onKeyDown={(e) => {
                   if (e.key === "Escape") {

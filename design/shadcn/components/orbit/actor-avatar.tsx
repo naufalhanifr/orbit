@@ -10,7 +10,7 @@ const initials = (name: string) =>
     .slice(0, 2)
     .toUpperCase()
 
-/** Human = light outlined circle. Agent = ink square. Shape + color + label, never color alone. */
+/** Human = light outlined circle. Agent = ink rounded square. Shape + color + label, never color alone. */
 export function ActorAvatar({
   actor,
   size = "default",
@@ -24,14 +24,14 @@ export function ActorAvatar({
   return (
     <Avatar
       size={size}
-      className={cn(agent && "rounded-none after:rounded-none after:border-0", className)}
+      className={cn(agent && "rounded-md after:rounded-md after:border-0", className)}
       aria-label={`${actor.name} (${agent ? "agent" : "human"})`}
     >
       <AvatarFallback
         className={cn(
           "font-medium",
           agent
-            ? "rounded-none bg-agent text-agent-foreground"
+            ? "rounded-md bg-agent text-agent-foreground"
             : "bg-human text-human-foreground ring-1 ring-input"
         )}
       >

@@ -8,6 +8,7 @@ import {
   CircleSlash,
   Clock,
   GitPullRequest,
+  Hourglass,
   MessageCircleQuestion,
   OctagonAlert,
   Pause,
@@ -39,6 +40,7 @@ export const TASK_STATUS: Record<TaskStatus, Def> = {
 
 export const EXEC_STATUS: Record<ExecStatus, Def> = {
   queued: { label: "Queued", icon: Clock, cls: "bg-exec-queued-subtle text-exec-queued-foreground", dot: "bg-exec-queued" },
+  preparing: { label: "Preparing", icon: Hourglass, cls: "bg-exec-preparing-subtle text-exec-preparing-foreground", dot: "bg-exec-preparing" },
   running: { label: "Running", icon: "orbit", cls: "bg-exec-running-subtle text-exec-running-foreground", dot: "bg-exec-running" },
   waiting: { label: "Waiting for Input", icon: MessageCircleQuestion, cls: "bg-exec-waiting-subtle text-exec-waiting-foreground", dot: "bg-exec-waiting" },
   completed: { label: "Completed", icon: Check, cls: "bg-exec-completed-subtle text-exec-completed-foreground", dot: "bg-exec-completed" },

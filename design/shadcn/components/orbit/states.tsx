@@ -32,7 +32,7 @@ export function BoardLoading() {
       {[0, 1, 2].map((c) => (
         <div key={c} className="flex w-[264px] flex-col gap-2">
           <Skeleton className="h-8 w-32 animate-none" />
-          <div className="flex flex-col gap-2 bg-muted/60 p-2">
+          <div className="flex flex-col gap-2 rounded-lg bg-muted/60 p-2">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-24 w-full animate-none bg-card" />
             ))}
@@ -50,7 +50,7 @@ export function BoardError() {
       <AlertTitle>Tasks couldn’t load</AlertTitle>
       <AlertDescription>
         <p>The server didn’t respond within 10 seconds. Tasks already on screen are unchanged.</p>
-        <Button variant="outline" size="sm" className="mt-2 text-foreground no-underline" render={<Link href="/board" />}>
+        <Button variant="outline" size="sm" className="mt-2 text-foreground no-underline!" render={<Link href="/board" />}>
           <RotateCw aria-hidden="true" />
           Reload board
         </Button>

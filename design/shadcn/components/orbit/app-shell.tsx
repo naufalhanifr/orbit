@@ -24,9 +24,9 @@ import {
 } from "@/components/ui/sidebar"
 import { ActorAvatar } from "@/components/orbit/actor-avatar"
 import { OrbitWordmark } from "@/components/orbit/orbit-mark"
-import { founder, tasks } from "@/lib/orbit-data"
+import { founder, tasks, waitingCount } from "@/lib/orbit-data"
 
-const waiting = tasks.filter((t) => t.status === "founder-approval").length
+const waiting = waitingCount(tasks)
 
 const NAV = [
   {
@@ -96,7 +96,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
                         </SidebarMenuButton>
                         {item.badge ? (
                           <SidebarMenuBadge
-                            aria-label={`${item.badge} task waiting for your approval`}
+                            aria-label={`${item.badge} items waiting on you`}
                             className="bg-task-founder-approval-subtle text-task-founder-approval-foreground"
                           >
                             {item.badge}

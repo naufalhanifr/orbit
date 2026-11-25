@@ -13,6 +13,7 @@ export type TaskStatus =
 
 export type ExecStatus =
   | "queued"
+  | "preparing"
   | "running"
   | "waiting"
   | "completed"
@@ -113,6 +114,7 @@ export const runningExecution = {
 
 export const recentExecutions: { id: string; taskId: string; status: ExecStatus; tokens: number; duration: string }[] = [
   { id: "EXE-482", taskId: "ORB-11", status: "running", tokens: 84200, duration: "18m" },
+  { id: "EXE-483", taskId: "ORB-16", status: "preparing", tokens: 0, duration: "0m" },
   { id: "EXE-479", taskId: "ORB-9", status: "completed", tokens: 212400, duration: "41m" },
   { id: "EXE-477", taskId: "ORB-14", status: "waiting", tokens: 52300, duration: "9m" },
   { id: "EXE-471", taskId: "ORB-10", status: "failed", tokens: 296800, duration: "57m" },
@@ -141,6 +143,16 @@ export const taskThreads: Record<string, Comment[]> = {
     { id: 1, authorId: "spec", time: "Yesterday", text: "PR #18 is ready for review. Tests: 58 passed, 0 failed. Dependency cycles are rejected with a message naming the task that causes them." },
   ],
 }
+
+// Executions waiting on the Founder in the sample (question, suspended). Tasks in Founder
+// Approval or Blocked are derived from `tasks`.
+export const waitingExecutions = [
+  { kind: "question" as const, taskId: "ORB-14", agent: "Shared Specialist" },
+  { kind: "suspended" as const, execId: "EXE-468", taskId: "ORB-12" },
+]
+
+export const waitingCount = (list: Task[]) =>
+  list.filter((t) => t.status === "founder-approval" || t.status === "blocked").length + waitingExecutions.length
 
 export const byId = <T extends { id: string }>(list: T[], id?: string) => list.find((x) => x.id === id)
 export const actorById = (id?: string): Actor | undefined => (id === "founder" ? founder : byId(agents, id))

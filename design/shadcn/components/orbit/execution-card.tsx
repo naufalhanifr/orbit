@@ -65,7 +65,7 @@ export function ExecutionCard({ className, showLog = false, stopOpen }: { classN
   const progress = exec.tokens / exec.limit
   const running = status === "running"
   return (
-    <section aria-label={`Execution ${exec.id}`} className={cn("flex flex-col gap-3 bg-card p-4 ring-1 ring-foreground/10", className)}>
+    <section aria-label={`Execution ${exec.id}`} className={cn("flex flex-col gap-3 rounded-lg bg-card p-4 ring-1 ring-foreground/10", className)}>
       <div className="flex items-center gap-2">
         <ActorAvatar actor={agent} size="sm" />
         <p className="min-w-0 flex-1 truncate text-sm">
@@ -101,7 +101,7 @@ export function ExecutionCard({ className, showLog = false, stopOpen }: { classN
         </section>
       ) : null}
       {showLog ? (
-        <pre aria-label="Execution log" className="max-h-56 overflow-auto bg-muted p-3 font-mono text-xs leading-5 text-foreground">
+        <pre aria-label="Execution log" className="max-h-56 overflow-auto rounded-md bg-muted p-3 font-mono text-xs leading-5 text-foreground">
           {exec.log.join("\n")}
           {running ? "" : "\n11:02:10  Stopped by the Founder"}
         </pre>

@@ -69,7 +69,7 @@ for name,base in [('Light',root),('Dark',dark)]:
         add('Non-teks',a,'background',c,bg,3); add('Non-teks',a,'card',over(g(a),card) if g(a)[1]<1 else g(a),card,3)
     for i in range(1,6): add('Non-teks (grafik)',f'chart-{i}','background',g(f'chart-{i}'),bg,3)
     for grp,keys in [('task',['backlog','assigned','in-progress','founder-approval','revision','blocked','done','cancelled']),
-                     ('exec',['queued','running','waiting','completed','failed','cancelled','suspended']),
+                     ('exec',['queued','preparing','running','waiting','completed','failed','cancelled','suspended']),
                      ('agent-status',['draft','configuring','ready','active','paused','error','archived'])]:
         for k in keys:
             t=f'{grp}-{k}'

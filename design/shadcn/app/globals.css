@@ -87,6 +87,9 @@
     --color-exec-queued: var(--exec-queued);
     --color-exec-queued-subtle: var(--exec-queued-subtle);
     --color-exec-queued-foreground: var(--exec-queued-foreground);
+    --color-exec-preparing: var(--exec-preparing);
+    --color-exec-preparing-subtle: var(--exec-preparing-subtle);
+    --color-exec-preparing-foreground: var(--exec-preparing-foreground);
     --color-exec-running: var(--exec-running);
     --color-exec-running-subtle: var(--exec-running-subtle);
     --color-exec-running-foreground: var(--exec-running-foreground);
@@ -137,25 +140,23 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.46 0.23 264.376);         /* default 0.488: text on hover primary/80 only 4.21:1 */
+    --primary: oklch(0.46 0.23 264.376);         /* AA: preset 0.488 gives 4.21:1 for text on hover primary/80 */
     --primary-foreground: oklch(0.97 0.014 254.604);
     --secondary: oklch(0.967 0.001 286.375);
     --secondary-foreground: oklch(0.21 0.006 285.885);
     --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.52 0 0);          /* default 0.556: 4.34:1 on --muted, fails AA */
+    --muted-foreground: oklch(0.52 0 0);          /* AA: preset 0.556 gives 4.34:1 on --muted */
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.53 0.21 27);           /* default 0.577: text on destructive/10 only 3.99:1 */
+    --destructive: oklch(0.53 0.21 27);           /* AA: preset 0.577 gives 3.99:1 for text on destructive/10 */
     --border: oklch(0.922 0 0);
-    --input: oklch(0.64 0 0);                     /* batas input ≥ 3:1 (WCAG 1.4.11) */
-    --ring: oklch(0.46 0.23 264.376);           /* focus >= 3:1; default 0.708 only 2.59:1 */
-    --chart-1: oklch(0.623 0.214 259.815);
+    --input: oklch(0.64 0 0);                     /* AA 1.4.11: preset 0.922 gives a 1.26:1 field border */
+    --ring: oklch(0.46 0.23 264.376);           /* AA 1.4.11: preset 0.708 gives a 2.59:1 focus ring */
+    --chart-1: oklch(0.623 0.214 259.815);       /* every series >= 3:1 on white */
     --chart-2: oklch(0.546 0.245 262.881);
     --chart-3: oklch(0.488 0.243 264.376);
     --chart-4: oklch(0.424 0.199 265.638);
@@ -191,6 +192,8 @@
     --human-foreground: oklch(0.205 0 0);
     --agent: oklch(0.205 0 0);
     --agent-foreground: oklch(0.985 0 0);
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
 }
 
 .dark {
@@ -200,7 +203,7 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.205 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.707 0.165 254.624);        /* default 0.424: link text only 2.24:1 on background */
+    --primary: oklch(0.707 0.165 254.624);        /* AA: preset 0.424 gives 2.24:1 for primary text on background */
     --primary-foreground: oklch(0.145 0 0);
     --secondary: oklch(0.274 0.006 286.033);
     --secondary-foreground: oklch(0.985 0 0);
@@ -210,9 +213,9 @@
     --accent-foreground: oklch(0.985 0 0);
     --destructive: oklch(0.704 0.191 22.216);
     --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 36%);                  /* default 15% → batas input 1.47:1 */
+    --input: oklch(1 0 0 / 36%);                  /* AA 1.4.11: preset 15% gives a 1.47:1 field border */
     --ring: oklch(0.707 0.165 254.624);
-    --chart-1: oklch(0.809 0.105 251.813);
+    --chart-1: oklch(0.809 0.105 251.813);        /* every series >= 3:1 on background */
     --chart-2: oklch(0.707 0.165 254.624);
     --chart-3: oklch(0.623 0.214 259.815);
     --chart-4: oklch(0.585 0.23 262);
@@ -280,6 +283,9 @@
     --exec-queued: var(--tone-neutral);
     --exec-queued-subtle: var(--tone-neutral-subtle);
     --exec-queued-foreground: var(--tone-neutral-foreground);
+    --exec-preparing: var(--tone-neutral);
+    --exec-preparing-subtle: var(--tone-neutral-subtle);
+    --exec-preparing-foreground: var(--tone-neutral-foreground);
     --exec-running: var(--tone-ink);
     --exec-running-subtle: var(--tone-ink-subtle);
     --exec-running-foreground: var(--tone-ink-foreground);

@@ -29,7 +29,7 @@ export function AgentList() {
           Create agent
         </Button>
       </div>
-      <div className="overflow-x-auto ring-1 ring-foreground/10">
+      <div className="overflow-x-auto rounded-lg ring-1 ring-foreground/10">
         <Table>
           <TableHeader>
             <TableRow>
@@ -193,7 +193,7 @@ export function AgentBuilder() {
               { v: "read-only", t: "read-only", d: "Reads the repo and documents. Cannot change code." },
               { v: "coding", t: "coding", d: "Changes code, runs tests and opens PRs in the project repo." },
             ].map((o) => (
-              <Label key={o.v} htmlFor={`preset-${o.v}`} className="flex items-start gap-3 p-3 ring-1 ring-input has-data-checked:ring-ring">
+              <Label key={o.v} htmlFor={`preset-${o.v}`} className="flex items-start gap-3 rounded-lg p-3 ring-1 ring-input has-data-checked:ring-2 has-data-checked:ring-ring">
                 <RadioGroupItem id={`preset-${o.v}`} value={o.v} className="mt-0.5" />
                 <span className="flex flex-col gap-1">
                   <span className="font-mono font-medium">{o.t}</span>
@@ -226,7 +226,7 @@ export function AgentBuilder() {
               />
             </TabsContent>
             <TabsContent value="preview">
-              <div className="min-h-40 p-3 text-sm whitespace-pre-wrap ring-1 ring-input">
+              <div className="min-h-40 rounded-md p-3 text-sm whitespace-pre-wrap ring-1 ring-input">
                 {instructions || <span className="text-muted-foreground">No instructions yet.</span>}
               </div>
             </TabsContent>

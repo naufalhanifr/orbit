@@ -1,6 +1,6 @@
 # ORBIT Design System
 
-Versi 2.1 · 2026-11-25 · Mengikuti PRD v1.12
+Versi 3.0 · 2026-11-25 · Mengikuti PRD v1.14 · shadcn preset `b1ZzrZc6S` (`base-mira`)
 Bahasa UI: Inggris penuh. Implementasi: [`design/shadcn/`](shadcn/) · Brand: [`brand-guidelines.md`](brand-guidelines.md) · Logo: [`logo/`](logo/) · Mockup: [`mockups/`](mockups/)
 
 Design system ini **adalah kode di `design/shadcn`**. Dokumen ini menjelaskan keputusan dan aturannya. Kalau dokumen dan kode berbeda, yang dianggap benar adalah kode, lalu dokumen ini diperbaiki.
@@ -12,7 +12,7 @@ Design system ini **adalah kode di `design/shadcn`**. Dokumen ini menjelaskan ke
 | Hal | Nilai |
 |---|---|
 | Stack | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4 |
-| Komponen | shadcn/ui style **`base-lyra`** (primitive Base UI), `baseColor: neutral`, ikon `lucide` (lihat `components.json`) |
+| Komponen | shadcn/ui style **`base-mira`** (primitive Base UI), `baseColor: neutral`, ikon `lucide` (lihat `components.json`). Diterapkan dengan `npx shadcn@latest apply --preset b1ZzrZc6S`. |
 | Token | [`shadcn/app/globals.css`](shadcn/app/globals.css), satu-satunya sumber token |
 | Font | Noto Sans (`--font-sans`, juga heading) dan Geist Mono (`--font-mono`) lewat `next/font` di `app/layout.tsx` |
 | Tema | `next-themes`, class `.dark`, default mengikuti sistem, tombol ganti tema di sidebar |
@@ -29,7 +29,7 @@ Cara menjalankan: `cd design/shadcn && npm install && npm run dev`, lalu buka `/
 
 ## 1. Arah desain
 
-> Dibaca sebagai: web app operasional untuk satu Founder yang mengarahkan AI Agent, dengan bahasa visual minimalis Swiss di atas shadcn `base-lyra`, dial **ENERGY 1 / RHYTHM 1 / MOTION 1**.
+> Dibaca sebagai: web app operasional untuk satu Founder yang mengarahkan AI Agent, dengan bahasa visual minimalis Swiss di atas shadcn `base-mira`, dial **ENERGY 1 / RHYTHM 1 / MOTION 1**.
 
 Sumber arah:
 - Founder: tema minimalis, mengikuti shadcn di repo, logo ORBIT 2D.
@@ -53,8 +53,8 @@ Sumber arah:
 | Palet: netral tinta + satu aksen biru + tiga sinyal | R-29 (maksimal 2–3 warna inti + 1 aksen). Founder perlu membedakan "menunggu saya", "bermasalah", dan "selesai" dalam sekali lirik. Status lain cukup ikon + label. |
 | Sedang dikerjakan = tinta, bukan biru | Biru hanya untuk aksen; kalau ikut dipakai untuk status, kekuatannya sebagai aksen hilang. |
 | Amber = menunggu Founder | Founder Approval, Waiting for Input, dan Suspended punya arti yang sama: bola ada di tangan Founder. |
-| Agent = kotak tinta, human = lingkaran terang berbingkai | Pelaku adalah konsep inti ORBIT. Bentuknya berbeda, jadi tetap terbaca tanpa warna. Tidak memakai ikon robot (R-04). |
-| Sudut tegas (`rounded-none`) | Bawaan `base-lyra`. Lingkaran hanya untuk human dan titik status. |
+| Agent = kotak membulat tinta, human = lingkaran terang berbingkai | Pelaku adalah konsep inti ORBIT. Bentuknya berbeda, jadi tetap terbaca tanpa warna. Tidak memakai ikon robot (R-04). |
+| Sudut membulat dari `--radius` | Bawaan `base-mira`: kontrol `rounded-md`, kartu dan panel `rounded-lg`, dialog `rounded-xl`, badge pill. Komponen ORBIT memakai skala yang sama supaya konsisten dengan komponen shadcn. |
 | Tanpa bayangan pada kartu | Hierarki dibuat dengan border tipis (`ring-foreground/10`) dan latar. Bayangan hanya untuk overlay. |
 | Blur pada backdrop dialog dan sheet | Bawaan shadcn. Hanya di overlay modal (R-10 membatasi 1–2 elemen), tujuannya memisahkan lapisan modal dari halaman. |
 | Kartu hanya untuk task, execution, node org, dan angka budget | Hanya untuk objek yang bisa dibuka, dipindah, atau dibandingkan. Sisanya list dan tabel. |
@@ -97,7 +97,8 @@ Setiap tone punya tiga varian: **solid** untuk titik dan ikon (≥ 3:1), **subtl
 
 | Execution (PRD 18.3) | Tone | Ikon |
 |---|---|---|
-| Queued (juga Preparing Context) | neutral | `clock` |
+| Queued | neutral | `clock` |
+| Preparing (Preparing Context, PRD 18.3 v1.14) | neutral | `hourglass` |
 | Running | ink | `OrbitIndicator` |
 | Waiting for Input | amber | `message-circle-question` |
 | Completed | green | `check` |
@@ -115,7 +116,7 @@ Setiap tone punya tiga varian: **solid** untuk titik dan ikon (≥ 3:1), **subtl
 | Error | red | `octagon-alert` |
 | Archived | neutral | `archive` |
 
-Pelaku: `--human` / `--human-foreground` (lingkaran terang dengan bingkai `--input`) dan `--agent` / `--agent-foreground` (kotak tinta, terbalik di dark mode).
+Pelaku: `--human` / `--human-foreground` (lingkaran terang dengan bingkai `--input`) dan `--agent` / `--agent-foreground` (kotak membulat `rounded-md` berwarna tinta, terbalik di dark mode).
 
 ## 3. Spacing, radius, tipografi, elevation
 
@@ -124,7 +125,14 @@ Pelaku: `--human` / `--human-foreground` (lingkaran terang dengan bingkai `--inp
 - Halaman: 16 px di mobile, 24 px di desktop.
 - Jarak antar-section: 24–32 px.
 
-**Radius.** `--radius: 0.625rem` tersedia, tetapi komponen `base-lyra` memakai `rounded-none`. Pengecualian: avatar human dan titik status memakai `rounded-full`.
+**Radius.** `--radius: 0.625rem` dengan turunan `--radius-sm` sampai `--radius-4xl` (lihat `@theme` di `globals.css`).
+
+| Elemen | Radius |
+|---|---|
+| Tombol, input, select, menu item, avatar agent, label garis org | `rounded-md` |
+| Kartu task, kartu execution, wadah kolom, panel, strip Waiting on you, node org, alert | `rounded-lg` |
+| Dialog, empty state | `rounded-xl` (bawaan) |
+| Badge status, avatar human, titik status | `rounded-full` |
 
 **Tipografi.**
 
@@ -133,7 +141,7 @@ Pelaku: `--human` / `--human-foreground` (lingkaran terang dengan bingkai `--inp
 | Judul halaman | `text-sm font-medium` di header | Satu `h1` per halaman |
 | Judul section | `text-sm font-medium` | Kolom, section, judul kartu |
 | Body | `text-sm` | Pesan chat, deskripsi task, isi dialog |
-| Kontrol | `text-xs` (bawaan lyra) | Tombol, input, badge, menu |
+| Kontrol | `text-xs/relaxed` (bawaan mira) | Tombol, input, badge, menu |
 | Meta | `text-xs text-muted-foreground` | Waktu, assignee, keterangan |
 | Data teknis | `font-mono text-xs tabular-nums` | ID task, execution ID, token, durasi, log |
 | Angka utama | `font-mono text-2xl font-medium tabular-nums` | Token hari ini |
@@ -173,17 +181,27 @@ Transisi milik assignee atau system tidak muncul sebagai tombol.
 
 ## 5. Pola khusus ORBIT
 
-- **Strip "Waiting on you"** (`/board`): titik fokus halaman. Berlatar amber subtle dan memuat setiap item yang menunggu Founder, masing-masing dengan tombol aksi yang spesifik ("Review ORB-9", "Answer in chat"). Hanya tampil bila ada isinya.
+- **Strip "Waiting on you"** (`WaitingOnYou`, PRD 4.4 v1.14): titik fokus papan. Panel amber subtle `rounded-lg` dengan jumlah item dan satu baris per item. Setiap baris punya aksi langsung:
+
+  | Item | Aksi |
+  |---|---|
+  | Task Founder Approval | "Review ORB-9" membuka detail task |
+  | Execution Waiting for Input | "Answer in chat" ke Project Chat |
+  | Execution Suspended | "Resume EXE-468", lalu konfirmasi "resumed and is queued" |
+  | Task Blocked | "Review blocker" membuka detail task |
+  | Run Founder saat budget harian tercapai | "Run anyway" membuka `AlertDialog` konfirmasi |
+
+  Strip hanya tampil bila ada isinya. Badge di sidebar menunjukkan jumlah yang sama. Contoh lengkap kelima jenis item ada di `/states`.
 - **StatusBadge**: ikon + label + tone, tanpa border, uppercase, atau glow. Untuk status yang sedang berjalan, ikonnya `OrbitIndicator` dengan posisi satelit sesuai porsi token.
 - **ActorAvatar**: human berupa lingkaran `bg-human` dengan `ring-1 ring-input`; agent berupa kotak `bg-agent`. Isinya inisial. Di chat, nama agent diberi label "Agent".
 - **TaskCard**: baris atas berisi ID mono, penanda "from chat", dan menu aksi. Lalu judul (sebuah `<button>` yang area kliknya menutupi seluruh kartu), satu baris konteks (alasan blocked, feedback revisi, atau dependency yang ditunggu), dan footer berisi assignee, PR, dan token. Menu aksi adalah alternatif drag (WCAG 2.5.7). Tidak ada garis warna di tepi kartu.
-- **Detail task** (`TaskSheet`, PRD 17.4 v1.12): status, judul, assignee, PR, dan token di header. Bila ada execution berjalan, panel live (`ExecutionCard` dengan log) tampil paling atas. Di bawahnya acceptance criteria, dependency, lalu thread komentar. Aksi Founder di footer.
+- **Detail task** (`TaskSheet`, PRD 17.4): status, judul, assignee, PR, dan token di header. Bila ada execution berjalan, panel live (`ExecutionCard` dengan log) tampil paling atas. Di bawahnya acceptance criteria, dependency, lalu thread komentar. Aksi Founder di footer.
 - **TaskThread**: komentar task sekaligus chat dengan agent. Setiap komentar Founder diberi keterangan rute, sesuai PRD 17.4:
   - Mention assignee yang sedang bekerja: "Sent to the running execution as an extra instruction."
   - Mention agent lain: "Started a new invocation for …"
   - Tanpa mention: "Note only. Agents won’t read it until they are next invoked."
 - **ExecutionCard**: agent dan task, status, execution ID, durasi, token / batas, `progress`, langkah terakhir, dan (di detail task dan dashboard) daftar tool yang dipanggil serta log. Tombol Stop memakai varian `destructive` dan membuka `AlertDialog` (copy di brand-guidelines §3.4). Setelah dihentikan, status menjadi Cancelled.
-- **Node org chart**: Founder di puncak sebagai human (PRD 8.1, v1.11) dan tidak bisa diklik. Node agent adalah `<button>` yang membuka sheet detail.
+- **Node org chart**: Founder di puncak sebagai human (PRD 8.1) dan tidak bisa diklik. Node agent adalah `<button>` yang membuka sheet detail.
   - Garis atasan tetap: solid.
   - Garis atasan per proyek: putus-putus dengan label kode proyek.
   - Filter "Highlight project" menebalkan garis proyek terpilih dengan warna primary dan meredupkan garis lain.
@@ -216,14 +234,16 @@ Yang sudah diimplementasikan di `/states`: empty state 0 agent, skeleton papan, 
 - **Keyboard:** semua aksi memakai `<button>` atau `<a href>`. Dialog dan sheet menjebak fokus dan ditutup dengan Escape (Base UI). Kanban dan org chart adalah region scroll yang bisa difokus. Menu kartu menggantikan drag.
 - **Fokus terlihat:** cincin `--ring` (primary, minimal 7:1 terhadap latar).
 - **Affordance:** `cursor: pointer` untuk kontrol aktif dan `not-allowed` untuk yang disabled, diatur sekali di `globals.css`.
-- **Target sentuh:** di `pointer: coarse` semua kontrol minimal 44 × 44 px (aturan di `globals.css`). Di mouse, kepadatan lyra 32 px dipertahankan.
+- **Target sentuh:** di `pointer: coarse` semua kontrol minimal 44 × 44 px (aturan di `globals.css`). Di mouse, kepadatan `base-mira` dipertahankan (tombol default 28 px, `sm` 24 px). Ukuran `xs` dan `icon-xs` (20 px) tidak dipakai karena di bawah target 24 px (WCAG 2.5.8).
 - **Chat:** Enter mengirim, Shift+Enter membuat baris baru, dan Enter saat IME sedang menyusun teks diabaikan. Mengetik `@` memindahkan fokus ke daftar agent; Escape mengembalikan fokus ke composer.
 - **Dokumen:** `<html lang="en">` (UI full bahasa Inggris, keputusan Founder), judul unik per halaman, landmark `nav`, `main`, `aside`, dan satu `h1` per halaman.
 - **Gerak:** tidak ada animasi berulang. `prefers-reduced-motion` mematikan transisi overlay.
 
-### 7.2 Token yang diubah dari default proyek
+### 7.2 Token yang diubah dari nilai preset
 
-| Token | Mode | Default | ORBIT | Alasan |
+Preset `b1ZzrZc6S` memakai warna default shadcn, dan sebagian gagal AA. ORBIT menimpa nilai berikut di `globals.css`. Setiap kali preset diterapkan ulang, jalankan `contrast.py`: nilai ini bisa tertimpa lagi.
+
+| Token | Mode | Preset | ORBIT | Alasan |
 |---|---|---|---|---|
 | `--primary` | light | `0.488 0.243 264.4` | `0.46 0.23 264.4` | Teks di atas hover `primary/80`: 4.21 → 4.68 |
 | `--muted-foreground` | light | `0.556` | `0.52` | Di atas `--muted`: 4.34 → 5.05 |
@@ -237,7 +257,7 @@ Yang sudah diimplementasikan di `/states`: empty state 0 agent, skeleton papan, 
 
 ### 7.3 Hasil cek kontras
 
-`python3 design/scripts/contrast.py`: **285 pasangan lulus, 0 gagal** (light dan dark). Cakupannya:
+`python3 design/scripts/contrast.py`: **295 pasangan lulus, 0 gagal** (light dan dark). Cakupannya:
 - Semua pasangan inti shadcn.
 - Setiap status task, execution, dan agent: teks di atas latar subtle, card, dan muted; titik di atas background dan card.
 - Avatar human dan agent.
@@ -247,9 +267,10 @@ Yang sudah diimplementasikan di `/states`: empty state 0 agent, skeleton papan, 
 
 ### 7.4 Bukti click-through (R-35)
 
-Setiap mockup dijalankan dari `next build` + `next start`, lalu diuji otomatis dengan Playwright. Hasilnya 39 cek lulus dan 0 error di console. Yang diuji:
+Setiap mockup dijalankan dari `next build` + `next start`, lalu diuji otomatis dengan Playwright. Hasilnya 46 cek lulus dan 0 error di console. Yang diuji:
 - Navigasi sidebar ke 5 halaman.
 - Kanban ↔ List dan tampilkan Cancelled.
+- Waiting on you: 4 item di papan; Review blocker membuka detail; Resume mengubah status; di `/states`, Run anyway membuka konfirmasi lalu menyelesaikan item.
 - Review membuka sheet; Escape menutupnya.
 - Detail task In Progress menampilkan panel execution live dan tool yang dipanggil.
 - Rute komentar: mention assignee menjadi instruksi tambahan, mention agent lain memulai invocation baru, tanpa mention menjadi catatan.
@@ -260,6 +281,7 @@ Setiap mockup dijalankan dari `next build` + `next start`, lalu diuji otomatis d
 - Agent Builder: 3 error saat kosong, konfirmasi Draft saat valid.
 - Org chart: node membuka sheet, filter proyek berfungsi.
 - Tema: terang ↔ gelap.
+- Dashboard: badge Preparing tampil.
 - Stop: Batal membiarkan execution tetap Running; Hentikan mengubahnya menjadi Cancelled.
 - Mobile 390 px: tanpa horizontal overflow di 5 halaman; tombol navigasi membuka sheet.
 - Tab memberi fokus ke kontrol.

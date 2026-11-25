@@ -1,6 +1,6 @@
 # ORBIT Brand Guidelines
 
-Versi 2.0 · 2026-11-25 · Pemilik: Founder (EVORA Studio) · Mengikuti PRD v1.12
+Versi 2.0 · 2026-11-25 · Pemilik: Founder (EVORA Studio) · Mengikuti PRD v1.14
 Berlaku untuk: Web UI ORBIT, dokumentasi produk, notifikasi, dan materi tentang ORBIT.
 Pendamping: [`design-system.md`](design-system.md) (spesifikasi), implementasi di [`shadcn/`](shadcn/), token di [`shadcn/app/globals.css`](shadcn/app/globals.css), dan mockup di [`mockups/`](mockups/).
 
@@ -61,6 +61,7 @@ Label status memakai nama dari PRD. Teks bantu di bawah ini dipakai untuk toolti
 
 | Status execution | Teks bantu |
 |---|---|
+| Preparing | Starting the container and loading the agent’s instructions and task context. |
 | Waiting for Input | The agent needs your decision to continue. Suspends automatically after 30 minutes. |
 | Suspended | No answer within 30 minutes. State is saved; resume any time. |
 | Failed | 2 tests still fail after 3 attempts. PR opened as draft. |
@@ -102,7 +103,12 @@ Setelah berhasil, kartu execution menampilkan: *Stopped by the Founder. Task ret
 
 ### 3.5 Microcopy lain
 
-- Strip fokus di papan: *Waiting on you* · tombol *Review ORB-9* · *Answer in chat*.
+- Strip fokus di papan (PRD 4.4): judul *Waiting on you* + jumlah. Baris dan tombolnya:
+  - *PR #18 is ready for review* · [Review ORB-9]
+  - *Shared Specialist asked a question* · [Answer in chat]
+  - *EXE-468 was suspended after 30 minutes without an answer* · [Resume EXE-468]
+  - *Blocked: 2 tests still fail after 3 attempts.* · [Review blocker]
+  - *A run you started is waiting: the daily budget is reached* · [Run anyway]
 - Placeholder composer chat: *Mention an agent with @name. Agents only work when you invoke them.*
 - Pesan tanpa @mention: *No agent mentioned. Saved without starting an execution.*
 - Keterangan komentar task (PRD 17.4):
@@ -175,7 +181,7 @@ Nilai di atas adalah konversi hex dari oklch di `globals.css` (sumber kebenaran)
 | Merah | Bermasalah | Blocked, Failed, Error |
 | Hijau | Selesai dengan hasil | Done, Completed |
 
-Biru tidak dipakai untuk status, supaya tetap bekerja sebagai aksen. Human dan agent dibedakan oleh bentuk dan isi warna (lingkaran terang vs kotak tinta), bukan oleh warna tambahan.
+Biru tidak dipakai untuk status, supaya tetap bekerja sebagai aksen. Human dan agent dibedakan oleh bentuk dan isi warna (lingkaran terang vs kotak membulat berwarna tinta), bukan oleh warna tambahan.
 
 ## 6. Tipografi
 

@@ -24,7 +24,7 @@ export function Dashboard({ stopOpen }: { stopOpen?: boolean }) {
 
         <section aria-labelledby="recent" className="flex flex-col gap-2">
           <h2 id="recent" className="text-sm font-medium">Recent executions</h2>
-          <div className="overflow-x-auto ring-1 ring-foreground/10">
+          <div className="overflow-x-auto rounded-lg ring-1 ring-foreground/10">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -52,7 +52,7 @@ export function Dashboard({ stopOpen }: { stopOpen?: boolean }) {
       </div>
 
       <aside aria-label="Budget token" className="flex flex-col gap-6">
-        <section aria-labelledby="today" className="flex flex-col gap-3 bg-card p-4 ring-1 ring-foreground/10">
+        <section aria-labelledby="today" className="flex flex-col gap-3 rounded-lg bg-card p-4 ring-1 ring-foreground/10">
           <h2 id="today" className="text-xs text-muted-foreground">Tokens today</h2>
           <p className="font-mono text-2xl font-medium tabular-nums">{formatTokens(budget.usedToday)}</p>
           <Progress value={pct} aria-label={`${pct} percent of the daily budget`} />
@@ -60,7 +60,7 @@ export function Dashboard({ stopOpen }: { stopOpen?: boolean }) {
             {pct}% of {formatTokens(budget.perDay)}. When reached, automatic executions are blocked and Founder-triggered ones need confirmation.
           </p>
         </section>
-        <dl className="grid grid-cols-2 gap-px bg-border ring-1 ring-foreground/10">
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-border ring-1 ring-foreground/10">
           <div className="flex flex-col gap-1 bg-card p-4">
             <dt className="text-xs text-muted-foreground">Per-execution limit</dt>
             <dd className="font-mono text-sm tabular-nums">{formatTokens(budget.perExecution)}</dd>
@@ -70,7 +70,7 @@ export function Dashboard({ stopOpen }: { stopOpen?: boolean }) {
             <dd className="font-mono text-sm tabular-nums">{failed}</dd>
           </div>
         </dl>
-        <section aria-labelledby="perday" className="flex flex-col gap-2 bg-card p-4 ring-1 ring-foreground/10">
+        <section aria-labelledby="perday" className="flex flex-col gap-2 rounded-lg bg-card p-4 ring-1 ring-foreground/10">
           <h2 id="perday" className="text-xs text-muted-foreground">Tokens per day, last 7 days</h2>
           <ChartContainer config={chartConfig} className="aspect-auto h-44 w-full">
             <BarChart data={tokensPerDay} margin={{ left: 0, right: 0, top: 8 }}>

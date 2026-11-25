@@ -76,7 +76,7 @@ export function OrgChart() {
         </ul>
       </div>
 
-      <div className="overflow-x-auto bg-muted/40 ring-1 ring-foreground/10" role="region" aria-label="Org chart, scrolls horizontally" tabIndex={0}>
+      <div className="overflow-x-auto rounded-lg bg-muted/40 ring-1 ring-foreground/10" role="region" aria-label="Org chart, scrolls horizontally" tabIndex={0}>
         <div className="relative" style={{ width: 920, height: 540 }}>
           <svg className="absolute inset-0" width={920} height={540} aria-hidden="true">
             {EDGES.map((e) => {
@@ -101,7 +101,7 @@ export function OrgChart() {
             return (
               <span
                 key={`l-${e.project}`}
-                className={cn("absolute -translate-x-1/2 -translate-y-1/2 bg-card px-1.5 py-0.5 font-mono text-xs ring-1 ring-input", dim && "opacity-30")}
+                className={cn("absolute -translate-x-1/2 -translate-y-1/2 rounded-md bg-card px-1.5 py-0.5 font-mono text-xs ring-1 ring-input", dim && "opacity-30")}
                 style={{ left: x, top: y }}
               >
                 {e.project}
@@ -109,7 +109,7 @@ export function OrgChart() {
             )
           })}
 
-          <div className="absolute flex items-center gap-2 bg-card p-2 ring-1 ring-foreground/10" style={{ left: POS.founder[0] - W / 2, top: POS.founder[1], width: W, height: H }}>
+          <div className="absolute flex items-center gap-2 rounded-lg bg-card p-2 ring-1 ring-foreground/10" style={{ left: POS.founder[0] - W / 2, top: POS.founder[1], width: W, height: H }}>
             <ActorAvatar actor={founder} />
             <div className="min-w-0 text-xs">
               <p className="font-medium">Founder</p>
@@ -126,7 +126,7 @@ export function OrgChart() {
                 type="button"
                 onClick={() => setSelected(a)}
                 aria-label={`${a.name}, ${a.title}, status ${AGENT_STATUS[a.status].label}. Open details.`}
-                className="absolute flex items-center gap-2 bg-card p-2 text-left ring-1 ring-foreground/10 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                className="absolute flex items-center gap-2 rounded-lg bg-card p-2 text-left ring-1 ring-foreground/10 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
                 style={{ left: x - W / 2, top: y, width: W, height: H }}
               >
                 <ActorAvatar actor={a} />
