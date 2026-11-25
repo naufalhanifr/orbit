@@ -4,7 +4,7 @@
 |---|---|
 | Product | ORBIT |
 | Brand | ORBIT by EVORA Studio |
-| Version | 1.13 |
+| Version | 1.14 |
 | Status | Approved Product Direction |
 | Product Category | AI Workforce & Project Operating System |
 | Initial Organization | EVORA Studio |
@@ -15,6 +15,11 @@
 | Primary Domain | orbit.evora-studio.com |
 
 ## Changelog
+
+### v1.14
+- **Baru:** Status execution "Preparing Context" ditampilkan sendiri di UI dengan label "Preparing" (Bagian 18.3).
+- **Baru:** Daftar "Waiting on you" di Web UI (Bagian 4.4).
+- **Baru:** Rujukan identitas visual dan design system di `design/` (Bagian 31).
 
 ### v1.13
 - **Diperbaiki:** Bagian 18.1 diselaraskan dengan 4.4 dan ADR-0001 §3.8: runtime memakai langganan Claude milik Founder; API key organisasi menjadi opsi pengganti.
@@ -125,6 +130,7 @@ MVP menggabungkan Phase 0 dan Phase 1 dengan batasan berikut. Bagian ini mengesa
 | Hosting | 1 VPS dengan Docker (backend, Postgres, container agent) di `orbit.evora-studio.com`. |
 | Autentikasi Claude | Langganan Claude milik Founder, dengan risiko ketentuan tercatat di ADR-0001 §3.8. Autentikasi dapat diganti ke API key. Budget dalam token. Execution paralel: 1. |
 | Bahasa UI | Seluruh teks UI ORBIT memakai bahasa Inggris. |
+| Waiting on you | Strip di atas papan task yang menjadi titik fokus Founder. Isinya: task di Founder Approval (PR menunggu review), execution Waiting for Input (agent bertanya), execution Suspended (perlu di-resume), task Blocked (hanya Founder yang dapat membuka blokir), dan konfirmasi run saat budget harian tercapai. Setiap item memiliki aksi langsung. |
 | Web UI | Kanban, List, dan detail task (dengan panel execution live dan thread komentar/chat, Bagian 17.4); Project Chat dengan @mention agent; Agent Builder dan Org chart; Dashboard token serta execution log dengan tombol Stop. |
 | Ditunda | Gantt, Timeline, Calendar, tampilan Dependency Graph, Document Storage, Skill Center, Notifications, FigCraft, VS Code, Row-Level Security multi-org, PO Agent, auto-merge. |
 | Repo target | Repo sandbox khusus uji agent, diakses lewat GitHub App. |
@@ -605,6 +611,8 @@ Execution ID, Agent ID, Project ID, Task ID (jika ada), trigger source, autonomy
 ### 18.3 Lifecycle
 `Queued → Preparing Context → Running → Waiting for Input → Completed / Failed / Cancelled / Suspended`
 
+Di UI, Preparing Context ditampilkan sebagai status tersendiri dengan label "Preparing" (tone netral), tidak digabung ke Queued.
+
 **Waiting for Input:** jika tidak ada respons dalam **(default) 30 menit**, execution berpindah ke Suspended: state disimpan dan container dihentikan. Execution dapat di-resume oleh human.
 
 ## 19. Budget & Cost Control
@@ -843,6 +851,8 @@ Tahap awal menggunakan satu domain dengan routing berbasis path (`/api`, `/files
 - `files.orbit.evora-studio.com` — File and document access.
 
 Seluruh interface, dokumentasi, branding, dan notifikasi menggunakan nama ORBIT. Seluruh teks UI dan notifikasi menggunakan bahasa Inggris. Nama PLAN tidak lagi digunakan.
+
+Identitas visual mengacu ke `design/brand-guidelines.md`. Design system diimplementasikan di `design/shadcn`, dengan token tema di `design/shadcn/app/globals.css`. Frontend wajib memakai token dan komponen yang ada di sana.
 
 ## 32. Success Metrics
 
