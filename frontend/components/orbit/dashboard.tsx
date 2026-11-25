@@ -14,8 +14,8 @@ import { ACTIVE_EXEC, api, ApiError, formatTime, formatTokens, type Execution, t
 
 const chartConfig = { tokens: { label: "Tokens", color: "var(--chart-3)" } } satisfies ChartConfig
 
-// shortcut: no org-wide executions or usage endpoint yet, so this walks projects → tasks → executions
-// (one request per task). Replace with a backend /executions and usage summary endpoint.
+// shortcut: no org-wide executions or usage endpoint yet, so this loads executions and tasks per project
+// and sums tokens client side. Replace with a backend usage summary endpoint.
 function useAllExecutions() {
   const { projects } = useOrbit()
   const [data, setData] = React.useState<{ executions: Execution[]; tasks: Map<number, Task>; now: number }>()
@@ -25,8 +25,9 @@ function useAllExecutions() {
     if (!projects) return
     let live = true
     ;(async () => {
-      const tasks = (await Promise.all(projects.map((p) => api<Task[]>(`/projects/${p.id}/tasks`)))).flat()
-      const executions = (await Promise.all(tasks.map((t) => api<Execution[]>(`/tasks/${t.id}/executions`)))).flat()
+      const [tasks, executions] = await Promise.all(
+        ["tasks", "executions"].map((kind) => Promise.all(projects.map((p) => api<unknown[]>(`/projects/${p.id}/${kind}`))).then((r) => r.flat()))
+      ) as [Task[], Execution[]]
       executions.sort((a, b) => b.id - a.id)
       return { executions, tasks: new Map(tasks.map((t) => [t.id, t])), now: Date.now() }
     })().then(
@@ -59,7 +60,7 @@ export function Dashboard() {
   const { executions, tasks, now } = data
   const label = (e: Execution) => {
     const t = e.task_id ? tasks.get(e.task_id) : undefined
-    return t ? `${t.key} ${t.title}` : "No task"
+    return t ? `${t.key} ${t.title}` : "Project chat"
   }
   const active = executions.filter((e) => ACTIVE_EXEC.includes(e.status))
   const today = dayKey(new Date(now))

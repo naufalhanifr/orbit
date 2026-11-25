@@ -30,13 +30,12 @@ npm run lint && npm run typecheck && npm run build
 | `/board` (Kanban/List, task detail sheet, Waiting on you) | `/projects`, `/projects/{id}/tasks`, `/tasks/{id}` (PATCH, transitions, events, dependencies, messages, executions), `/waiting-on-you`, `/executions/{id}` (events, stop, resume) |
 | `/agents`, `/agents/new`, `/agents/{id}` | `/agents`, `/agents/{id}/instructions`, `/agents/{id}/supervisor`, `/projects/{id}/assignments` |
 | `/org` | agents + assignments of every project |
-| `/dashboard` | executions per task, summed client side |
-| `/chat` | no endpoint yet: shows "not available yet" |
+| `/dashboard` | `/projects/{id}/executions` and tasks, summed client side |
+| `/chat` | `/projects/{id}/messages`, `/projects/{id}/executions` |
 
 ## Known gaps (backend)
 
-- Project Chat outside a task: no endpoint.
 - Agent runtime (ADR-0001): executions stay Queued; the live panel polls `/executions/{id}/events` every 3 s.
-- No org-wide execution list or token usage endpoint: the dashboard fetches executions task by task.
+- No org-wide token usage endpoint: the dashboard sums executions per project in the browser.
 - Daily budget and its "Run anyway" confirmation in Waiting on you: not in the backend yet.
 - `/auth/me` has no workforce id; comment authors that are not agents are shown as the Founder.

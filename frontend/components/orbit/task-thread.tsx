@@ -11,7 +11,7 @@ import { ActorAvatar } from "@/components/orbit/actor-avatar"
 import { useProjectAgents } from "@/components/orbit/assignee-select"
 import { useActor } from "@/components/orbit/orbit-context"
 import { EXEC_STATUS, StatusBadge } from "@/components/orbit/status"
-import { api, ApiError, formatTime, useApi, type Execution, type Message, type Task } from "@/lib/api"
+import { api, ApiError, formatTime, useApi, type Execution, type Message } from "@/lib/api"
 
 /**
  * Task thread = comments = chat with agents (PRD 17.4). Mentions are picked in the UI and sent
@@ -49,8 +49,23 @@ function Body({ text, names }: { text: string; names: string[] }) {
   )
 }
 
-export function TaskThread({ task, executions, onSent }: { task: Task; executions: Execution[]; onSent: () => void }) {
-  const messages = useApi<Message[]>(`/tasks/${task.id}/messages`, 10_000)
+/** One thread: a task's comments (`/tasks/{id}`) or the Project Chat (`/projects/{id}`). */
+export function TaskThread({
+  path,
+  label,
+  assigneeId,
+  executions,
+  onSent,
+  title = "Comments and chat",
+}: {
+  path: string
+  label: string
+  assigneeId?: number | null
+  executions: Execution[]
+  onSent: () => void
+  title?: string
+}) {
+  const messages = useApi<Message[]>(`${path}/messages`, 10_000)
   const agents = useProjectAgents()
   const actor = useActor()
   const [draft, setDraft] = React.useState("")
@@ -67,7 +82,7 @@ export function TaskThread({ task, executions, onSent }: { task: Task; execution
     if (!body || busy) return
     setBusy(true)
     try {
-      await api<Message>(`/tasks/${task.id}/messages`, { body: { body, mentions } })
+      await api<Message>(`${path}/messages`, { body: { body, mentions } })
       setDraft("")
       setMentions([])
       setError(null)
@@ -89,7 +104,7 @@ export function TaskThread({ task, executions, onSent }: { task: Task; execution
   return (
     <section aria-labelledby="thread" className="flex flex-col gap-3">
       <h2 id="thread" className="text-sm font-medium">
-        Comments and chat
+        {title}
       </h2>
       {messages.error && !messages.data ? (
         <p role="alert" className="text-xs text-destructive">
@@ -157,7 +172,7 @@ export function TaskThread({ task, executions, onSent }: { task: Task; execution
         <InputGroup>
           <InputGroupTextarea
             ref={textRef}
-            aria-label={`Comment on ${task.key}`}
+            aria-label={`Message in ${label}`}
             placeholder="Write a comment. Mention an agent to invoke it."
             rows={2}
             value={draft}
@@ -195,7 +210,7 @@ export function TaskThread({ task, executions, onSent }: { task: Task; execution
                         >
                           <ActorAvatar actor={{ name: a.name, kind: "agent" }} size="sm" className="size-5" />
                           <span className="flex-1">{a.name}</span>
-                          <span className="text-muted-foreground">{a.id === task.assignee_id ? "Assignee" : a.title}</span>
+                          <span className="text-muted-foreground">{a.id === assigneeId ? "Assignee" : a.title}</span>
                         </CommandItem>
                       ))}
                     </CommandGroup>

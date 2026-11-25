@@ -285,7 +285,14 @@ export function TaskSheet({
                 </section>
               )}
               <Dependencies task={task} all={all} onChanged={changed} />
-              <TaskThread key={task.id} task={task} executions={execs.data ?? []} onSent={changed} />
+              <TaskThread
+                key={task.id}
+                path={`/tasks/${task.id}`}
+                label={task.key}
+                assigneeId={task.assignee_id}
+                executions={execs.data ?? []}
+                onSent={changed}
+              />
             </div>
             {actions.length ? (
               <div className="flex flex-wrap items-center gap-2 border-t p-4">
