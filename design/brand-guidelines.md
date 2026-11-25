@@ -1,8 +1,8 @@
 # ORBIT Brand Guidelines
 
-Versi 1.0 · 2026-11-25 · Pemilik: Founder (EVORA Studio)
+Versi 2.0 · 2026-11-25 · Pemilik: Founder (EVORA Studio) · Mengikuti PRD v1.11
 Berlaku untuk: Web UI ORBIT, dokumentasi produk, notifikasi, dan materi tentang ORBIT.
-Pendamping: [`design-system.md`](design-system.md) (spesifikasi teknis) dan [`tokens.css`](tokens.css) (token).
+Pendamping: [`design-system.md`](design-system.md) (spesifikasi), implementasi di [`shadcn/`](shadcn/), token di [`shadcn/app/globals.css`](shadcn/app/globals.css), dan mockup di [`mockups/`](mockups/).
 
 ---
 
@@ -34,7 +34,7 @@ Tema visual dan verbal: **minimalis**. ORBIT terasa seperti ruang kendali yang t
 
 ## 3. Tone of Voice
 
-**Bahasa.** Teks UI ditulis dalam Bahasa Indonesia baku yang santai. Pengguna disapa "kamu". Nama status, peran, dan istilah domain mengikuti PRD dan tidak diterjemahkan: Backlog, In Progress, Review, Execution, Agent, Founder, PR.
+**Bahasa.** Teks UI ditulis dalam Bahasa Indonesia baku yang santai. Pengguna disapa "kamu". Nama status, peran, dan istilah domain mengikuti PRD dan tidak diterjemahkan: Backlog, In Progress, Founder Approval, Revision, Execution, Agent, Founder, PR.
 
 **Prinsip menulis:**
 1. **Subjek jelas.** Sebut pelakunya: "Agent *Backend Dev* membuka PR #42", bukan "PR dibuka".
@@ -49,19 +49,29 @@ Tema visual dan verbal: **minimalis**. ORBIT terasa seperti ruang kendali yang t
 
 | Status | Label | Teks bantu (tooltip / baris kedua) |
 |---|---|---|
-| Idle / Ready | Siap | Menunggu dipanggil. Tidak memakai token. |
-| Running | Sedang bekerja | Mengerjakan *ORB-12 Tambah endpoint login* · 4 m 12 d · 38.200 token |
-| Waiting for Input | Menunggu jawabanmu | Agent butuh keputusan untuk lanjut. Ditangguhkan otomatis dalam 30 menit. |
-| Suspended | Ditangguhkan | Tidak ada jawaban dalam 30 menit. State disimpan, lanjutkan kapan saja. |
-| Failed | Gagal | Test gagal setelah 3 percobaan. Lihat log. |
-| Draft (belum punya atasan) | Belum siap | Tetapkan atasan agar agent bisa dipakai. |
+Label status ditulis persis seperti di PRD (Draft, Ready, Active, dan seterusnya). Teks bantu di bawah ini dipakai untuk tooltip atau baris kedua.
+
+| Status agent (PRD 10) | Teks bantu |
+|---|---|
+| Draft / Configuring | Belum pernah bekerja. Menjadi Ready otomatis saat task pertamanya masuk Assigned. |
+| Ready | Siap menerima task. Tidak memakai token sampai dipanggil. |
+| Active | Mengerjakan *ORB-11 Streaming execution log* · 18 m 40 d · 84.200 token |
+| Paused | Dijeda oleh Founder. Tidak bisa menerima task sampai dilanjutkan. |
+| Error | Execution terakhir gagal. Lihat log sebelum memberi task baru. |
+| Archived | Tidak aktif. Agent yang masih punya bawahan tidak bisa diarsipkan. |
+
+| Status execution | Teks bantu |
+|---|---|
+| Waiting for Input | Agent butuh keputusanmu untuk lanjut. Ditangguhkan otomatis dalam 30 menit. |
+| Suspended | Tidak ada jawaban dalam 30 menit. State disimpan, lanjutkan kapan saja. |
+| Failed | Test gagal setelah 3 percobaan. PR dibuka sebagai draft. |
 
 ### 3.2 Microcopy: empty state "belum ada agent"
 
 Ingat: org selalu dimulai dengan 0 agent (PRD §4.4). Empty state ini adalah layar pertama yang dilihat Founder.
 
 > **Belum ada agent**
-> Org ORBIT dimulai kosong, dan kamu yang menentukan siapa saja yang bekerja di sini. Agent pertama otomatis menjadi agent puncak yang melapor langsung kepadamu.
+> Organisasi dimulai kosong, dan kamu yang menentukan siapa saja yang bekerja di sini. Agent tanpa atasan melapor langsung kepadamu.
 > [ Buat agent pertama ]
 
 Variasi singkat (di panel atau dropdown @mention):
@@ -75,28 +85,30 @@ Variasi singkat (di panel atau dropdown @mention):
 | Execution gagal | Execution gagal | *Backend Dev* berhenti di langkah "Menjalankan test": 2 test gagal. PR dibuka sebagai draft dan task ditandai Blocked. | Lihat log · Buka PR draft |
 | Timeout | Execution melewati 60 menit | Execution dihentikan otomatis. Perubahan sampai titik ini tersimpan di branch `orb-12-login`. | Lihat log · Jalankan ulang |
 | Koneksi GitHub | Tidak bisa terhubung ke GitHub | ORBIT tidak bisa mengakses repo *sandbox*. Periksa instalasi GitHub App. | Coba lagi |
-| Validasi form | (inline, di bawah field) | Atasan wajib diisi, kecuali untuk agent puncak. | (tidak ada) |
+| Validasi form | (inline, di bawah field) | Instruksi wajib diisi. Agent bekerja hanya dari instruksi ini. | (tidak ada) |
 | Login terkunci | Terlalu banyak percobaan | Login dikunci sementara selama 15 menit. | (tidak ada) |
 
 Pola error: **apa yang terjadi → dampaknya → apa yang bisa dilakukan.** Jangan menampilkan kode error mentah tanpa penjelasan.
 
 ### 3.4 Microcopy: konfirmasi "Stop execution"
 
-Pakai `AlertDialog` (lihat design-system §5.5). Angka di contoh microcopy ini adalah ilustrasi; di UI selalu diisi data execution yang sebenarnya. Tombol aksi bertuliskan kata kerja yang spesifik, dengan varian `destructive`.
+Pakai `AlertDialog` (`StopExecutionDialog`, lihat design-system §5). Angka di contoh microcopy ini adalah ilustrasi; di UI selalu diisi data execution yang sebenarnya. Tombol aksi bertuliskan kata kerja yang spesifik, dengan varian `destructive`.
 
 > **Hentikan execution ini?**
-> *Backend Dev* sedang mengerjakan **ORB-12 Tambah endpoint login** (4 m 12 d, 38.200 token terpakai).
-> Execution akan berhenti sekarang dan berstatus Cancelled. Perubahan yang belum di-commit akan hilang. Token yang sudah terpakai tetap tercatat.
+> *Shared Specialist* sedang mengerjakan **ORB-11 Streaming execution log ke Web UI** (18 m 40 d, 84.200 token terpakai). Execution berhenti sekarang dan berstatus Cancelled. Perubahan yang belum di-commit hilang. Token yang sudah terpakai tetap tercatat.
 >
 > [ Batal ]  [ Hentikan execution ]
 
-Setelah berhasil, tampilkan toast: *Execution dihentikan. Task kembali ke Assigned.*
+Setelah berhasil, kartu execution menampilkan: *Dihentikan oleh Founder. Task kembali ke Assigned.*
 
 ### 3.5 Microcopy lain yang sering dipakai
 
 - Konfirmasi run saat budget habis: **"Jalankan meski budget harian tercapai?"** · "Execution ini bisa memakai hingga 300.000 token di atas batas harian." · [Batal] [Jalankan]
 - Empty Kanban kolom: *Kosong*. (Cukup satu kata. Kolom kosong bukan masalah.)
-- Empty chat: *Panggil agent dengan @nama. Agent hanya bekerja saat kamu panggil.*
+- Empty chat (placeholder composer): *Panggil agent dengan @nama. Agent hanya bekerja saat kamu panggil.*
+- Pesan tanpa @mention: *Tidak ada agent yang dipanggil. Pesan tersimpan tanpa memulai execution.*
+- Strip fokus di papan: *Menunggu keputusanmu* · tombol *Review ORB-9* · *Jawab di chat*.
+- Dependency: *Maju otomatis setelah ORB-11 Done.*
 - Task dari chat: label *dari chat*.
 - Atribusi runtime: *Powered by Claude* (jangan menyebut "Claude Code" di UI, PRD §18.1).
 
@@ -133,39 +145,34 @@ Logo ORBIT adalah **logo 2D datar**. File ada di [`design/logo/`](logo/).
 
 ## 5. Warna
 
-ORBIT memakai palet bawaan proyek shadcn di repo (`baseColor: neutral`, primary biru). Perubahan hanya dilakukan untuk memenuhi kontras AA. Prinsipnya: **netral untuk struktur, biru untuk aksi, warna lain hanya untuk status.** Kalau sebuah warna tidak menyampaikan status atau aksi, warnanya abu-abu.
+Palet minimalis: **netral tinta + satu aksen + tiga sinyal.** Basisnya palet shadcn di repo (`baseColor: neutral`, primary biru). Perubahan nilai hanya dilakukan demi kontras AA. Kalau sebuah warna tidak menyampaikan aksi utama atau sinyal, warnanya netral.
 
 ### 5.1 Warna inti
 
 | Peran | Token | Light | Dark | Kegunaan |
 |---|---|---|---|---|
 | Background | `--background` | `#ffffff` | `#0a0a0a` | Latar halaman. |
-| Foreground | `--foreground` | `#0a0a0a` | `#fafafa` | Teks utama. |
+| Foreground / tinta | `--foreground` | `#0a0a0a` | `#fafafa` | Teks utama, avatar agent, status "sedang dikerjakan". |
 | Card | `--card` | `#ffffff` | `#171717` | Kartu task, panel, dialog. |
-| Muted | `--muted` / `--muted-foreground` | `#f5f5f5` / `#696969` | `#262626` / `#a1a1a1` | Latar sekunder, teks bantu, metadata. |
+| Muted | `--muted` / `--muted-foreground` | `#f5f5f5` / `#696969` | `#262626` / `#a1a1a1` | Wadah kolom, teks bantu, metadata. |
 | Border | `--border` | `#e5e5e5` | putih 10% | Pemisah dekoratif. |
-| Input | `--input` | `#8c8c8c` | putih 36% | Batas field (≥ 3:1). |
-| **Primary** | `--primary` | `#1141d5` | `#51a2ff` | Satu aksi utama per layar, link, fokus, satelit logo. |
-| Destructive | `--destructive` | `#c90f1a` | `#ff6467` | Stop execution, hapus, arsipkan. |
+| Input | `--input` | `#8c8c8c` | putih 36% | Batas field dan bingkai avatar human (≥ 3:1). |
+| **Primary (aksen)** | `--primary` | `#1141d5` | `#51a2ff` | Satu tombol aksi utama per layar, satelit logo dan `OrbitIndicator`, cincin fokus. |
+| Destructive | `--destructive` | `#c90f1a` | `#ff6467` | Stop execution, batalkan task. |
 
-Hex di atas adalah konversi dari nilai oklch di `tokens.css` (sumber kebenaran).
+Nilai di atas adalah konversi hex dari oklch di `globals.css` (sumber kebenaran).
 
-### 5.2 Warna status (tone)
-
-Delapan tone. Setiap tone memiliki tiga varian: **solid** untuk titik, ikon, dan garis; **subtle** untuk latar badge; **foreground** untuk teks.
+### 5.2 Sinyal status
 
 | Tone | Makna | Dipakai oleh |
 |---|---|---|
-| Gray | Belum dimulai / selesai tanpa hasil | Backlog, Cancelled, Queued, human |
-| Sky | Sudah ada pemilik | Assigned |
-| Blue | Sedang berjalan | In Progress, Running |
-| Amber | **Menunggu kamu** (Founder) | Review, Waiting for Input |
-| Orange | Ditangguhkan sistem | Suspended |
-| Red | Butuh perhatian, ada masalah | Blocked, Failed |
-| Green | Selesai dengan hasil | Done, Completed |
-| Violet | **Agent** | avatar, nama, dan label agent |
+| Netral | Belum berjalan atau tidak aktif | Backlog, Assigned, Cancelled, Queued, Draft, Configuring, Ready, Paused, Archived |
+| Tinta | Sedang dikerjakan | In Progress, Revision, Running, Active |
+| **Amber** | **Menunggu kamu** (Founder) | Founder Approval, Waiting for Input, Suspended |
+| Merah | Bermasalah | Blocked, Failed, Error |
+| Hijau | Selesai dengan hasil | Done, Completed |
 
-Amber dipakai secara konsisten untuk "bola ada di tangan Founder". Violet khusus untuk identitas agent dan tidak pernah dipakai sebagai status.
+Biru tidak dipakai untuk status, supaya tetap bekerja sebagai aksen. Human dan agent dibedakan oleh bentuk dan isi warna (lingkaran terang vs kotak tinta), bukan oleh warna tambahan.
 
 ## 6. Tipografi
 
@@ -185,22 +192,7 @@ Gunakan angka tabular (`tabular-nums`) untuk kolom angka dan penghitung token ya
 - Ukuran 16 px (`size-4`) di dalam teks dan tombol; 14 px (`size-3.5`) di badge padat; 20 px untuk empty state. Stroke bawaan 2.
 - Ikon status (selalu dipasangkan dengan teks):
 
-| Status | Ikon lucide |
-|---|---|
-| Backlog | `circle-dashed` |
-| Assigned | `circle-user` |
-| In Progress | `circle-dot` |
-| Review | `git-pull-request` |
-| Blocked | `octagon-alert` |
-| Done | `circle-check` |
-| Cancelled | `circle-slash` |
-| Queued | `clock` |
-| Running | `loader` (berputar; diam bila reduced motion) |
-| Waiting for Input | `message-circle-question` |
-| Completed | `check` |
-| Failed | `x` |
-| Suspended | `circle-pause` |
-| Stop | `square` |
+Daftar ikon per status ada di design-system §2.3. Status yang sedang berjalan (In Progress, Running, Active) tidak memakai ikon lucide; ikonnya adalah `OrbitIndicator` (lintasan + satelit), yang statis dan tanpa animasi. Tombol Stop memakai `square`.
 
 - Ikon tanpa label wajib memiliki `aria-label` dan `Tooltip`.
 
@@ -208,7 +200,7 @@ Gunakan angka tabular (`tabular-nums`) untuk kolom angka dan penghitung token ya
 
 | Do | Don't |
 |---|---|
-| Satu tombol primary per area kerja. Sisanya `outline` atau `ghost`. | Beberapa tombol biru berdampingan. |
+| Satu tombol primary per layar atau area kerja. Sisanya `outline` atau `ghost`. | Beberapa tombol biru berdampingan, atau biru dipakai untuk status. |
 | Status = ikon + teks + warna. | Status hanya berupa warna atau hanya titik. |
 | Bedakan agent dan human lewat bentuk avatar (kotak vs lingkaran), warna, **dan** label "Agent". | Membedakan hanya dengan warna. |
 | Tampilkan token dan durasi di setiap execution. | Menyembunyikan biaya di halaman lain. |
@@ -216,6 +208,6 @@ Gunakan angka tabular (`tabular-nums`) untuk kolom angka dan penghitung token ya
 | Status ditandai badge atau baris teks. | Garis warna tipis di tepi kiri kartu sebagai penanda. |
 | Tanda baca biasa: koma, titik, titik dua, kurung. | Em dash (tanda pisah panjang) di teks UI dan dokumen. |
 | Teks bantu pakai `muted-foreground`. | Menurunkan opacity teks untuk membuat teks bantu (bisa gagal kontras). |
-| Animasi hanya untuk status hidup (Running) dan transisi overlay ≤ 200 ms. | Animasi dekoratif, confetti, efek ketik. |
+| Gerak hanya untuk hover, focus, dan transisi overlay bawaan. | Animasi berulang (spinner, denyut skeleton), confetti, efek ketik. |
 | Microcopy yang menyebut pelaku, angka, dan langkah berikutnya. | "Oops!", "Something went wrong", emoji, CTA generik ("Pelajari", "Mulai", "Get Started"). |
 | Konfirmasi untuk aksi yang tidak bisa dibatalkan atau memakan budget besar. | Konfirmasi untuk hal kecil yang bisa di-undo. |

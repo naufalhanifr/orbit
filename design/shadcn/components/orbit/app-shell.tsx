@@ -1,0 +1,138 @@
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { useTheme } from "next-themes"
+import { Bot, ChartColumn, KanbanSquare, MessagesSquare, Moon, Network, Sun } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { ActorAvatar } from "@/components/orbit/actor-avatar"
+import { OrbitWordmark } from "@/components/orbit/orbit-mark"
+import { founder, tasks } from "@/lib/orbit-data"
+
+const waiting = tasks.filter((t) => t.status === "founder-approval").length
+
+const NAV = [
+  {
+    label: "Proyek ORBIT",
+    items: [
+      { href: "/board", label: "Papan task", icon: KanbanSquare, badge: waiting },
+      { href: "/chat", label: "Project chat", icon: MessagesSquare },
+    ],
+  },
+  {
+    label: "Organisasi",
+    items: [
+      { href: "/agents", label: "Agent", icon: Bot },
+      { href: "/org", label: "Struktur org", icon: Network },
+    ],
+  },
+  {
+    label: "Biaya",
+    items: [{ href: "/dashboard", label: "Token dan execution", icon: ChartColumn }],
+  },
+]
+
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme()
+  // Ikon dipilih lewat CSS (kelas dark:) agar render server dan klien sama.
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label="Ganti tema terang atau gelap"
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+    >
+      <Moon aria-hidden="true" className="dark:hidden" />
+      <Sun aria-hidden="true" className="hidden dark:block" />
+    </Button>
+  )
+}
+
+export function AppShell({ title, actions, children }: { title: string; actions?: React.ReactNode; children: React.ReactNode }) {
+  const pathname = usePathname()
+  return (
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader className="px-4 py-4">
+          <Link href="/board" aria-label="ORBIT, ke papan task" className="w-fit">
+            <OrbitWordmark />
+          </Link>
+        </SidebarHeader>
+        <SidebarContent>
+          {NAV.map((group) => (
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => {
+                    const active = pathname.startsWith(item.href)
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          isActive={active}
+                          tooltip={item.label}
+                          className="data-active:font-medium"
+                          render={<Link href={item.href} aria-current={active ? "page" : undefined} />}
+                        >
+                          <item.icon aria-hidden="true" />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                        {item.badge ? (
+                          <SidebarMenuBadge
+                            aria-label={`${item.badge} task menunggu approval kamu`}
+                            className="bg-task-founder-approval-subtle text-task-founder-approval-foreground"
+                          >
+                            {item.badge}
+                          </SidebarMenuBadge>
+                        ) : null}
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
+        <SidebarFooter className="border-t p-3">
+          <div className="flex items-center gap-2">
+            <ActorAvatar actor={founder} size="sm" />
+            <div className="min-w-0 flex-1 text-xs">
+              <p className="truncate font-medium">Founder</p>
+              <p className="truncate text-muted-foreground">EVORA Studio</p>
+            </div>
+            <ThemeToggle />
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset className="min-w-0">
+        <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4">
+          <SidebarTrigger className="-ml-1" aria-label="Buka atau tutup navigasi" />
+          <h1 className="min-w-0 truncate text-sm font-medium">{title}</h1>
+          <p className="ml-2 shrink-0 text-xs text-muted-foreground">
+            <span className="md:hidden">Data contoh</span>
+            <span className="hidden md:inline">Data contoh untuk review desain, bukan data nyata.</span>
+          </p>
+          <div className="ml-auto flex items-center gap-2">{actions}</div>
+        </header>
+        <main className="min-w-0 flex-1">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}

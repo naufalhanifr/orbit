@@ -1,16 +1,9 @@
 /*
- * ORBIT design tokens: globals.css untuk frontend (Next.js + Tailwind v4 + shadcn/ui).
+ * ORBIT globals.css: sumber kebenaran token desain (shadcn/ui base-lyra, Tailwind v4, oklch).
+ * Dokumentasi: design/design-system.md. Cek kontras: python3 design/scripts/contrast.py
  *
- * Dasar: proyek shadcn di design/shadcn (style "base-lyra", baseColor "neutral",
- * cssVariables, iconLibrary "lucide"). Nama dan format variabel mengikuti
- * shadcn/ui terkini: warna oklch() di :root dan .dark, dipetakan ke Tailwind
- * lewat @theme inline, radius turunan dari --radius.
- *
- * Perubahan dari default proyek shadcn dibuat hanya demi kontras WCAG 2.1 AA
- * (lihat design/design-system.md §7). Token ORBIT tambahan diberi prefiks
- * --tone-*, --task-*, --exec-*, --human, --agent.
- *
- * Pemakaian: salin file ini menjadi app/globals.css.
+ * Palet: netral tinta + satu aksen (--primary) + tiga sinyal (amber, merah, hijau).
+ * Token ORBIT: --tone-*, --task-*, --exec-*, --agent-status-*, --human*, --agent*.
  */
 
 @import "tailwindcss";
@@ -64,7 +57,7 @@
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
 
-    /* ORBIT: status task. Kelas: bg-task-done-subtle text-task-done-foreground, bg-task-done (titik) */
+    /* ORBIT: status task (PRD 15.1). Kelas: bg-task-done-subtle text-task-done-foreground; titik: bg-task-done */
     --color-task-backlog: var(--task-backlog);
     --color-task-backlog-subtle: var(--task-backlog-subtle);
     --color-task-backlog-foreground: var(--task-backlog-foreground);
@@ -74,9 +67,12 @@
     --color-task-in-progress: var(--task-in-progress);
     --color-task-in-progress-subtle: var(--task-in-progress-subtle);
     --color-task-in-progress-foreground: var(--task-in-progress-foreground);
-    --color-task-review: var(--task-review);
-    --color-task-review-subtle: var(--task-review-subtle);
-    --color-task-review-foreground: var(--task-review-foreground);
+    --color-task-founder-approval: var(--task-founder-approval);
+    --color-task-founder-approval-subtle: var(--task-founder-approval-subtle);
+    --color-task-founder-approval-foreground: var(--task-founder-approval-foreground);
+    --color-task-revision: var(--task-revision);
+    --color-task-revision-subtle: var(--task-revision-subtle);
+    --color-task-revision-foreground: var(--task-revision-foreground);
     --color-task-blocked: var(--task-blocked);
     --color-task-blocked-subtle: var(--task-blocked-subtle);
     --color-task-blocked-foreground: var(--task-blocked-foreground);
@@ -87,7 +83,7 @@
     --color-task-cancelled-subtle: var(--task-cancelled-subtle);
     --color-task-cancelled-foreground: var(--task-cancelled-foreground);
 
-    /* ORBIT: status execution */
+    /* ORBIT: status execution (PRD 18.3) */
     --color-exec-queued: var(--exec-queued);
     --color-exec-queued-subtle: var(--exec-queued-subtle);
     --color-exec-queued-foreground: var(--exec-queued-foreground);
@@ -110,12 +106,33 @@
     --color-exec-suspended-subtle: var(--exec-suspended-subtle);
     --color-exec-suspended-foreground: var(--exec-suspended-foreground);
 
-    /* ORBIT: human vs agent */
+    /* ORBIT: status agent (PRD 10, lifecycle) */
+    --color-agent-status-draft: var(--agent-status-draft);
+    --color-agent-status-draft-subtle: var(--agent-status-draft-subtle);
+    --color-agent-status-draft-foreground: var(--agent-status-draft-foreground);
+    --color-agent-status-configuring: var(--agent-status-configuring);
+    --color-agent-status-configuring-subtle: var(--agent-status-configuring-subtle);
+    --color-agent-status-configuring-foreground: var(--agent-status-configuring-foreground);
+    --color-agent-status-ready: var(--agent-status-ready);
+    --color-agent-status-ready-subtle: var(--agent-status-ready-subtle);
+    --color-agent-status-ready-foreground: var(--agent-status-ready-foreground);
+    --color-agent-status-active: var(--agent-status-active);
+    --color-agent-status-active-subtle: var(--agent-status-active-subtle);
+    --color-agent-status-active-foreground: var(--agent-status-active-foreground);
+    --color-agent-status-paused: var(--agent-status-paused);
+    --color-agent-status-paused-subtle: var(--agent-status-paused-subtle);
+    --color-agent-status-paused-foreground: var(--agent-status-paused-foreground);
+    --color-agent-status-error: var(--agent-status-error);
+    --color-agent-status-error-subtle: var(--agent-status-error-subtle);
+    --color-agent-status-error-foreground: var(--agent-status-error-foreground);
+    --color-agent-status-archived: var(--agent-status-archived);
+    --color-agent-status-archived-subtle: var(--agent-status-archived-subtle);
+    --color-agent-status-archived-foreground: var(--agent-status-archived-foreground);
+
+    /* ORBIT: pelaku */
     --color-human: var(--human);
-    --color-human-subtle: var(--human-subtle);
     --color-human-foreground: var(--human-foreground);
     --color-agent: var(--agent);
-    --color-agent-subtle: var(--agent-subtle);
     --color-agent-foreground: var(--agent-foreground);
 }
 
@@ -153,31 +170,27 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.46 0.23 264.376);
 
-    /* ORBIT tones: solid = titik/ikon/garis (≥3:1), subtle = latar badge, foreground = teks (≥4.5:1) */
-    --tone-gray: oklch(0.6 0 0);
-    --tone-gray-subtle: oklch(0.96 0 0);
-    --tone-gray-foreground: oklch(0.47 0 0);
-    --tone-sky: oklch(0.6 0.11 230);
-    --tone-sky-subtle: oklch(0.965 0.016 230);
-    --tone-sky-foreground: oklch(0.47 0.09 230);
-    --tone-blue: oklch(0.6 0.2 262);
-    --tone-blue-subtle: oklch(0.965 0.022 262);
-    --tone-blue-foreground: oklch(0.48 0.18 262);
-    --tone-violet: oklch(0.6 0.2 293);
-    --tone-violet-subtle: oklch(0.965 0.022 293);
-    --tone-violet-foreground: oklch(0.48 0.18 293);
+    /* ORBIT tones. solid = titik/ikon (>=3:1), subtle = latar badge, foreground = teks (>=4.5:1) */
+    --tone-neutral: oklch(0.6 0 0);
+    --tone-neutral-subtle: oklch(0.96 0 0);
+    --tone-neutral-foreground: oklch(0.47 0 0);
+    --tone-ink: oklch(0.205 0 0);
+    --tone-ink-subtle: oklch(0.93 0 0);
+    --tone-ink-foreground: oklch(0.205 0 0);
     --tone-amber: oklch(0.6 0.13 70);
     --tone-amber-subtle: oklch(0.965 0.03 80);
     --tone-amber-foreground: oklch(0.48 0.1 65);
-    --tone-orange: oklch(0.6 0.16 45);
-    --tone-orange-subtle: oklch(0.965 0.022 45);
-    --tone-orange-foreground: oklch(0.49 0.14 42);
     --tone-red: oklch(0.6 0.2 25);
     --tone-red-subtle: oklch(0.965 0.02 25);
     --tone-red-foreground: oklch(0.5 0.18 25);
     --tone-green: oklch(0.6 0.14 150);
     --tone-green-subtle: oklch(0.965 0.025 150);
     --tone-green-foreground: oklch(0.47 0.11 150);
+
+    --human: oklch(0.922 0 0);
+    --human-foreground: oklch(0.205 0 0);
+    --agent: oklch(0.205 0 0);
+    --agent-foreground: oklch(0.985 0 0);
 }
 
 .dark {
@@ -213,66 +226,64 @@
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.707 0.165 254.624);
 
-    --tone-gray: oklch(0.62 0 0);
-    --tone-gray-subtle: oklch(0.27 0 0);
-    --tone-gray-foreground: oklch(0.8 0 0);
-    --tone-sky: oklch(0.7 0.11 230);
-    --tone-sky-subtle: oklch(0.27 0.035 230);
-    --tone-sky-foreground: oklch(0.82 0.08 230);
-    --tone-blue: oklch(0.68 0.17 262);
-    --tone-blue-subtle: oklch(0.27 0.06 262);
-    --tone-blue-foreground: oklch(0.8 0.1 262);
-    --tone-violet: oklch(0.68 0.17 293);
-    --tone-violet-subtle: oklch(0.27 0.06 293);
-    --tone-violet-foreground: oklch(0.8 0.1 293);
+    --tone-neutral: oklch(0.62 0 0);
+    --tone-neutral-subtle: oklch(0.27 0 0);
+    --tone-neutral-foreground: oklch(0.8 0 0);
+    --tone-ink: oklch(0.922 0 0);
+    --tone-ink-subtle: oklch(0.32 0 0);
+    --tone-ink-foreground: oklch(0.97 0 0);
     --tone-amber: oklch(0.75 0.14 75);
     --tone-amber-subtle: oklch(0.27 0.045 75);
     --tone-amber-foreground: oklch(0.83 0.11 80);
-    --tone-orange: oklch(0.7 0.15 45);
-    --tone-orange-subtle: oklch(0.27 0.05 45);
-    --tone-orange-foreground: oklch(0.81 0.1 50);
     --tone-red: oklch(0.68 0.18 25);
     --tone-red-subtle: oklch(0.27 0.06 25);
     --tone-red-foreground: oklch(0.8 0.1 25);
     --tone-green: oklch(0.7 0.14 150);
     --tone-green-subtle: oklch(0.27 0.045 150);
     --tone-green-foreground: oklch(0.82 0.1 150);
+
+    --human: oklch(0.371 0 0);
+    --human-foreground: oklch(0.985 0 0);
+    --agent: oklch(0.922 0 0);
+    --agent-foreground: oklch(0.145 0 0);
 }
 
-/* Pemetaan status → tone. Sama untuk light dan dark; hanya tone yang berganti.
-   Selektor ganda agar var() di-resolve ulang bila .dark dipasang pada subtree. */
+/* Pemetaan status ke tone. Selektor ganda agar var() di-resolve ulang bila .dark dipasang pada subtree.
+   Aturan warna: netral = belum/tidak jalan, tinta = sedang dikerjakan, amber = menunggu Founder,
+   merah = bermasalah, hijau = selesai. Warna selalu ditemani ikon + label. */
 :root, .dark {
-    /* Task */
-    --task-backlog: var(--tone-gray);
-    --task-backlog-subtle: var(--tone-gray-subtle);
-    --task-backlog-foreground: var(--tone-gray-foreground);
-    --task-assigned: var(--tone-sky);
-    --task-assigned-subtle: var(--tone-sky-subtle);
-    --task-assigned-foreground: var(--tone-sky-foreground);
-    --task-in-progress: var(--tone-blue);
-    --task-in-progress-subtle: var(--tone-blue-subtle);
-    --task-in-progress-foreground: var(--tone-blue-foreground);
-    --task-review: var(--tone-amber);             /* amber = menunggu Founder */
-    --task-review-subtle: var(--tone-amber-subtle);
-    --task-review-foreground: var(--tone-amber-foreground);
+    --task-backlog: var(--tone-neutral);
+    --task-backlog-subtle: var(--tone-neutral-subtle);
+    --task-backlog-foreground: var(--tone-neutral-foreground);
+    --task-assigned: var(--tone-neutral);
+    --task-assigned-subtle: var(--tone-neutral-subtle);
+    --task-assigned-foreground: var(--tone-neutral-foreground);
+    --task-in-progress: var(--tone-ink);
+    --task-in-progress-subtle: var(--tone-ink-subtle);
+    --task-in-progress-foreground: var(--tone-ink-foreground);
+    --task-founder-approval: var(--tone-amber);
+    --task-founder-approval-subtle: var(--tone-amber-subtle);
+    --task-founder-approval-foreground: var(--tone-amber-foreground);
+    --task-revision: var(--tone-ink);
+    --task-revision-subtle: var(--tone-ink-subtle);
+    --task-revision-foreground: var(--tone-ink-foreground);
     --task-blocked: var(--tone-red);
     --task-blocked-subtle: var(--tone-red-subtle);
     --task-blocked-foreground: var(--tone-red-foreground);
     --task-done: var(--tone-green);
     --task-done-subtle: var(--tone-green-subtle);
     --task-done-foreground: var(--tone-green-foreground);
-    --task-cancelled: var(--tone-gray);
-    --task-cancelled-subtle: var(--tone-gray-subtle);
-    --task-cancelled-foreground: var(--tone-gray-foreground);
+    --task-cancelled: var(--tone-neutral);
+    --task-cancelled-subtle: var(--tone-neutral-subtle);
+    --task-cancelled-foreground: var(--tone-neutral-foreground);
 
-    /* Execution */
-    --exec-queued: var(--tone-gray);
-    --exec-queued-subtle: var(--tone-gray-subtle);
-    --exec-queued-foreground: var(--tone-gray-foreground);
-    --exec-running: var(--tone-blue);
-    --exec-running-subtle: var(--tone-blue-subtle);
-    --exec-running-foreground: var(--tone-blue-foreground);
-    --exec-waiting: var(--tone-amber);            /* Waiting for Input = menunggu Founder */
+    --exec-queued: var(--tone-neutral);
+    --exec-queued-subtle: var(--tone-neutral-subtle);
+    --exec-queued-foreground: var(--tone-neutral-foreground);
+    --exec-running: var(--tone-ink);
+    --exec-running-subtle: var(--tone-ink-subtle);
+    --exec-running-foreground: var(--tone-ink-foreground);
+    --exec-waiting: var(--tone-amber);
     --exec-waiting-subtle: var(--tone-amber-subtle);
     --exec-waiting-foreground: var(--tone-amber-foreground);
     --exec-completed: var(--tone-green);
@@ -281,20 +292,34 @@
     --exec-failed: var(--tone-red);
     --exec-failed-subtle: var(--tone-red-subtle);
     --exec-failed-foreground: var(--tone-red-foreground);
-    --exec-cancelled: var(--tone-gray);
-    --exec-cancelled-subtle: var(--tone-gray-subtle);
-    --exec-cancelled-foreground: var(--tone-gray-foreground);
-    --exec-suspended: var(--tone-orange);         /* dihentikan sistem: budget/timeout */
-    --exec-suspended-subtle: var(--tone-orange-subtle);
-    --exec-suspended-foreground: var(--tone-orange-foreground);
+    --exec-cancelled: var(--tone-neutral);
+    --exec-cancelled-subtle: var(--tone-neutral-subtle);
+    --exec-cancelled-foreground: var(--tone-neutral-foreground);
+    --exec-suspended: var(--tone-amber);
+    --exec-suspended-subtle: var(--tone-amber-subtle);
+    --exec-suspended-foreground: var(--tone-amber-foreground);
 
-    /* Pelaku */
-    --human: var(--tone-gray);
-    --human-subtle: var(--tone-gray-subtle);
-    --human-foreground: var(--tone-gray-foreground);
-    --agent: var(--tone-violet);
-    --agent-subtle: var(--tone-violet-subtle);
-    --agent-foreground: var(--tone-violet-foreground);
+    --agent-status-draft: var(--tone-neutral);
+    --agent-status-draft-subtle: var(--tone-neutral-subtle);
+    --agent-status-draft-foreground: var(--tone-neutral-foreground);
+    --agent-status-configuring: var(--tone-neutral);
+    --agent-status-configuring-subtle: var(--tone-neutral-subtle);
+    --agent-status-configuring-foreground: var(--tone-neutral-foreground);
+    --agent-status-ready: var(--tone-neutral);
+    --agent-status-ready-subtle: var(--tone-neutral-subtle);
+    --agent-status-ready-foreground: var(--tone-neutral-foreground);
+    --agent-status-active: var(--tone-ink);
+    --agent-status-active-subtle: var(--tone-ink-subtle);
+    --agent-status-active-foreground: var(--tone-ink-foreground);
+    --agent-status-paused: var(--tone-neutral);
+    --agent-status-paused-subtle: var(--tone-neutral-subtle);
+    --agent-status-paused-foreground: var(--tone-neutral-foreground);
+    --agent-status-error: var(--tone-red);
+    --agent-status-error-subtle: var(--tone-red-subtle);
+    --agent-status-error-foreground: var(--tone-red-foreground);
+    --agent-status-archived: var(--tone-neutral);
+    --agent-status-archived-subtle: var(--tone-neutral-subtle);
+    --agent-status-archived-foreground: var(--tone-neutral-foreground);
 }
 
 @layer base {
@@ -322,7 +347,21 @@
     }
 }
 
-/* Gerak: hanya indikator Running yang berdenyut, dan mati bila pengguna meminta reduced motion. */
+/* Target sentuh (antislop R-03, WCAG 2.5.5): di perangkat sentuh semua kontrol minimal 44 x 44 px.
+   Di mouse, kepadatan base-lyra (32 px) dipertahankan. */
+@media (pointer: coarse) {
+    :where([data-slot="button"], [data-slot="toggle-group-item"], [data-slot="select-trigger"],
+           [data-slot="input-group-button"], [data-slot="sidebar-menu-button"], [data-slot="dropdown-menu-item"],
+           [data-slot="select-item"], [data-slot="command-item"], [data-slot="tabs-trigger"], [data-slot="sidebar-trigger"]) {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    :where([data-slot="input"], [data-slot="input-group"]) {
+        min-height: 44px;
+    }
+}
+
+/* Gerak (MOTION 1): tidak ada animasi berulang. Transisi overlay bawaan shadcn dimatikan bila pengguna meminta reduced motion. */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;

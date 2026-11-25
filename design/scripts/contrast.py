@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Hitung kontras WCAG 2.1 untuk design/tokens.css (light & dark).
+"""Hitung kontras WCAG 2.1 untuk design/shadcn/app/globals.css (light & dark).
 
 Pemakaian:  python3 design/scripts/contrast.py            # ringkasan + kegagalan
             python3 design/scripts/contrast.py --markdown # tabel lengkap (untuk design-system.md)
@@ -30,7 +30,7 @@ def lum(c): r,g,b=[s2lin(x) for x in c[0]]; return 0.2126*r+0.7152*g+0.0722*b
 def cr(a,b):
     la,lb=lum(a),lum(b); return (max(la,lb)+0.05)/(min(la,lb)+0.05)
 def hexs(c): return '#'+''.join('%02x'%round(x*255) for x in c[0])
-css=open(__import__('pathlib').Path(__file__).resolve().parent.parent/'tokens.css').read()
+css=open(__import__('pathlib').Path(__file__).resolve().parent.parent/'shadcn'/'app'/'globals.css').read()
 css=re.sub(r'/\*.*?\*/','',css,flags=re.S)
 def block(sel):
     m=re.search(re.escape(sel)+r'\s*\{(.*?)\n\}',css,re.S); return dict(re.findall(r'--([\w-]+):\s*([^;]+);',m[1]))
@@ -68,14 +68,20 @@ for name,base in [('Light',root),('Dark',dark)]:
         c=g(a); c=over(c,bg) if c[1]<1 else c
         add('Non-teks',a,'background',c,bg,3); add('Non-teks',a,'card',over(g(a),card) if g(a)[1]<1 else g(a),card,3)
     for i in range(1,6): add('Non-teks (grafik)',f'chart-{i}','background',g(f'chart-{i}'),bg,3)
-    for grp,keys in [('task',['backlog','assigned','in-progress','review','blocked','done','cancelled']),('exec',['queued','running','waiting','completed','failed','cancelled','suspended']),('',['human','agent'])]:
+    for grp,keys in [('task',['backlog','assigned','in-progress','founder-approval','revision','blocked','done','cancelled']),
+                     ('exec',['queued','running','waiting','completed','failed','cancelled','suspended']),
+                     ('agent-status',['draft','configuring','ready','active','paused','error','archived'])]:
         for k in keys:
-            t=f'{grp}-{k}' if grp else k
+            t=f'{grp}-{k}'
             add('Teks',f'{t}-foreground',f'{t}-subtle',g(f'{t}-foreground'),g(f'{t}-subtle'),4.5)
             add('Teks',f'{t}-foreground','card',g(f'{t}-foreground'),card,4.5)
             add('Teks',f'{t}-foreground','muted',g(f'{t}-foreground'),g('muted'),4.5)
             add('Non-teks',t,'card',g(t),card,3)
             add('Non-teks',t,'background',g(t),bg,3)
+    for who in ['human','agent']:
+        add('Teks',f'{who}-foreground',who,g(f'{who}-foreground'),g(who),4.5)
+    add('Non-teks','agent (bentuk avatar)','background',g('agent'),bg,3)
+    add('Non-teks','agent (bentuk avatar)','card',g('agent'),card,3)
     out.append(f'\n#### {name}\n\n| Jenis | Depan | Latar | Rasio | Minimum | Hasil |\n|---|---|---|---|---|---|\n'+'\n'.join(rows))
 md='\n'.join(out)
 if '--markdown' in sys.argv: print(md); sys.exit(0)

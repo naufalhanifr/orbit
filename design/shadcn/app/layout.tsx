@@ -1,7 +1,9 @@
-import { Geist, Geist_Mono, Noto_Sans } from "next/font/google"
+import type { Metadata } from "next"
+import { Geist_Mono, Noto_Sans } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils";
 
 const notoSans = Noto_Sans({subsets:['latin'],variable:'--font-sans'})
@@ -11,6 +13,11 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
+export const metadata: Metadata = {
+  title: { default: "ORBIT", template: "%s · ORBIT" },
+  description: "Mockup desain ORBIT dengan data contoh.",
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -18,12 +25,14 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="id"
       suppressHydrationWarning
       className={cn("antialiased", fontMono.variable, "font-sans", notoSans.variable)}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <TooltipProvider>{children}</TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
