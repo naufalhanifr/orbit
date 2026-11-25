@@ -4,7 +4,7 @@
 |---|---|
 | Product | ORBIT |
 | Brand | ORBIT by EVORA Studio |
-| Version | 1.9 |
+| Version | 1.10 |
 | Status | Approved Product Direction |
 | Product Category | AI Workforce & Project Operating System |
 | Initial Organization | EVORA Studio |
@@ -15,6 +15,11 @@
 | Primary Domain | orbit.evora-studio.com |
 
 ## Changelog
+
+### v1.10
+- **Diubah:** Founder berada di luar struktur agent. Struktur agent memiliki **tepat satu agent puncak** (misalnya CTO) yang melapor ke Founder.
+- **Diubah:** Reporting line memakai **model matriks**: agent boleh memiliki lebih dari satu atasan; atasan yang berlaku ditentukan oleh proyek task yang sedang dikerjakan.
+- **Baru:** Keputusan MVP tambahan: login email + password, perilaku chat, Agent Builder minimal, versi instruksi otomatis, batas token default, bukti test sebelum PR (Bagian 4.4).
 
 ### v1.9
 - **Baru:** Organization Structure & Reporting Lines (Bagian 8). Workforce tersusun seperti struktur perusahaan; setiap anggota melapor ke atasannya hingga Founder.
@@ -109,6 +114,15 @@ MVP menggabungkan Phase 0 dan Phase 1 dengan batasan berikut. Bagian ini mengesa
 | Ditunda | Gantt, Timeline, Calendar, Dependency Graph, Document Storage, Skill Center, Notifications, FigCraft, VS Code, Row-Level Security multi-org, PO Agent, auto-merge. |
 | Repo target | Repo sandbox khusus uji agent, diakses lewat GitHub App. |
 | Target waktu | 4–6 minggu. |
+| Login ORBIT | Email + password: hash argon2, pembatasan percobaan login (kunci sementara setelah 5 kali gagal), session cookie aman, reset password lewat perintah di server. 2FA (TOTP) menyusul sebelum ada pengguna kedua. |
+| Struktur agent | Sesuai Bagian 8. Di MVP, reporting line dipakai untuk data dan org chart; seluruh eskalasi langsung ke Founder. |
+| Agent template | Tidak ada. Org dimulai dengan 0 agent. |
+| Agent Builder | Nama, jabatan, atasan (tetap dan per proyek), model, instruksi markdown, preset izin tool (`read-only` atau `coding`), batas token per execution. Memory, skill, MCP custom, dan authority limit ditunda. |
+| Versi instruksi | Setiap simpan membuat versi baru; setiap execution mencatat versi yang dipakai. UI draft/publish, compare, dan restore ditunda. |
+| Penugasan | Satu task dikerjakan satu agent. Tanpa handoff dan tanpa percakapan antar-agent. |
+| Budget default | 300.000 token per execution, 3.000.000 token per hari (execution otomatis diblokir saat tercapai; execution yang dipicu Founder memerlukan konfirmasi), timeout 60 menit. |
+| Bukti selesai | Agent wajib menjalankan test proyek bila ada dan menyertakan hasilnya di work report dan deskripsi PR. Jika test tetap gagal, PR dibuka sebagai draft dan task menjadi Blocked dengan alasan. |
+| Chat | Agent di chat mana pun boleh mengubah kode, tetapi hanya saat dipanggil eksplisit oleh Founder. Perubahan kode dari chat yang tidak terhubung ke task otomatis membuat task ringan bertanda "dari chat" (acceptance criteria dari isi pesan, terhubung ke percakapan), lalu branch dan PR seperti biasa. |
 
 ### 4.5 Out of Scope (v1)
 - JAPRI, PANTAU, dan EVORA Website.
@@ -165,7 +179,7 @@ Setiap workforce memiliki:
 - Unique ID, name, profile.
 - Type: `human` atau `agent`.
 - Position / title dan responsibilities.
-- Reports to (atasan langsung).
+- Reports to: atasan tetap dan/atau atasan per proyek (lihat Bagian 8).
 - Organization dan project assignments.
 - Permissions dan authority limits.
 - Availability dan workload.
@@ -177,36 +191,45 @@ AI Agent merupakan subtype dari workforce. Agent profile terhubung 1:1 dengan wo
 - Organisasi baru dimulai **tanpa agent**. Workforce awal hanya Founder (human).
 - Sistem tidak membuat agent secara otomatis.
 - Founder menentukan sendiri agent apa yang dibutuhkan, termasuk posisinya dalam struktur organisasi.
-- ORBIT boleh menyediakan **agent templates** (misalnya Frontend Engineer, QA, Product Owner) sebagai titik awal opsional. Template baru menjadi agent setelah Founder membuat dan mempublikasikannya secara eksplisit.
+- Di luar MVP, ORBIT boleh menyediakan **agent templates** (misalnya Frontend Engineer, QA, Product Owner) sebagai titik awal opsional. Template baru menjadi agent setelah Founder membuat dan mempublikasikannya secara eksplisit.
 - Selama organisasi belum memiliki agent, seluruh fitur yang memerlukan agent menampilkan empty state dengan ajakan membuat agent, bukan error.
 
 ## 8. Organization Structure & Reporting Lines
 
 ### 8.1 Overview
-Workforce disusun dalam struktur organisasi seperti perusahaan. Setiap anggota workforce, human maupun agent, kecuali Founder, memiliki **satu atasan langsung** (`reports_to`).
+Agent disusun dalam struktur organisasi seperti perusahaan. **Founder berada di luar struktur agent**: Founder bukan agent dan tidak tampil sebagai node di org chart agent. Struktur agent memiliki **tepat satu agent puncak** yang dianggap melapor langsung ke Founder.
+
+Reporting line memakai **model matriks**: satu agent boleh memiliki lebih dari satu atasan, dan atasan yang berlaku ditentukan oleh **proyek dari task yang sedang dikerjakan**.
 
 Contoh:
 
 ```
-Founder (human)
-├── Head of Product (agent/human)
-│   ├── Product Owner – ORBIT (agent)
-│   └── UX Designer (shared specialist, agent)
-└── Head of Engineering (agent/human)
-    ├── Frontend Engineer (shared specialist, agent)
-    ├── Backend Engineer (shared specialist, agent)
-    └── QA Engineer (shared specialist, agent)
+(Founder — di luar struktur agent)
+          │
+         CTO (agent puncak)
+        ┌──┴──┐
+      PO 1   PO 2
+        └──┬──┘
+   Shared Specialist
+   (proyek A → PO 1, proyek B → PO 2)
 ```
 
 ### 8.2 Aturan Struktural
-- Founder adalah root. Founder tidak memiliki atasan.
-- Setiap workforce lain wajib memiliki tepat satu atasan langsung.
-- Struktur berbentuk tree: tidak boleh ada siklus.
+- Struktur agent memiliki **tepat satu agent puncak**.
+  - Agent pertama yang dibuat otomatis menjadi agent puncak.
+  - Agent puncak dapat diganti; agent puncak lama harus dipindah ke bawah atau diarsipkan terlebih dahulu sehingga puncak selalu satu.
+  - Agent puncak tidak dapat diarsipkan selama masih memiliki bawahan.
+- Setiap agent selain agent puncak wajib memiliki minimal satu atasan, berupa atasan tetap atau atasan per proyek.
+- **Atasan tetap** disimpan di profil agent; **atasan per proyek** disimpan di penugasan proyek agent (`project assignment`).
+- Atasan yang berlaku untuk sebuah task:
+  1. Atasan pada penugasan proyek task tersebut, jika ada.
+  2. Jika tidak ada, atasan tetap dari profil agent.
+  3. Jika keduanya tidak ada (hanya agent puncak), Founder.
+- Struktur tidak boleh membentuk siklus, dan kedalaman dibatasi **(default) maksimal 4 level** dihitung dari agent puncak. Kedua aturan dicek **per proyek**, dengan memperhitungkan atasan tetap dan atasan per proyek.
 - Atasan dapat berupa human atau agent.
-- **Shared specialist** (bekerja lintas proyek) wajib melapor ke atasannya dalam struktur organisasi. Atasan tersebut melapor ke atasannya lagi, sampai ke Founder.
-- Kedalaman struktur dibatasi **(default) maksimal 4 level** di bawah Founder, untuk membatasi jumlah hop koordinasi.
+- Org chart menampilkan seluruh garis atasan; garis atasan per proyek diberi label nama proyek.
 - Perubahan reporting line tercatat dalam history dan audit trail.
-- Agent baru tidak dapat berstatus Ready sebelum memiliki atasan langsung.
+- Agent baru tidak dapat berstatus Ready sebelum memiliki atasan, kecuali agent puncak.
 
 ### 8.3 Reporting Line vs Project Role
 Dua jalur ini berbeda dan tidak boleh menghasilkan koordinasi ganda:
@@ -216,7 +239,7 @@ Dua jalur ini berbeda dan tidak boleh menghasilkan koordinasi ganda:
 | **Project role** (PO, assignee) | Koordinasi operasional task di dalam proyek: assignment, review, revisi. |
 | **Reporting line** (atasan) | Pengawasan, eskalasi, keputusan di luar wewenang, dan ringkasan kinerja. |
 
-Satu work report ditulis **sekali** dan dapat dilihat oleh PO proyek maupun atasan di reporting line. Report tidak dikirim ulang ke masing-masing pihak.
+Satu work report ditulis **sekali** dan hanya diarahkan ke **atasan yang berlaku untuk proyek task tersebut** (aturan 8.2), bukan ke seluruh atasan agent. Report tidak dikirim ulang ke masing-masing pihak.
 
 ### 8.4 Authority Limits
 Setiap posisi memiliki batas wewenang, misalnya:
@@ -260,8 +283,10 @@ Eskalasi dibuat hanya jika:
 - Batas siklus revisi terlampaui.
 - Terjadi masalah keamanan atau akses.
 
+Di MVP, seluruh eskalasi langsung ke Founder. Alur bertingkat di bawah ini aktif mulai Phase 3.
+
 Alur eskalasi:
-1. Sistem mencari atasan terdekat yang memiliki wewenang atas jenis keputusan tersebut.
+1. Sistem mencari atasan terdekat yang berlaku untuk proyek task tersebut dan memiliki wewenang atas jenis keputusan itu.
 2. Jika atasan itu human, dibuat notifikasi dan approval request.
 3. Jika atasan itu agent, agent tersebut dipanggil **satu kali** dengan payload eskalasi terstruktur (bukan seluruh riwayat).
 4. Jika agent tidak dapat memutuskan, eskalasi naik ke level berikutnya.
@@ -270,7 +295,7 @@ Alur eskalasi:
 ## 9. Roles & Permissions
 
 ### 9.1 Roles
-- **Founder:** pemilik organisasi, root struktur organisasi.
+- **Founder:** pemilik organisasi; berada di luar struktur agent dan menjadi atasan dari agent puncak.
 - **Manager:** workforce yang memiliki bawahan (human atau agent).
 - **Product Owner (PO):** koordinator operasional task dalam proyek (human atau agent).
 - **Member:** human yang berkontribusi pada proyek.
@@ -298,7 +323,7 @@ Alur eskalasi:
 
 Setiap agent dapat dikonfigurasi melalui:
 - Name, identity, position.
-- Reports to (atasan langsung) — wajib.
+- Reports to: atasan tetap dan/atau atasan per proyek — wajib, kecuali agent puncak.
 - Role dan job description.
 - Responsibilities dan authority limits.
 - Model configuration.
@@ -765,7 +790,7 @@ Seluruh interface, dokumentasi, branding, dan notifikasi menggunakan nama ORBIT.
 2. Setiap proyek memiliki workspace dan document storage permanen.
 3. Human dan agent dikelola melalui unified workforce dalam struktur organisasi.
 4. Organisasi baru dimulai dengan 0 agent dan Founder dapat membuat agent sendiri.
-5. Setiap workforce non-Founder memiliki atasan; reporting line berjalan hingga Founder.
+5. Struktur agent memiliki tepat satu agent puncak; setiap agent lain memiliki atasan yang berlaku untuk setiap proyeknya.
 6. Agent dapat menerima dan menyelesaikan task sesuai workflow.
 7. Revision dan approval berjalan tanpa membuat task duplikat.
 8. Human dapat memanggil agent melalui project chat; chat dapat dihubungkan dengan task.
@@ -802,11 +827,13 @@ Seluruh interface, dokumentasi, branding, dan notifikasi menggunakan nama ORBIT.
 
 ## 34. Acceptance Criteria — Organization Structure & Reporting
 
-- Organisasi baru memiliki 0 agent; hanya Founder yang ada di workforce.
+- Organisasi baru memiliki 0 agent; hanya Founder yang ada di workforce, dan Founder tidak tampil di org chart agent.
 - Tidak ada agent yang dibuat otomatis oleh sistem, termasuk dari template.
-- Agent tidak dapat berstatus Ready tanpa atasan langsung.
-- Struktur organisasi tidak dapat membentuk siklus dan tidak melebihi batas kedalaman.
-- Shared specialist melapor ke atasannya, dan rantai pelaporan berakhir di Founder.
+- Agent pertama otomatis menjadi agent puncak; struktur tidak pernah memiliki lebih dari satu agent puncak.
+- Agent selain agent puncak tidak dapat berstatus Ready tanpa atasan.
+- Atasan yang berlaku untuk task ditentukan dari penugasan proyek, lalu atasan tetap, lalu Founder.
+- Struktur tidak dapat membentuk siklus dan tidak melebihi batas kedalaman, dicek per proyek.
+- Work report hanya diterima atasan yang berlaku untuk proyek task tersebut.
 - Work report mengikuti skema dan batas panjang; report yang melanggar ditolak validasi.
 - Work report dihasilkan di dalam execution yang sama dan tidak memicu execution atasan.
 - Tidak ada report yang dibuat jika tidak ada perubahan relevan.
