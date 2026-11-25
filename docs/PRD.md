@@ -95,7 +95,22 @@ Sebuah fase dianggap selesai apabila acceptance criteria fase tersebut terpenuhi
 | **Phase 3 – Autonomy** | Fully Autonomous Mode, PO Agent, manager agent, auto-merge sesuai policy. |
 | **Phase 4 – Live Collaboration & Scale** | VS Code Extension, FigCraft MCP, Timeline, Calendar, Gantt, Dependency Graph, multi-organization aktif. |
 
-### 4.4 Out of Scope (v1)
+### 4.4 MVP Definition (keputusan Founder, 2026-11-25)
+MVP menggabungkan Phase 0 dan Phase 1 dengan batasan berikut. Bagian ini mengesampingkan isi Phase 0–1 di atas bila bertentangan.
+
+| Topik | Keputusan |
+|---|---|
+| Pengguna human | Hanya Founder. Peran yang aktif: Founder dan Member. Aturan izin Manager, PO, dan Viewer ditunda; jabatan tetap tersimpan sebagai data struktur organisasi. |
+| Kriteria berhasil | Founder membuat task berisi acceptance criteria di Web UI → agent mengerjakannya di repo → agent membuka PR → Founder me-review. |
+| Review | Founder me-review langsung di PR. Task Done setelah PR di-approve atau di-merge. PO Agent belum ikut alur review. |
+| Hosting | 1 VPS dengan Docker (backend, Postgres, container agent) di `orbit.evora-studio.com`. |
+| Autentikasi Claude | Langganan Claude milik Founder, dengan risiko ketentuan tercatat di ADR-0001 §3.8. Autentikasi dapat diganti ke API key. Budget dalam token. Execution paralel: 1. |
+| Web UI | Kanban, List, dan detail task; Project Chat dengan @mention agent; Agent Builder dan Org chart; Dashboard token serta execution log dengan tombol Stop. |
+| Ditunda | Gantt, Timeline, Calendar, Dependency Graph, Document Storage, Skill Center, Notifications, FigCraft, VS Code, Row-Level Security multi-org, PO Agent, auto-merge. |
+| Repo target | Repo sandbox khusus uji agent, diakses lewat GitHub App. |
+| Target waktu | 4–6 minggu. |
+
+### 4.5 Out of Scope (v1)
 - JAPRI, PANTAU, dan EVORA Website.
 - Billing atau penagihan ke pelanggan eksternal.
 - Marketplace skill publik.
