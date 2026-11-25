@@ -4,7 +4,7 @@
 |---|---|
 | Product | ORBIT |
 | Brand | ORBIT by EVORA Studio |
-| Version | 1.11 |
+| Version | 1.12 |
 | Status | Approved Product Direction |
 | Product Category | AI Workforce & Project Operating System |
 | Initial Organization | EVORA Studio |
@@ -15,6 +15,9 @@
 | Primary Domain | orbit.evora-studio.com |
 
 ## Changelog
+
+### v1.12
+- **Baru:** Detail task menampilkan execution yang sedang berjalan secara live, dan komentar task berfungsi sebagai chat dengan agent (Bagian 17.4).
 
 ### v1.11
 - **Diubah (mengganti v1.10):** Founder adalah puncak struktur organisasi. Tidak ada lagi "tepat satu agent puncak" dan batas kedalaman dihapus; jumlah agent yang melapor langsung ke Founder bebas. Model matriks tetap berlaku.
@@ -117,7 +120,7 @@ MVP menggabungkan Phase 0 dan Phase 1 dengan batasan berikut. Bagian ini mengesa
 | Review | Founder me-review langsung di PR. Task Done setelah PR di-approve atau di-merge. PO Agent belum ikut alur review. |
 | Hosting | 1 VPS dengan Docker (backend, Postgres, container agent) di `orbit.evora-studio.com`. |
 | Autentikasi Claude | Langganan Claude milik Founder, dengan risiko ketentuan tercatat di ADR-0001 §3.8. Autentikasi dapat diganti ke API key. Budget dalam token. Execution paralel: 1. |
-| Web UI | Kanban, List, dan detail task; Project Chat dengan @mention agent; Agent Builder dan Org chart; Dashboard token serta execution log dengan tombol Stop. |
+| Web UI | Kanban, List, dan detail task (dengan panel execution live dan thread komentar/chat, Bagian 17.4); Project Chat dengan @mention agent; Agent Builder dan Org chart; Dashboard token serta execution log dengan tombol Stop. |
 | Ditunda | Gantt, Timeline, Calendar, tampilan Dependency Graph, Document Storage, Skill Center, Notifications, FigCraft, VS Code, Row-Level Security multi-org, PO Agent, auto-merge. |
 | Repo target | Repo sandbox khusus uji agent, diakses lewat GitHub App. |
 | Target waktu | 4–6 minggu. |
@@ -414,7 +417,7 @@ Phase 4: Timeline, Calendar, Gantt, Dependency Graph, Design Workspace, Developm
 Initiative, Epic, Feature, Story, Task, Subtask, Bug, Technical Debt, Improvement, Research, Milestone.
 
 ### 14.2 Task Information
-Task ID (`{PROJECT_KEY}-{number}`), title, description, project, type, priority, status, assignee, reporter, due date, acceptance criteria, approval gate, dependencies, repository/branch/workspace/design/document references, attachments, comments, activity history, execution records, work reports.
+Task ID (`{PROJECT_KEY}-{number}`), title, description, project, type, priority, status, assignee, reporter, due date, acceptance criteria, approval gate, dependencies, repository/branch/workspace/design/document references, attachments, comments (thread task, Bagian 17.4), activity history, execution records, work reports.
 
 Task wajib memiliki acceptance criteria sebelum execution, kecuali pekerjaan eksploratif yang secara eksplisit ditandai tidak memerlukannya.
 
@@ -531,6 +534,23 @@ Mention tidak boleh menjadi mekanisme untuk melewati permission system.
 
 ### 17.4 Task-Linked Chat
 Chat dapat dihubungkan ke task. Agent memperoleh task context yang relevan (description, acceptance criteria, dependencies, status, dokumen yang diizinkan). Task-linked chat tidak otomatis mengubah status task.
+
+**Komentar task adalah chat.** Setiap task memiliki satu thread yang sekaligus menjadi kolom komentar dan task-linked conversation. Tidak ada sistem komentar terpisah.
+
+**Panel execution live di detail task.** Saat task memiliki execution yang berjalan, halaman detail task menampilkan:
+- Status execution dan langkah yang sedang dikerjakan.
+- Output agent secara streaming.
+- Ringkasan tool yang dipanggil (misalnya file yang diubah, perintah yang dijalankan).
+- Pemakaian token berjalan terhadap batas execution.
+- Tombol Stop.
+
+Riwayat execution sebelumnya tetap dapat dibuka dari detail task.
+
+**Komentar saat execution berjalan:**
+- Komentar yang me-mention assignee yang sedang bekerja dikirim ke execution yang berjalan sebagai instruksi tambahan. Tidak dibuat execution baru.
+- Komentar yang me-mention agent lain memulai invocation baru sesuai aturan chat.
+- Komentar tanpa mention hanya tersimpan sebagai catatan. Agent tidak membacanya sampai dipanggil berikutnya.
+- Membuka detail task atau melihat panel live tidak memicu aktivitas agent (Bagian 17.5).
 
 Setiap pesan atau execution yang relevan dapat merujuk Project ID, Task ID, Agent ID, Conversation ID, dan Execution ID.
 
