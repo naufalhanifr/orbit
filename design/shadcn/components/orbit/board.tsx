@@ -30,6 +30,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { ActorAvatar } from "@/components/orbit/actor-avatar"
 import { ExecutionCard } from "@/components/orbit/execution-card"
+import { TaskThread } from "@/components/orbit/task-thread"
 import { StatusBadge, StatusIcon, TASK_STATUS } from "@/components/orbit/status"
 import { actorById, byId, formatTokens, tasks as seed, type Task, type TaskStatus } from "@/lib/orbit-data"
 import { cn } from "@/lib/utils"
@@ -244,7 +245,12 @@ function TaskSheet({ task, all, onClose, onPick }: { task: Task | null; all: Tas
               {task.note ? (
                 <p className={cn("text-sm", task.status === "blocked" && "text-task-blocked-foreground")}>{task.note}</p>
               ) : null}
-              {task.status === "in-progress" ? <ExecutionCard /> : null}
+              {task.status === "in-progress" ? (
+                <section aria-labelledby="live" className="flex flex-col gap-2">
+                  <h2 id="live" className="text-sm font-medium">Execution berjalan</h2>
+                  <ExecutionCard showLog />
+                </section>
+              ) : null}
               <section aria-labelledby="ac" className="flex flex-col gap-2">
                 <h2 id="ac" className="text-sm font-medium">Acceptance criteria</h2>
                 {task.criteria.length ? (
@@ -273,6 +279,7 @@ function TaskSheet({ task, all, onClose, onPick }: { task: Task | null; all: Tas
                   <p className="text-xs text-muted-foreground">Task ini pindah ke Assigned otomatis saat semua dependency Done.</p>
                 </section>
               ) : null}
+              <TaskThread key={task.id} task={task} />
             </div>
             {actions.length ? (
               <div className="flex flex-wrap items-center gap-2 border-t p-4">

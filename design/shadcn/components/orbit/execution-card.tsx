@@ -88,6 +88,19 @@ export function ExecutionCard({ className, showLog = false, stopOpen }: { classN
         {running ? <>Langkah terakhir: {exec.step}</> : <>Dihentikan oleh Founder. Task kembali ke Assigned.</>}
       </p>
       {showLog ? (
+        <section aria-label="Tool yang dipanggil" className="flex flex-col gap-1 text-xs">
+          <h3 className="text-muted-foreground">Tool yang dipanggil</h3>
+          <ul className="flex flex-col gap-0.5 font-mono">
+            {exec.tools.map((t) => (
+              <li key={t.detail} className="flex gap-2">
+                <span className="w-20 shrink-0 text-muted-foreground">{t.kind}</span>
+                <span className="min-w-0 truncate">{t.detail}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {showLog ? (
         <pre aria-label="Execution log" className="max-h-56 overflow-auto bg-muted p-3 font-mono text-xs leading-5 text-foreground">
           {exec.log.join("\n")}
           {running ? "" : "\n11:02:10  Dihentikan oleh Founder"}

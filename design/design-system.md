@@ -1,6 +1,6 @@
 # ORBIT Design System
 
-Versi 2.0 · 2026-11-25 · Mengikuti PRD v1.11
+Versi 2.0 · 2026-11-25 · Mengikuti PRD v1.12
 Implementasi: [`design/shadcn/`](shadcn/) · Brand: [`brand-guidelines.md`](brand-guidelines.md) · Logo: [`logo/`](logo/) · Mockup: [`mockups/`](mockups/)
 
 Design system ini **adalah kode di `design/shadcn`**. Dokumen ini menjelaskan keputusan dan aturannya. Kalau dokumen dan kode berbeda, yang dianggap benar adalah kode, lalu dokumen ini diperbaiki.
@@ -153,7 +153,7 @@ Berat font hanya 400 dan 500. Tidak ada uppercase dengan tracking lebar.
 
 | Layar (PRD 4.4) | Route | Pola ORBIT | Komponen shadcn |
 |---|---|---|---|
-| Kanban, List, detail task | `/board` | `Board`, `TaskCard`, `TaskSheet`, `ReasonDialog`, `CreateTaskDialog` | `toggle-group`, `button`, `dropdown-menu`, `sheet`, `dialog`, `field`, `input`, `textarea`, `table`, `badge`, `avatar` |
+| Kanban, List, detail task (dengan panel execution live dan thread komentar/chat, PRD 17.4) | `/board` | `Board`, `TaskCard`, `TaskSheet`, `TaskThread`, `ExecutionCard`, `ReasonDialog`, `CreateTaskDialog` | `toggle-group`, `button`, `dropdown-menu`, `sheet`, `dialog`, `field`, `input`, `textarea`, `table`, `badge`, `avatar` |
 | Project Chat dengan @mention | `/chat` | `Chat` | `input-group`, `command`, `select`, `item`, `avatar`, `badge` |
 | Daftar agent | `/agents` | `AgentList` | `table`, `badge`, `avatar`, `button` |
 | Agent Builder | `/agents/new` | `AgentBuilder` | `field`, `input`, `input-group`, `select`, `radio-group`, `tabs`, `textarea`, `alert` |
@@ -177,7 +177,12 @@ Transisi milik assignee atau system tidak muncul sebagai tombol.
 - **StatusBadge**: ikon + label + tone, tanpa border, uppercase, atau glow. Untuk status yang sedang berjalan, ikonnya `OrbitIndicator` dengan posisi satelit sesuai porsi token.
 - **ActorAvatar**: human berupa lingkaran `bg-human` dengan `ring-1 ring-input`; agent berupa kotak `bg-agent`. Isinya inisial. Di chat, nama agent diberi label "Agent".
 - **TaskCard**: baris atas berisi ID mono, penanda "dari chat", dan menu aksi. Lalu judul (sebuah `<button>` yang area kliknya menutupi seluruh kartu), satu baris konteks (alasan blocked, feedback revisi, atau dependency yang ditunggu), dan footer berisi assignee, PR, dan token. Menu aksi adalah alternatif drag (WCAG 2.5.7). Tidak ada garis warna di tepi kartu.
-- **ExecutionCard**: agent dan task, status, execution ID, durasi, token / batas, `progress`, langkah terakhir, dan log opsional. Tombol Stop memakai varian `destructive` dan membuka `AlertDialog` (copy di brand-guidelines §3.4). Setelah dihentikan, status menjadi Cancelled.
+- **Detail task** (`TaskSheet`, PRD 17.4 v1.12): status, judul, assignee, PR, dan token di header. Bila ada execution berjalan, panel live (`ExecutionCard` dengan log) tampil paling atas. Di bawahnya acceptance criteria, dependency, lalu thread komentar. Aksi Founder di footer.
+- **TaskThread**: komentar task sekaligus chat dengan agent. Setiap komentar Founder diberi keterangan rute, sesuai PRD 17.4:
+  - Mention assignee yang sedang bekerja: "Dikirim ke execution yang sedang berjalan sebagai instruksi tambahan."
+  - Mention agent lain: "Memulai invocation baru untuk …"
+  - Tanpa mention: "Catatan. Agent tidak membacanya sampai dipanggil berikutnya."
+- **ExecutionCard**: agent dan task, status, execution ID, durasi, token / batas, `progress`, langkah terakhir, dan (di detail task dan dashboard) daftar tool yang dipanggil serta log. Tombol Stop memakai varian `destructive` dan membuka `AlertDialog` (copy di brand-guidelines §3.4). Setelah dihentikan, status menjadi Cancelled.
 - **Node org chart**: Founder di puncak sebagai human (PRD 8.1, v1.11) dan tidak bisa diklik. Node agent adalah `<button>` yang membuka sheet detail.
   - Garis atasan tetap: solid.
   - Garis atasan per proyek: putus-putus dengan label kode proyek.
@@ -242,10 +247,12 @@ Yang sudah diimplementasikan di `/states`: empty state 0 agent, skeleton papan, 
 
 ### 7.4 Bukti click-through (R-35)
 
-Setiap mockup dijalankan dari `next build` + `next start`, lalu diuji otomatis dengan Playwright. Hasilnya 35 cek lulus dan 0 error di console. Yang diuji:
+Setiap mockup dijalankan dari `next build` + `next start`, lalu diuji otomatis dengan Playwright. Hasilnya 39 cek lulus dan 0 error di console. Yang diuji:
 - Navigasi sidebar ke 5 halaman.
 - Kanban ↔ List dan tampilkan Cancelled.
 - Review membuka sheet; Escape menutupnya.
+- Detail task In Progress menampilkan panel execution live dan tool yang dipanggil.
+- Rute komentar: mention assignee menjadi instruksi tambahan, mention agent lain memulai invocation baru, tanpa mention menjadi catatan.
 - Blocked tanpa alasan memunculkan error; dengan alasan, task pindah kolom.
 - Setujui memindahkan task ke Done.
 - Buat task: validasi, lalu task muncul di Backlog.

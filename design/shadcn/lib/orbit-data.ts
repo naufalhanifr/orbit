@@ -95,6 +95,12 @@ export const runningExecution = {
   tokens: 84200,
   limit: 300000,
   step: "Menjalankan test integrasi (pnpm test)",
+  tools: [
+    { kind: "Ubah file", detail: "backend/app/executions/stream.py" },
+    { kind: "Ubah file", detail: "web/components/execution-log.tsx" },
+    { kind: "Perintah", detail: "pnpm test (unit): 41 lulus" },
+    { kind: "Perintah", detail: "pnpm test (integrasi): berjalan" },
+  ],
   log: [
     "10:42:03  Mengambil branch orb-11-log-stream",
     "10:42:09  Membaca instruksi agent v7",
@@ -122,6 +128,19 @@ export const tokensPerDay = [
   { day: "Sel", tokens: 2120700 },
   { day: "Rab", tokens: 1284300 },
 ]
+
+export type Comment = { id: number; authorId: string; time: string; text: string; note?: string }
+
+// Thread task = kolom komentar = chat terkait task (PRD 17.4, v1.12).
+export const taskThreads: Record<string, Comment[]> = {
+  "ORB-11": [
+    { id: 1, authorId: "founder", time: "10:41", text: "@Shared Specialist kerjakan ORB-11. Pakai Server-Sent Events, bukan WebSocket." },
+    { id: 2, authorId: "spec", time: "10:42", text: "Mulai di branch orb-11-log-stream dengan SSE. Execution EXE-482." },
+  ],
+  "ORB-9": [
+    { id: 1, authorId: "spec", time: "Kemarin", text: "PR #18 siap di-review. Test: 58 lulus, 0 gagal. Siklus dependency ditolak dengan pesan yang menyebut task penyebabnya." },
+  ],
+}
 
 export const byId = <T extends { id: string }>(list: T[], id?: string) => list.find((x) => x.id === id)
 export const actorById = (id?: string): Actor | undefined => (id === "founder" ? founder : byId(agents, id))

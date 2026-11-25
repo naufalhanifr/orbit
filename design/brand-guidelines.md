@@ -1,6 +1,6 @@
 # ORBIT Brand Guidelines
 
-Versi 2.0 · 2026-11-25 · Pemilik: Founder (EVORA Studio) · Mengikuti PRD v1.11
+Versi 2.0 · 2026-11-25 · Pemilik: Founder (EVORA Studio) · Mengikuti PRD v1.12
 Berlaku untuk: Web UI ORBIT, dokumentasi produk, notifikasi, dan materi tentang ORBIT.
 Pendamping: [`design-system.md`](design-system.md) (spesifikasi), implementasi di [`shadcn/`](shadcn/), token di [`shadcn/app/globals.css`](shadcn/app/globals.css), dan mockup di [`mockups/`](mockups/).
 
@@ -107,6 +107,10 @@ Setelah berhasil, kartu execution menampilkan: *Dihentikan oleh Founder. Task ke
 - Empty Kanban kolom: *Kosong*. (Cukup satu kata. Kolom kosong bukan masalah.)
 - Empty chat (placeholder composer): *Panggil agent dengan @nama. Agent hanya bekerja saat kamu panggil.*
 - Pesan tanpa @mention: *Tidak ada agent yang dipanggil. Pesan tersimpan tanpa memulai execution.*
+- Komentar task (PRD 17.4), keterangan di bawah setiap komentar Founder:
+  - Mention assignee yang sedang bekerja: *Dikirim ke execution yang sedang berjalan sebagai instruksi tambahan.*
+  - Mention agent lain: *Memulai invocation baru untuk PO 1.*
+  - Tanpa mention: *Catatan. Agent tidak membacanya sampai dipanggil berikutnya.*
 - Strip fokus di papan: *Menunggu keputusanmu* · tombol *Review ORB-9* · *Jawab di chat*.
 - Dependency: *Maju otomatis setelah ORB-11 Done.*
 - Task dari chat: label *dari chat*.
