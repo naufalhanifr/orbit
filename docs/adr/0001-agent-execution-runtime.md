@@ -140,8 +140,13 @@ Dengan begitu budget ditegakkan dua lapis: `max_budget_usd` di SDK dan pemblokir
 - Secret Git (token GitHub App berumur pendek) diinjeksi per execution dan dicabut setelah selesai.
 
 ### 3.8 Autentikasi & Branding
-- Menggunakan API key organisasi (Claude API atau penyedia cloud yang didukung). **Login akun claude.ai/langganan tidak digunakan**, sesuai ketentuan Agent SDK untuk produk pihak ketiga.
-- Penggunaan tunduk pada Anthropic Commercial Terms of Service.
+- Target jangka panjang: API key organisasi (Claude API atau penyedia cloud yang didukung), sesuai ketentuan Agent SDK. Penggunaan API tunduk pada Anthropic Commercial Terms of Service.
+- **Keputusan Founder untuk MVP (2026-11-25):** memakai **langganan Claude (subscription)** milik Founder untuk penggunaan internal pribadi. Dokumentasi Agent SDK menyatakan: *"Unless previously approved, Anthropic does not allow third party developers to offer claude.ai login or rate limits for their products, including agents built on the Claude Agent SDK."* Kesesuaian pemakaian langganan untuk kasus ORBIT **belum dikonfirmasi** dan sedang dicek Founder ke Anthropic. Sampai terkonfirmasi, status ini adalah risiko terbuka.
+- Konsekuensi teknis selama memakai langganan:
+  - Autentikasi dibuat **dapat diganti** (subscription ↔ API key) lewat konfigurasi Runner, tanpa perubahan kode agent.
+  - Budget ditegakkan dalam **token** per execution/proyek/organisasi, bukan dolar; `max_budget_usd` tidak dijadikan sumber kebenaran.
+  - Kuota langganan dipakai bersama penggunaan Claude pribadi Founder; jumlah execution paralel dibatasi (default: 1).
+  - Kredensial langganan tidak dapat disuntikkan oleh LLM Gateway seperti API key, sehingga berada di dalam container execution. Mitigasi: egress allowlist ketat, container berumur pendek, kredensial tidak ditulis ke workspace atau log.
 - UI ORBIT tidak menyebut dirinya "Claude Code". Label yang diperbolehkan misalnya "Powered by Claude".
 
 ## 4. Konsekuensi
@@ -159,6 +164,8 @@ Dengan begitu budget ditegakkan dua lapis: `max_budget_usd` di SDK dan pemblokir
 | Prompt injection dari repo/dokumen | `setting_sources=[]`, policy engine di `can_use_tool`, egress allowlist, secret tidak ada di container |
 | `usage` hanya menghitung loop utama | Pakai `model_usage` dan angka dari LLM Gateway sebagai sumber kebenaran biaya |
 | Komponen baru (LLM Gateway) menambah kerja | Mulai dengan reverse proxy tipis; fitur metering bertahap |
+| Pemakaian langganan untuk MVP mungkin tidak sesuai ketentuan Anthropic | Founder mengonfirmasi ke Anthropic; autentikasi dapat diganti ke API key tanpa perubahan kode agent |
+| Kredensial langganan berada di dalam container | Egress allowlist, container berumur pendek, kredensial tidak ditulis ke disk workspace/log; pindah ke API key + gateway untuk produksi |
 
 ### Netral
 - Opsi C (Managed Agents) dapat ditinjau ulang lewat ADR baru jika beban operasional container terlalu besar.
