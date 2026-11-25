@@ -2,59 +2,18 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { CirclePause, Gauge, GitPullRequest, MessageCircleQuestion, OctagonAlert } from "lucide-react"
+import { CirclePause, GitPullRequest, MessageCircleQuestion, OctagonAlert } from "lucide-react"
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { budget, formatTokens } from "@/lib/orbit-data"
 
-/** One entry per thing only the Founder can move forward (PRD 4.4, v1.14). */
+/** One entry per thing only the Founder can move forward (PRD 4.4, v1.15). */
 export type WaitingItem =
   | { kind: "approval"; taskId: string; pr: number }
   | { kind: "question"; taskId: string; agent: string }
   | { kind: "suspended"; execId: string; taskId: string }
   | { kind: "blocked"; taskId: string; reason: string }
-  | { kind: "budget"; taskId: string }
 
-const ICON = { approval: GitPullRequest, question: MessageCircleQuestion, suspended: CirclePause, blocked: OctagonAlert, budget: Gauge }
-
-function BudgetConfirm({ taskId, onRun }: { taskId: string; onRun: () => void }) {
-  const [open, setOpen] = React.useState(false)
-  return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger render={<Button size="sm" variant="outline" />}>Run anyway</AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Run despite the daily budget?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {formatTokens(budget.perDay)} tokens are already used today. This run of {taskId} can use up to {formatTokens(budget.perExecution)} more tokens over the daily limit.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => {
-              setOpen(false)
-              onRun()
-            }}
-          >
-            Run {taskId}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
-}
+const ICON = { approval: GitPullRequest, question: MessageCircleQuestion, suspended: CirclePause, blocked: OctagonAlert }
 
 export function WaitingOnYou({ items, onOpenTask }: { items: WaitingItem[]; onOpenTask?: (taskId: string) => void }) {
   const [done, setDone] = React.useState<Record<string, string>>({})
@@ -84,7 +43,6 @@ export function WaitingOnYou({ items, onOpenTask }: { items: WaitingItem[]; onOp
                 {i.kind === "question" && <>{i.agent} asked a question</>}
                 {i.kind === "suspended" && <>{i.execId} was suspended after 30 minutes without an answer</>}
                 {i.kind === "blocked" && <>Blocked: {i.reason}</>}
-                {i.kind === "budget" && <>A run you started is waiting: the daily budget is reached</>}
               </p>
               {i.kind === "approval" && (
                 <Button size="sm" variant="outline" {...openProps(i.taskId)}>Review {i.taskId}</Button>
@@ -99,9 +57,6 @@ export function WaitingOnYou({ items, onOpenTask }: { items: WaitingItem[]; onOp
               )}
               {i.kind === "blocked" && (
                 <Button size="sm" variant="outline" {...openProps(i.taskId)}>Review blocker</Button>
-              )}
-              {i.kind === "budget" && (
-                <BudgetConfirm taskId={i.taskId} onRun={() => setDone((d) => ({ ...d, [key(i)]: `${i.taskId} is queued over the daily budget.` }))} />
               )}
             </li>
           )

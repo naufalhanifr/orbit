@@ -15,10 +15,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import { ActorAvatar } from "@/components/orbit/actor-avatar"
 import { EXEC_STATUS, StatusBadge } from "@/components/orbit/status"
-import { actorById, byId, formatTokens, runningExecution, tasks, type ExecStatus } from "@/lib/orbit-data"
+import { actorById, byId, formatTokens, runningExecution, tasks, usage, type ExecStatus } from "@/lib/orbit-data"
 import { cn } from "@/lib/utils"
 
 type Exec = typeof runningExecution
@@ -62,7 +61,7 @@ export function ExecutionCard({ className, showLog = false, stopOpen }: { classN
   const exec = runningExecution
   const agent = actorById(exec.agentId)!
   const task = byId(tasks, exec.taskId)!
-  const progress = exec.tokens / exec.limit
+  const progress = exec.minutes / usage.timeoutMinutes
   const running = status === "running"
   return (
     <section aria-label={`Execution ${exec.id}`} className={cn("flex flex-col gap-3 rounded-lg bg-card p-4 ring-1 ring-foreground/10", className)}>
@@ -78,12 +77,13 @@ export function ExecutionCard({ className, showLog = false, stopOpen }: { classN
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" aria-live="polite">
         <StatusBadge def={EXEC_STATUS[status]} progress={progress} />
         <span className="font-mono text-muted-foreground">{exec.id}</span>
-        <span className="font-mono tabular-nums text-muted-foreground">{exec.elapsed}</span>
+        <span className="font-mono tabular-nums text-muted-foreground">
+          {exec.elapsed} <span className="sr-only">elapsed</span>of {usage.timeoutMinutes}m timeout
+        </span>
         <span className="ml-auto font-mono tabular-nums">
-          {formatTokens(exec.tokens)} <span className="text-muted-foreground">/ {formatTokens(exec.limit)} tokens</span>
+          {formatTokens(exec.tokens)} <span className="text-muted-foreground">tokens used</span>
         </span>
       </div>
-      <Progress value={Math.round(progress * 100)} aria-label="Tokens used of the per-execution limit" />
       <p className="font-mono text-xs text-muted-foreground">
         {running ? <>Last step: {exec.step}</> : <>Stopped by the Founder. Task returned to Assigned.</>}
       </p>

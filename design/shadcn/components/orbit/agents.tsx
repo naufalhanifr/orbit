@@ -6,9 +6,9 @@ import { CircleCheck, Plus } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -17,13 +17,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { ActorAvatar } from "@/components/orbit/actor-avatar"
 import { AGENT_STATUS, StatusBadge } from "@/components/orbit/status"
-import { actorById, agents, projects } from "@/lib/orbit-data"
+import { actorById, agents, projects, runningExecution, usage, type Agent } from "@/lib/orbit-data"
+
+const worksInLabel = (a: Agent) =>
+  a.worksIn === "all" ? "All projects" : a.worksIn.map((k) => projects.find((p) => p.key === k)?.name ?? k).join(", ")
 
 export function AgentList() {
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6">
       <div className="flex items-center gap-2">
-        <p className="text-sm text-muted-foreground">{agents.length} agents. Agents without an agent manager report directly to the Founder.</p>
+        <p className="text-sm text-muted-foreground">{agents.length} agents. New agents report directly to the Founder until you pick an agent manager.</p>
         <Button className="ml-auto" render={<Link href="/agents/new" />}>
           <Plus aria-hidden="true" />
           Create agent
@@ -35,8 +38,8 @@ export function AgentList() {
             <TableRow>
               <TableHead>Agent</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Fixed manager</TableHead>
-              <TableHead>Per-project managers</TableHead>
+              <TableHead>Reports to</TableHead>
+              <TableHead>Works in</TableHead>
               <TableHead>Model</TableHead>
               <TableHead>Permissions</TableHead>
               <TableHead className="text-right">Instructions</TableHead>
@@ -54,13 +57,18 @@ export function AgentList() {
                     </span>
                   </span>
                 </TableCell>
-                <TableCell><StatusBadge def={AGENT_STATUS[a.status]} progress={0.28} /></TableCell>
-                <TableCell>{actorById(a.managerId)?.name}</TableCell>
-                <TableCell className="text-muted-foreground">
-                  {a.projectManagers
-                    ? Object.entries(a.projectManagers).map(([p, m]) => `${p} → ${actorById(m)?.name}`).join(", ")
-                    : "None"}
+                <TableCell><StatusBadge def={AGENT_STATUS[a.status]} progress={runningExecution.minutes / usage.timeoutMinutes} /></TableCell>
+                <TableCell>
+                  <span className="flex flex-col">
+                    <span>{actorById(a.managerId)?.name}</span>
+                    {a.projectManagers ? (
+                      <span className="text-muted-foreground">
+                        {Object.entries(a.projectManagers).map(([p, m]) => `${p}: ${actorById(m)?.name}`).join(", ")}
+                      </span>
+                    ) : null}
+                  </span>
                 </TableCell>
+                <TableCell>{worksInLabel(a)}</TableCell>
                 <TableCell>{a.model}</TableCell>
                 <TableCell className="font-mono">{a.preset}</TableCell>
                 <TableCell className="text-right font-mono">v{a.instructionVersion}</TableCell>
@@ -73,13 +81,13 @@ export function AgentList() {
   )
 }
 
-const managers = [{ id: "founder", name: "Founder (direct)" }, ...agents.map((a) => ({ id: a.id, name: `${a.name}, ${a.title}` }))]
-
 export function AgentBuilder() {
   const [errors, setErrors] = React.useState<Record<string, string>>({})
-  const [saved, setSaved] = React.useState(false)
+  const [saved, setSaved] = React.useState<string | null>(null)
   const [instructions, setInstructions] = React.useState("")
-  const [manager, setManager] = React.useState<string | null>("founder")
+  const [manager, setManager] = React.useState<string | null>(null)
+  const [scope, setScope] = React.useState("selected")
+  const [selected, setSelected] = React.useState<string[]>([])
 
   return (
     <form
@@ -91,18 +99,21 @@ export function AgentBuilder() {
         const next: Record<string, string> = {}
         if (!String(f.get("name") ?? "").trim()) next.name = "Enter a name."
         if (!String(f.get("title") ?? "").trim()) next.title = "Enter a title."
+        if (scope === "selected" && !selected.length) next.worksIn = "Pick at least one project, or choose All projects."
         if (!instructions.trim()) next.instructions = "Enter instructions. The agent works only from these."
-        const limit = Number(String(f.get("limit") ?? "").replace(/\D/g, ""))
-        if (!limit || limit > 300000) next.limit = "Enter a number from 1 to 300,000 (the default per-execution limit)."
         setErrors(next)
-        setSaved(Object.keys(next).length === 0)
+        setSaved(
+          Object.keys(next).length
+            ? null
+            : `It starts as Idle and reports to ${manager ? actorById(manager)?.name : "the Founder"}.`
+        )
       }}
     >
       {saved ? (
         <Alert>
           <CircleCheck aria-hidden="true" />
-          <AlertTitle>Agent saved as Draft, instructions v1.</AlertTitle>
-          <AlertDescription>It becomes Ready automatically when its first task moves to Assigned.</AlertDescription>
+          <AlertTitle>Agent saved with instructions v1.</AlertTitle>
+          <AlertDescription>{saved}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -124,79 +135,79 @@ export function AgentBuilder() {
 
       <FieldSet>
         <FieldLegend>Structure</FieldLegend>
-        <FieldGroup className="grid gap-4 md:grid-cols-2">
+        <FieldGroup className="grid gap-6 md:grid-cols-2">
           <Field>
-            <FieldLabel htmlFor="manager">Fixed manager</FieldLabel>
+            <FieldLabel htmlFor="manager">Reports to</FieldLabel>
             <Select value={manager} onValueChange={(v) => setManager(v as string | null)}>
               <SelectTrigger id="manager" className="w-full">
-                <SelectValue>{(v: string) => managers.find((m) => m.id === v)?.name}</SelectValue>
+                <SelectValue>{(v: string | null) => (v ? actorById(v)?.name : "No agent manager")}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {managers.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                <SelectItem value={null}>No agent manager</SelectItem>
+                {agents.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>{a.name}, {a.title}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <FieldDescription>Choose Founder if the agent reports directly to the Founder.</FieldDescription>
+            <FieldDescription>
+              Without an agent manager, the agent sits directly under the Founder. Per-project managers are set on the project assignment.
+            </FieldDescription>
           </Field>
-          <Field>
-            <FieldLabel>Per-project managers</FieldLabel>
-            <div className="flex flex-col gap-2">
-              {projects.map((p) => (
-                <div key={p.key} className="flex items-center gap-2">
-                  <Label htmlFor={`pm-${p.key}`} className="w-20 shrink-0 font-mono text-muted-foreground">{p.key}</Label>
-                  <Select defaultValue={null}>
-                    <SelectTrigger id={`pm-${p.key}`} className="w-full">
-                      <SelectValue>{(v: string | null) => (v ? managers.find((m) => m.id === v)?.name : "Use fixed manager")}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={null}>Use fixed manager</SelectItem>
-                      {managers.slice(1).map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+          <Field data-invalid={!!errors.worksIn || undefined}>
+            <FieldLabel id="works-in-label">Works in</FieldLabel>
+            <RadioGroup value={scope} onValueChange={(v) => setScope(v as string)} aria-labelledby="works-in-label" className="gap-2">
+              <Label htmlFor="scope-selected" className="flex items-center gap-2 font-normal">
+                <RadioGroupItem id="scope-selected" value="selected" />
+                Selected projects
+              </Label>
+              {scope === "selected" ? (
+                <div className="ml-6 flex flex-col gap-2" role="group" aria-label="Projects">
+                  {projects.map((p) => (
+                    <Label key={p.key} htmlFor={`project-${p.key}`} className="flex items-center gap-2 font-normal">
+                      <Checkbox
+                        id={`project-${p.key}`}
+                        checked={selected.includes(p.key)}
+                        onCheckedChange={(on) => setSelected((s) => (on ? [...s, p.key] : s.filter((k) => k !== p.key)))}
+                        aria-invalid={!!errors.worksIn || undefined}
+                      />
+                      {p.name} <span className="font-mono text-muted-foreground">{p.key}</span>
+                    </Label>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <FieldDescription>A per-project manager decides where work reports go for tasks in that project.</FieldDescription>
+              ) : null}
+              <Label htmlFor="scope-all" className="flex items-center gap-2 font-normal">
+                <RadioGroupItem id="scope-all" value="all" />
+                All projects, including ones created later
+              </Label>
+            </RadioGroup>
+            {errors.worksIn ? <FieldError>{errors.worksIn}</FieldError> : <FieldDescription>The agent can only be assigned tasks in these projects.</FieldDescription>}
           </Field>
         </FieldGroup>
       </FieldSet>
 
       <FieldSet>
         <FieldLegend>Runtime</FieldLegend>
-        <FieldGroup className="grid gap-4 md:grid-cols-2">
-          <Field>
-            <FieldLabel htmlFor="model">Model</FieldLabel>
-            <Select defaultValue="Claude Sonnet">
-              <SelectTrigger id="model" className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Claude Sonnet">Claude Sonnet</SelectItem>
-                <SelectItem value="Claude Opus">Claude Opus</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field data-invalid={!!errors.limit || undefined}>
-            <FieldLabel htmlFor="limit">Token limit per execution</FieldLabel>
-            <InputGroup>
-              <InputGroupInput id="limit" name="limit" inputMode="numeric" defaultValue="300,000" className="font-mono tabular-nums" aria-invalid={!!errors.limit || undefined} />
-              <InputGroupAddon align="inline-end"><InputGroupText>tokens</InputGroupText></InputGroupAddon>
-            </InputGroup>
-            {errors.limit ? <FieldError>{errors.limit}</FieldError> : <FieldDescription>The execution stops automatically when it reaches this limit.</FieldDescription>}
-          </Field>
-        </FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="model">Model</FieldLabel>
+          <Select defaultValue="Claude Sonnet">
+            <SelectTrigger id="model" className="w-full md:w-1/2"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Claude Sonnet">Claude Sonnet</SelectItem>
+              <SelectItem value="Claude Opus">Claude Opus</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
         <Field>
           <FieldLabel id="preset-label">Tool permission preset</FieldLabel>
           <RadioGroup defaultValue="read-only" aria-labelledby="preset-label" className="grid gap-2 md:grid-cols-2">
             {[
-              { v: "read-only", t: "read-only", d: "Reads the repo and documents. Cannot change code." },
-              { v: "coding", t: "coding", d: "Changes code, runs tests and opens PRs in the project repo." },
+              { v: "read-only", d: "Reads the repo and documents. Cannot change code." },
+              { v: "coding", d: "Changes code, runs tests and opens PRs in the project repo." },
             ].map((o) => (
               <Label key={o.v} htmlFor={`preset-${o.v}`} className="flex items-start gap-3 rounded-lg p-3 ring-1 ring-input has-data-checked:ring-2 has-data-checked:ring-ring">
                 <RadioGroupItem id={`preset-${o.v}`} value={o.v} className="mt-0.5" />
                 <span className="flex flex-col gap-1">
-                  <span className="font-mono font-medium">{o.t}</span>
+                  <span className="font-mono font-medium">{o.v}</span>
                   <span className="font-normal text-muted-foreground">{o.d}</span>
                 </span>
               </Label>

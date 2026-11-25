@@ -1,5 +1,4 @@
 import {
-  Archive,
   Check,
   Circle,
   CircleCheck,
@@ -11,10 +10,6 @@ import {
   Hourglass,
   MessageCircleQuestion,
   OctagonAlert,
-  Pause,
-  PencilLine,
-  RotateCcw,
-  Settings2,
   X,
   type LucideIcon,
 } from "lucide-react"
@@ -32,7 +27,6 @@ export const TASK_STATUS: Record<TaskStatus, Def> = {
   assigned: { label: "Assigned", icon: Circle, cls: "bg-task-assigned-subtle text-task-assigned-foreground", dot: "bg-task-assigned" },
   "in-progress": { label: "In Progress", icon: "orbit", cls: "bg-task-in-progress-subtle text-task-in-progress-foreground", dot: "bg-task-in-progress" },
   "founder-approval": { label: "Founder Approval", icon: GitPullRequest, cls: "bg-task-founder-approval-subtle text-task-founder-approval-foreground", dot: "bg-task-founder-approval" },
-  revision: { label: "Revision", icon: RotateCcw, cls: "bg-task-revision-subtle text-task-revision-foreground", dot: "bg-task-revision" },
   blocked: { label: "Blocked", icon: OctagonAlert, cls: "bg-task-blocked-subtle text-task-blocked-foreground", dot: "bg-task-blocked" },
   done: { label: "Done", icon: CircleCheck, cls: "bg-task-done-subtle text-task-done-foreground", dot: "bg-task-done" },
   cancelled: { label: "Cancelled", icon: CircleSlash, cls: "bg-task-cancelled-subtle text-task-cancelled-foreground", dot: "bg-task-cancelled" },
@@ -49,14 +43,11 @@ export const EXEC_STATUS: Record<ExecStatus, Def> = {
   suspended: { label: "Suspended", icon: CirclePause, cls: "bg-exec-suspended-subtle text-exec-suspended-foreground", dot: "bg-exec-suspended" },
 }
 
+// PRD 10 (v1.15): Idle, Running, Blocked, derived from tasks and executions.
 export const AGENT_STATUS: Record<AgentStatus, Def> = {
-  draft: { label: "Draft", icon: PencilLine, cls: "bg-agent-status-draft-subtle text-agent-status-draft-foreground", dot: "bg-agent-status-draft" },
-  configuring: { label: "Configuring", icon: Settings2, cls: "bg-agent-status-configuring-subtle text-agent-status-configuring-foreground", dot: "bg-agent-status-configuring" },
-  ready: { label: "Ready", icon: Circle, cls: "bg-agent-status-ready-subtle text-agent-status-ready-foreground", dot: "bg-agent-status-ready" },
-  active: { label: "Active", icon: "orbit", cls: "bg-agent-status-active-subtle text-agent-status-active-foreground", dot: "bg-agent-status-active" },
-  paused: { label: "Paused", icon: Pause, cls: "bg-agent-status-paused-subtle text-agent-status-paused-foreground", dot: "bg-agent-status-paused" },
-  error: { label: "Error", icon: OctagonAlert, cls: "bg-agent-status-error-subtle text-agent-status-error-foreground", dot: "bg-agent-status-error" },
-  archived: { label: "Archived", icon: Archive, cls: "bg-agent-status-archived-subtle text-agent-status-archived-foreground", dot: "bg-agent-status-archived" },
+  idle: { label: "Idle", icon: Circle, cls: "bg-agent-status-idle-subtle text-agent-status-idle-foreground", dot: "bg-agent-status-idle" },
+  running: { label: "Running", icon: "orbit", cls: "bg-agent-status-running-subtle text-agent-status-running-foreground", dot: "bg-agent-status-running" },
+  blocked: { label: "Blocked", icon: OctagonAlert, cls: "bg-agent-status-blocked-subtle text-agent-status-blocked-foreground", dot: "bg-agent-status-blocked" },
 }
 
 export function StatusIcon({ def, progress, className }: { def: Def; progress?: number; className?: string }) {

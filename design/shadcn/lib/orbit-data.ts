@@ -6,7 +6,6 @@ export type TaskStatus =
   | "assigned"
   | "in-progress"
   | "founder-approval"
-  | "revision"
   | "blocked"
   | "done"
   | "cancelled"
@@ -21,14 +20,8 @@ export type ExecStatus =
   | "cancelled"
   | "suspended"
 
-export type AgentStatus =
-  | "draft"
-  | "configuring"
-  | "ready"
-  | "active"
-  | "paused"
-  | "error"
-  | "archived"
+// PRD 10 (v1.15): derived from the agent's tasks and executions, never set by hand.
+export type AgentStatus = "idle" | "running" | "blocked"
 
 export type Actor = { id: string; name: string; title: string; kind: "human" | "agent" }
 
@@ -39,17 +32,18 @@ export type Agent = Actor & {
   status: AgentStatus
   model: string
   preset: "read-only" | "coding"
-  managerId: string // fixed manager; "founder" when reporting directly to the Founder
-  projectManagers?: Record<string, string> // per-project manager (matrix)
+  managerId: string // Reports to; "founder" when the agent has no agent manager (the default)
+  worksIn: "all" | string[] // Works in: all projects, or selected project keys
+  projectManagers?: Record<string, string> // per-project manager from project assignment (PRD 8.2)
   instructionVersion: number
 }
 
 export const agents: Agent[] = [
-  { id: "cto", name: "CTO", title: "Chief Technology Officer", kind: "agent", status: "ready", model: "Claude Opus", preset: "read-only", managerId: "founder", instructionVersion: 4 },
-  { id: "cmo", name: "CMO", title: "Chief Marketing Officer", kind: "agent", status: "draft", model: "Claude Sonnet", preset: "read-only", managerId: "founder", instructionVersion: 1 },
-  { id: "po1", name: "PO 1", title: "Product Owner ORBIT", kind: "agent", status: "ready", model: "Claude Sonnet", preset: "read-only", managerId: "cto", instructionVersion: 3 },
-  { id: "po2", name: "PO 2", title: "Product Owner Sandbox", kind: "agent", status: "paused", model: "Claude Sonnet", preset: "read-only", managerId: "cto", instructionVersion: 2 },
-  { id: "spec", name: "Shared Specialist", title: "Backend Engineer", kind: "agent", status: "active", model: "Claude Opus", preset: "coding", managerId: "cto", projectManagers: { ORB: "po1", SBX: "po2" }, instructionVersion: 7 },
+  { id: "cto", name: "CTO", title: "Chief Technology Officer", kind: "agent", status: "idle", model: "Claude Opus", preset: "read-only", managerId: "founder", worksIn: "all", instructionVersion: 4 },
+  { id: "cmo", name: "CMO", title: "Chief Marketing Officer", kind: "agent", status: "idle", model: "Claude Sonnet", preset: "read-only", managerId: "founder", worksIn: "all", instructionVersion: 1 },
+  { id: "po1", name: "PO 1", title: "Product Owner ORBIT", kind: "agent", status: "idle", model: "Claude Sonnet", preset: "read-only", managerId: "cto", worksIn: ["ORB"], instructionVersion: 3 },
+  { id: "po2", name: "PO 2", title: "Product Owner Sandbox", kind: "agent", status: "idle", model: "Claude Sonnet", preset: "read-only", managerId: "cto", worksIn: ["SBX"], instructionVersion: 2 },
+  { id: "spec", name: "Shared Specialist", title: "Backend Engineer", kind: "agent", status: "running", model: "Claude Opus", preset: "coding", managerId: "cto", worksIn: ["ORB", "SBX"], projectManagers: { ORB: "po1", SBX: "po2" }, instructionVersion: 7 },
 ]
 
 export const projects = [
@@ -73,19 +67,21 @@ export type Task = {
 
 export const tasks: Task[] = [
   { id: "ORB-15", title: "Agent Builder page", status: "backlog", criteria: [], note: "No acceptance criteria yet" },
-  { id: "ORB-13", title: "Block automatic executions when the daily budget is reached", status: "backlog", assigneeId: "spec", dependsOn: ["ORB-11"], criteria: ["Automatic executions are rejected once today's usage hits the limit", "Founder-triggered executions ask for confirmation"] },
+  { id: "ORB-13", title: "Stop executions after the 60-minute timeout", status: "backlog", assigneeId: "spec", dependsOn: ["ORB-11"], criteria: ["An execution running for 60 minutes is stopped and marked Failed", "The log states that the timeout ended it"] },
   { id: "ORB-12", title: "Stop execution button with confirmation", status: "assigned", assigneeId: "spec", criteria: ["Stop shuts down the container", "Execution status becomes Cancelled"] },
   { id: "ORB-16", title: "Fix the locked-login error message", status: "assigned", assigneeId: "spec", fromChat: true, criteria: ["Message states the 15-minute lockout"] },
   { id: "ORB-11", title: "Stream execution logs to the web UI", status: "in-progress", assigneeId: "spec", tokens: 84200, criteria: ["Log lines appear without a reload", "Dropped connections reconnect automatically", "Integration tests pass"] },
   { id: "ORB-9", title: "Task dependencies with automatic advance", status: "founder-approval", assigneeId: "spec", pr: 18, tokens: 212400, criteria: ["Task moves to Assigned when its last dependency is Done", "Dependency cycles are rejected", "Tests pass"] },
-  { id: "ORB-14", title: "Matrix org chart with per-project lines", status: "revision", assigneeId: "spec", pr: 19, note: "Feedback: project labels hide behind nodes where lines cross", criteria: ["Per-project manager lines are labeled with the project"] },
+  { id: "ORB-14", title: "Matrix org chart with per-project lines", status: "in-progress", assigneeId: "spec", pr: 19, tokens: 52300, note: "Revision 1. Feedback: project labels hide behind nodes where lines cross", criteria: ["Per-project manager lines are labeled with the project"] },
   { id: "ORB-10", title: "Lock login after 5 failed attempts", status: "blocked", previousStatus: "in-progress", assigneeId: "spec", pr: 17, note: "2 tests still fail after 3 attempts. PR opened as draft.", criteria: ["Account locks for 15 minutes after 5 failures"] },
   { id: "ORB-7", title: "MVP task state machine", status: "done", assigneeId: "spec", pr: 12, tokens: 188900, criteria: [] },
   { id: "ORB-1", title: "Email and password login", status: "done", assigneeId: "spec", pr: 4, tokens: 143100, criteria: [] },
   { id: "ORB-8", title: "Password reset by email", status: "cancelled", note: "Replaced by a server command (PRD 4.4)", criteria: [] },
 ]
 
-export const budget = { perExecution: 300000, perDay: 3000000, usedToday: 1284300 }
+// PRD 4.4 (v1.15): no token budget in the MVP. Usage is recorded and shown; the 60-minute
+// execution timeout is the only limit.
+export const usage = { tokensToday: 1284300, timeoutMinutes: 60 }
 
 export const runningExecution = {
   id: "EXE-482",
@@ -93,8 +89,8 @@ export const runningExecution = {
   agentId: "spec",
   status: "running" as ExecStatus,
   elapsed: "18m 40s",
+  minutes: 18.7,
   tokens: 84200,
-  limit: 300000,
   step: "Running integration tests (pnpm test)",
   tools: [
     { kind: "Edit file", detail: "backend/app/executions/stream.py" },
@@ -112,13 +108,13 @@ export const runningExecution = {
   ],
 }
 
-export const recentExecutions: { id: string; taskId: string; status: ExecStatus; tokens: number; duration: string }[] = [
-  { id: "EXE-482", taskId: "ORB-11", status: "running", tokens: 84200, duration: "18m" },
-  { id: "EXE-483", taskId: "ORB-16", status: "preparing", tokens: 0, duration: "0m" },
-  { id: "EXE-479", taskId: "ORB-9", status: "completed", tokens: 212400, duration: "41m" },
-  { id: "EXE-477", taskId: "ORB-14", status: "waiting", tokens: 52300, duration: "9m" },
-  { id: "EXE-471", taskId: "ORB-10", status: "failed", tokens: 296800, duration: "57m" },
-  { id: "EXE-468", taskId: "ORB-12", status: "suspended", tokens: 12100, duration: "30m" },
+export const recentExecutions: { id: string; taskId: string; status: ExecStatus; tokens: number; minutes: number }[] = [
+  { id: "EXE-482", taskId: "ORB-11", status: "running", tokens: 84200, minutes: 18 },
+  { id: "EXE-483", taskId: "ORB-16", status: "preparing", tokens: 0, minutes: 0 },
+  { id: "EXE-479", taskId: "ORB-9", status: "completed", tokens: 212400, minutes: 41 },
+  { id: "EXE-477", taskId: "ORB-14", status: "waiting", tokens: 52300, minutes: 9 },
+  { id: "EXE-471", taskId: "ORB-10", status: "failed", tokens: 296800, minutes: 57 },
+  { id: "EXE-468", taskId: "ORB-12", status: "suspended", tokens: 12100, minutes: 30 },
 ]
 
 export const tokensPerDay = [

@@ -1,12 +1,12 @@
 import { cn } from "@/lib/utils"
 
 /**
- * ORBIT identity motif for work in progress (In Progress, Running, Active).
- * Orbit = per-execution token limit; satellite position = share already used
+ * ORBIT identity motif for work in progress (In Progress, Running).
+ * Orbit = the 60-minute execution timeout; satellite position = time already elapsed
  * (clockwise from the top). Static (MOTION 1): it only moves when the data changes.
  */
 export function OrbitIndicator({
-  progress = 0.15,
+  progress = 0,
   className,
 }: {
   progress?: number

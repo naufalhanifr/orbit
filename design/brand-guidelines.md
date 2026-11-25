@@ -1,6 +1,6 @@
 # ORBIT Brand Guidelines
 
-Versi 2.0 · 2026-11-25 · Pemilik: Founder (EVORA Studio) · Mengikuti PRD v1.14
+Versi 2.0 · 2026-11-25 · Pemilik: Founder (EVORA Studio) · Mengikuti PRD v1.15
 Berlaku untuk: Web UI ORBIT, dokumentasi produk, notifikasi, dan materi tentang ORBIT.
 Pendamping: [`design-system.md`](design-system.md) (spesifikasi), implementasi di [`shadcn/`](shadcn/), token di [`shadcn/app/globals.css`](shadcn/app/globals.css), dan mockup di [`mockups/`](mockups/).
 
@@ -29,7 +29,7 @@ Tema visual dan verbal: **minimalis**. ORBIT terasa seperti ruang kendali yang t
 |---|---|
 | **Tenang.** Status buruk disampaikan datar dan jelas, tanpa panik. | Dramatis, penuh tanda seru. |
 | **Tegas.** Menyebut apa yang terjadi, siapa pelakunya, dan langkah berikutnya. | Samar ("Terjadi kesalahan"). |
-| **Jujur soal biaya dan risiko.** Token, batas, dan aksi yang tidak bisa dibatalkan selalu disebut. | Menyembunyikan konsekuensi. |
+| **Jujur soal biaya dan risiko.** Pemakaian token, timeout, dan aksi yang tidak bisa dibatalkan selalu disebut. | Menyembunyikan konsekuensi. |
 | **Manusia memegang kendali.** Agent adalah rekan kerja yang dibatasi policy, bukan sihir. | "AI magic", "autopilot", hype. |
 
 ## 3. Tone of Voice
@@ -52,12 +52,9 @@ Label status memakai nama dari PRD. Teks bantu di bawah ini dipakai untuk toolti
 
 | Status agent (PRD 10) | Teks bantu |
 |---|---|
-| Draft / Configuring | Hasn’t worked yet. Becomes Ready automatically when its first task moves to Assigned. |
-| Ready | Ready for tasks. Uses no tokens until invoked. |
-| Active | Working on *ORB-11 Stream execution logs to the web UI* · 18m 40s · 84,200 tokens |
-| Paused | Paused by the Founder. Can’t take tasks until resumed. |
-| Error | The last execution failed. Check the log before assigning new work. |
-| Archived | Inactive. Agents that still have reports can’t be archived. |
+| Idle | Not working on a task. Uses no tokens until invoked. |
+| Running | Working on *ORB-11 Stream execution logs to the web UI* · 18m 40s · 84,200 tokens |
+| Blocked | Stopped mid-task: *ORB-10 is Blocked*. Open the task to unblock it. |
 
 | Status execution | Teks bantu |
 |---|---|
@@ -80,7 +77,6 @@ Variasi singkat (daftar @mention tanpa hasil): *No agent with that name in this 
 
 | Situasi | Judul | Isi | Aksi |
 |---|---|---|---|
-| Budget harian habis | Daily budget reached | 3,000,000 of 3,000,000 tokens used today. Automatic executions are paused until 00:00. | Run anyway (needs confirmation) · View usage |
 | Execution gagal | Execution failed | Shared Specialist stopped at "Running tests": 2 tests failed. PR opened as draft and the task is Blocked. | View log · Open draft PR |
 | Timeout | Execution passed 60 minutes | The execution was stopped automatically. Changes up to this point are on branch `orb-12-login`. | View log · Run again |
 | GitHub | Can’t reach GitHub | ORBIT can’t access the *sandbox* repo. Check the GitHub App installation. | Try again |
@@ -108,7 +104,6 @@ Setelah berhasil, kartu execution menampilkan: *Stopped by the Founder. Task ret
   - *Shared Specialist asked a question* · [Answer in chat]
   - *EXE-468 was suspended after 30 minutes without an answer* · [Resume EXE-468]
   - *Blocked: 2 tests still fail after 3 attempts.* · [Review blocker]
-  - *A run you started is waiting: the daily budget is reached* · [Run anyway]
 - Placeholder composer chat: *Mention an agent with @name. Agents only work when you invoke them.*
 - Pesan tanpa @mention: *No agent mentioned. Saved without starting an execution.*
 - Keterangan komentar task (PRD 17.4):
@@ -118,7 +113,8 @@ Setelah berhasil, kartu execution menampilkan: *Stopped by the Founder. Task ret
 - Dependency: *Moves on automatically once ORB-11 is Done.*
 - Kolom Kanban kosong: *Empty*.
 - Task dari chat: label *from chat*.
-- Konfirmasi run saat budget habis: **Run despite the daily budget?** · *This execution can use up to 300,000 tokens over the daily limit.* · [Cancel] [Run]
+- Request revision (dialog): *The task returns to In Progress. Feedback goes to the agent and counts as one revision cycle.*
+- Agent Builder, Reports to kosong: *No agent manager* · *Without an agent manager, the agent sits directly under the Founder.*
 - Atribusi runtime: *Powered by Claude* (jangan menyebut "Claude Code" di UI, PRD 18.1).
 
 ## 4. Logo
@@ -175,10 +171,10 @@ Nilai di atas adalah konversi hex dari oklch di `globals.css` (sumber kebenaran)
 
 | Tone | Makna | Dipakai oleh |
 |---|---|---|
-| Netral | Belum berjalan atau tidak aktif | Backlog, Assigned, Cancelled, Queued, Draft, Configuring, Ready, Paused, Archived |
-| Tinta | Sedang dikerjakan | In Progress, Revision, Running, Active |
+| Netral | Belum berjalan atau tidak aktif | Backlog, Assigned, Cancelled, Queued, Preparing, agent Idle |
+| Tinta | Sedang dikerjakan | In Progress, Running (execution dan agent) |
 | **Amber** | **Menunggu kamu** (Founder) | Founder Approval, Waiting for Input, Suspended |
-| Merah | Bermasalah | Blocked, Failed, Error |
+| Merah | Bermasalah | Blocked (task dan agent), Failed |
 | Hijau | Selesai dengan hasil | Done, Completed |
 
 Biru tidak dipakai untuk status, supaya tetap bekerja sebagai aksen. Human dan agent dibedakan oleh bentuk dan isi warna (lingkaran terang vs kotak membulat berwarna tinta), bukan oleh warna tambahan.
@@ -201,7 +197,7 @@ Gunakan angka tabular (`tabular-nums`) untuk kolom angka dan penghitung token ya
 - Ukuran 16 px (`size-4`) di dalam teks dan tombol; 14 px (`size-3.5`) di badge padat; 20 px untuk empty state. Stroke bawaan 2.
 - Ikon status (selalu dipasangkan dengan teks):
 
-Daftar ikon per status ada di design-system §2.3. Status yang sedang berjalan (In Progress, Running, Active) tidak memakai ikon lucide; ikonnya adalah `OrbitIndicator` (lintasan + satelit), yang statis dan tanpa animasi. Tombol Stop memakai `square`.
+Daftar ikon per status ada di design-system §2.3. Status yang sedang berjalan (In Progress, Running) tidak memakai ikon lucide; ikonnya adalah `OrbitIndicator` (lintasan + satelit), yang statis dan tanpa animasi. Tombol Stop memakai `square`.
 
 - Ikon tanpa label wajib memiliki `aria-label` dan `Tooltip`.
 
@@ -219,4 +215,4 @@ Daftar ikon per status ada di design-system §2.3. Status yang sedang berjalan (
 | Teks bantu pakai `muted-foreground`. | Menurunkan opacity teks untuk membuat teks bantu (bisa gagal kontras). |
 | Gerak hanya untuk hover, focus, dan transisi overlay bawaan. | Animasi berulang (spinner, denyut skeleton), confetti, efek ketik. |
 | Microcopy yang menyebut pelaku, angka, dan langkah berikutnya. | "Oops!", "Something went wrong", emoji, CTA generik ("Learn more", "Get started", "Explore"). |
-| Konfirmasi untuk aksi yang tidak bisa dibatalkan atau memakan budget besar. | Konfirmasi untuk hal kecil yang bisa di-undo. |
+| Konfirmasi untuk aksi yang tidak bisa dibatalkan, misalnya Stop execution. | Konfirmasi untuk hal kecil yang bisa di-undo. |

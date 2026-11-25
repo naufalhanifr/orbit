@@ -1,6 +1,6 @@
 # ORBIT Design System
 
-Versi 3.0 · 2026-11-25 · Mengikuti PRD v1.14 · shadcn preset `b1ZzrZc6S` (`base-mira`)
+Versi 3.1 · 2026-11-25 · Mengikuti PRD v1.15 · shadcn preset `b1ZzrZc6S` (`base-mira`)
 Bahasa UI: Inggris penuh. Implementasi: [`design/shadcn/`](shadcn/) · Brand: [`brand-guidelines.md`](brand-guidelines.md) · Logo: [`logo/`](logo/) · Mockup: [`mockups/`](mockups/)
 
 Design system ini **adalah kode di `design/shadcn`**. Dokumen ini menjelaskan keputusan dan aturannya. Kalau dokumen dan kode berbeda, yang dianggap benar adalah kode, lalu dokumen ini diperbaiki.
@@ -42,7 +42,7 @@ Sumber arah:
 | RHYTHM | 1 | Keseragaman disengaja. Kolom, kartu, dan baris harus bisa dipindai cepat. |
 | MOTION | 1 | Hanya state hover, focus, dan pressed, plus transisi overlay bawaan shadcn. Tidak ada animasi berulang. Skeleton tidak berdenyut. |
 
-**Motif identitas: orbit.** Lintasan dan satelit dari logo dipakai ulang sebagai indikator pekerjaan yang sedang berjalan (`OrbitIndicator`). Posisi satelit menunjukkan porsi token yang sudah terpakai dari batas per execution, jadi motif ini membawa data, bukan dekorasi. Simbol `OrbitMark` versi mono menggantikan ilustrasi di empty state.
+**Motif identitas: orbit.** Lintasan dan satelit dari logo dipakai ulang sebagai indikator pekerjaan yang sedang berjalan (`OrbitIndicator`). Lintasan mewakili timeout execution 60 menit, dan posisi satelit menunjukkan waktu yang sudah berjalan, jadi motif ini membawa data, bukan dekorasi. (Sejak PRD v1.15 tidak ada batas token di MVP, sehingga timeout menjadi satu-satunya batas.) Simbol `OrbitMark` versi mono menggantikan ilustrasi di empty state.
 
 **Satu aksen.** Biru `--primary` hanya dipakai di tiga tempat: tombol aksi utama (satu per layar), satelit (logo dan `OrbitIndicator`), dan cincin fokus.
 
@@ -57,7 +57,7 @@ Sumber arah:
 | Sudut membulat dari `--radius` | Bawaan `base-mira`: kontrol `rounded-md`, kartu dan panel `rounded-lg`, dialog `rounded-xl`, badge pill. Komponen ORBIT memakai skala yang sama supaya konsisten dengan komponen shadcn. |
 | Tanpa bayangan pada kartu | Hierarki dibuat dengan border tipis (`ring-foreground/10`) dan latar. Bayangan hanya untuk overlay. |
 | Blur pada backdrop dialog dan sheet | Bawaan shadcn. Hanya di overlay modal (R-10 membatasi 1–2 elemen), tujuannya memisahkan lapisan modal dari halaman. |
-| Kartu hanya untuk task, execution, node org, dan angka budget | Hanya untuk objek yang bisa dibuka, dipindah, atau dibandingkan. Sisanya list dan tabel. |
+| Kartu hanya untuk task, execution, node org, dan angka pemakaian token | Hanya untuk objek yang bisa dibuka, dipindah, atau dibandingkan. Sisanya list dan tabel. |
 | Noto Sans + Geist Mono | Sudah dipasang di proyek. Noto Sans nyaman untuk teks panjang (deskripsi task, chat). Geist Mono menyejajarkan ID, hash, dan angka token. |
 | Ikon lucide | `iconLibrary` proyek dan dipakai internal oleh komponen shadcn. Ikon hanya untuk status dan aksi; setiap ikon status punya label teks. |
 | Kolom Kanban 264 px, scroll horizontal | Tujuh status MVP tidak muat di satu layar. Region scroll bisa difokus dan digeser dengan keyboard. |
@@ -90,7 +90,6 @@ Setiap tone punya tiga varian: **solid** untuk titik dan ikon (≥ 3:1), **subtl
 | Assigned | neutral | `circle` |
 | In Progress | ink | `OrbitIndicator` |
 | Founder Approval | amber | `git-pull-request` |
-| Revision | ink | `rotate-ccw` |
 | Blocked | red | `octagon-alert` |
 | Done | green | `circle-check` |
 | Cancelled | neutral (judul dicoret) | `circle-slash` |
@@ -98,7 +97,7 @@ Setiap tone punya tiga varian: **solid** untuk titik dan ikon (≥ 3:1), **subtl
 | Execution (PRD 18.3) | Tone | Ikon |
 |---|---|---|
 | Queued | neutral | `clock` |
-| Preparing (Preparing Context, PRD 18.3 v1.14) | neutral | `hourglass` |
+| Preparing (Preparing Context, PRD 18.3) | neutral | `hourglass` |
 | Running | ink | `OrbitIndicator` |
 | Waiting for Input | amber | `message-circle-question` |
 | Completed | green | `check` |
@@ -108,13 +107,13 @@ Setiap tone punya tiga varian: **solid** untuk titik dan ikon (≥ 3:1), **subtl
 
 | Agent (PRD 10, lifecycle) | Tone | Ikon |
 |---|---|---|
-| Draft | neutral | `pencil-line` |
-| Configuring | neutral | `settings-2` |
-| Ready | neutral | `circle` |
-| Active | ink | `OrbitIndicator` |
-| Paused | neutral | `pause` |
-| Error | red | `octagon-alert` |
-| Archived | neutral | `archive` |
+| Idle | neutral | `circle` |
+| Running | ink | `OrbitIndicator` |
+| Blocked | red | `octagon-alert` |
+
+Status agent diturunkan sistem dari task dan execution-nya, tidak diubah manual (PRD 10, v1.15). Blocked berarti agent berhenti di tengah pekerjaan: task Blocked, execution Waiting for Input, Suspended, atau Failed. Pengarsipan bukan status.
+
+Tidak ada status task Revision (PRD 15.1, v1.15). "Request revision" mengembalikan task ke In Progress dengan feedback wajib; kartu menampilkan "Revision 1. Feedback: …" sebagai baris konteks.
 
 Pelaku: `--human` / `--human-foreground` (lingkaran terang dengan bingkai `--input`) dan `--agent` / `--agent-foreground` (kotak membulat `rounded-md` berwarna tinta, terbalik di dark mode).
 
@@ -164,7 +163,7 @@ Berat font hanya 400 dan 500. Tidak ada uppercase dengan tracking lebar.
 | Kanban, List, detail task (dengan panel execution live dan thread komentar/chat, PRD 17.4) | `/board` | `Board`, `TaskCard`, `TaskSheet`, `TaskThread`, `ExecutionCard`, `ReasonDialog`, `CreateTaskDialog` | `toggle-group`, `button`, `dropdown-menu`, `sheet`, `dialog`, `field`, `input`, `textarea`, `table`, `badge`, `avatar` |
 | Project Chat dengan @mention | `/chat` | `Chat` | `input-group`, `command`, `select`, `item`, `avatar`, `badge` |
 | Daftar agent | `/agents` | `AgentList` | `table`, `badge`, `avatar`, `button` |
-| Agent Builder | `/agents/new` | `AgentBuilder` | `field`, `input`, `input-group`, `select`, `radio-group`, `tabs`, `textarea`, `alert` |
+| Agent Builder | `/agents/new` | `AgentBuilder` | `field`, `input`, `select`, `radio-group`, `checkbox`, `tabs`, `textarea`, `alert` |
 | Org chart matriks | `/org` | `OrgChart` | `select`, `sheet`, `avatar`, `badge` (garis memakai SVG) |
 | Dashboard token dan execution log dengan Stop | `/dashboard` | `Dashboard`, `ExecutionCard`, `StopExecutionDialog` | `progress`, `chart` (Recharts), `table`, `alert-dialog` |
 | State kosong, memuat, gagal | `/states` | `NoAgents`, `BoardLoading`, `BoardError` | `empty`, `skeleton`, `alert` |
@@ -181,7 +180,7 @@ Transisi milik assignee atau system tidak muncul sebagai tombol.
 
 ## 5. Pola khusus ORBIT
 
-- **Strip "Waiting on you"** (`WaitingOnYou`, PRD 4.4 v1.14): titik fokus papan. Panel amber subtle `rounded-lg` dengan jumlah item dan satu baris per item. Setiap baris punya aksi langsung:
+- **Strip "Waiting on you"** (`WaitingOnYou`, PRD 4.4): titik fokus papan. Panel amber subtle `rounded-lg` dengan jumlah item dan satu baris per item. Setiap baris punya aksi langsung:
 
   | Item | Aksi |
   |---|---|
@@ -189,10 +188,9 @@ Transisi milik assignee atau system tidak muncul sebagai tombol.
   | Execution Waiting for Input | "Answer in chat" ke Project Chat |
   | Execution Suspended | "Resume EXE-468", lalu konfirmasi "resumed and is queued" |
   | Task Blocked | "Review blocker" membuka detail task |
-  | Run Founder saat budget harian tercapai | "Run anyway" membuka `AlertDialog` konfirmasi |
 
-  Strip hanya tampil bila ada isinya. Badge di sidebar menunjukkan jumlah yang sama. Contoh lengkap kelima jenis item ada di `/states`.
-- **StatusBadge**: ikon + label + tone, tanpa border, uppercase, atau glow. Untuk status yang sedang berjalan, ikonnya `OrbitIndicator` dengan posisi satelit sesuai porsi token.
+  Strip hanya tampil bila ada isinya. Badge di sidebar menunjukkan jumlah yang sama. Contoh lengkap keempat jenis item ada di `/states`. Sejak PRD v1.15 tidak ada item konfirmasi budget.
+- **StatusBadge**: ikon + label + tone, tanpa border, uppercase, atau glow. Untuk status yang sedang berjalan, ikonnya `OrbitIndicator` dengan posisi satelit sesuai waktu berjalan terhadap timeout 60 menit.
 - **ActorAvatar**: human berupa lingkaran `bg-human` dengan `ring-1 ring-input`; agent berupa kotak `bg-agent`. Isinya inisial. Di chat, nama agent diberi label "Agent".
 - **TaskCard**: baris atas berisi ID mono, penanda "from chat", dan menu aksi. Lalu judul (sebuah `<button>` yang area kliknya menutupi seluruh kartu), satu baris konteks (alasan blocked, feedback revisi, atau dependency yang ditunggu), dan footer berisi assignee, PR, dan token. Menu aksi adalah alternatif drag (WCAG 2.5.7). Tidak ada garis warna di tepi kartu.
 - **Detail task** (`TaskSheet`, PRD 17.4): status, judul, assignee, PR, dan token di header. Bila ada execution berjalan, panel live (`ExecutionCard` dengan log) tampil paling atas. Di bawahnya acceptance criteria, dependency, lalu thread komentar. Aksi Founder di footer.
@@ -200,7 +198,10 @@ Transisi milik assignee atau system tidak muncul sebagai tombol.
   - Mention assignee yang sedang bekerja: "Sent to the running execution as an extra instruction."
   - Mention agent lain: "Started a new invocation for …"
   - Tanpa mention: "Note only. Agents won’t read it until they are next invoked."
-- **ExecutionCard**: agent dan task, status, execution ID, durasi, token / batas, `progress`, langkah terakhir, dan (di detail task dan dashboard) daftar tool yang dipanggil serta log. Tombol Stop memakai varian `destructive` dan membuka `AlertDialog` (copy di brand-guidelines §3.4). Setelah dihentikan, status menjadi Cancelled.
+- **AgentBuilder** (PRD 4.4, v1.15): Identity (Name, Title), Structure, Runtime (Model, preset izin `read-only`/`coding`), Instructions (Write/Preview, setiap simpan = versi baru). Tidak ada batas token. Structure berisi dua pilihan terpisah:
+  - **Reports to**: `Select` berisi agent yang ada, default "No agent manager" yang berarti langsung di bawah Founder. Tidak ada pilihan "Founder" (Founder adalah human). Atasan per proyek diatur di penugasan proyek, bukan di sini.
+  - **Works in**: radio "Selected projects" (dengan checkbox proyek, minimal satu) atau "All projects, including ones created later".
+- **ExecutionCard**: agent dan task, status, execution ID, durasi terhadap timeout 60 menit, token terpakai (tanpa batas, PRD v1.15), langkah terakhir, dan (di detail task dan dashboard) daftar tool yang dipanggil serta log. Tombol Stop memakai varian `destructive` dan membuka `AlertDialog` (copy di brand-guidelines §3.4). Setelah dihentikan, status menjadi Cancelled.
 - **Node org chart**: Founder di puncak sebagai human (PRD 8.1) dan tidak bisa diklik. Node agent adalah `<button>` yang membuka sheet detail.
   - Garis atasan tetap: solid.
   - Garis atasan per proyek: putus-putus dengan label kode proyek.
@@ -257,7 +258,7 @@ Preset `b1ZzrZc6S` memakai warna default shadcn, dan sebagian gagal AA. ORBIT me
 
 ### 7.3 Hasil cek kontras
 
-`python3 design/scripts/contrast.py`: **295 pasangan lulus, 0 gagal** (light dan dark). Cakupannya:
+`python3 design/scripts/contrast.py`: **245 pasangan lulus, 0 gagal** (light dan dark). Cakupannya:
 - Semua pasangan inti shadcn.
 - Setiap status task, execution, dan agent: teks di atas latar subtle, card, dan muted; titik di atas background dan card.
 - Avatar human dan agent.
@@ -267,10 +268,10 @@ Preset `b1ZzrZc6S` memakai warna default shadcn, dan sebagian gagal AA. ORBIT me
 
 ### 7.4 Bukti click-through (R-35)
 
-Setiap mockup dijalankan dari `next build` + `next start`, lalu diuji otomatis dengan Playwright. Hasilnya 46 cek lulus dan 0 error di console. Yang diuji:
+Setiap mockup dijalankan dari `next build` + `next start`, lalu diuji otomatis dengan Playwright. Hasilnya 45 cek lulus dan 0 error di console. Yang diuji:
 - Navigasi sidebar ke 5 halaman.
 - Kanban ↔ List dan tampilkan Cancelled.
-- Waiting on you: 4 item di papan; Review blocker membuka detail; Resume mengubah status; di `/states`, Run anyway membuka konfirmasi lalu menyelesaikan item.
+- Waiting on you: 4 item di papan; Review blocker membuka detail; Resume mengubah status; di `/states`, Review tanpa papan menjadi link ke `/board`.
 - Review membuka sheet; Escape menutupnya.
 - Detail task In Progress menampilkan panel execution live dan tool yang dipanggil.
 - Rute komentar: mention assignee menjadi instruksi tambahan, mention agent lain memulai invocation baru, tanpa mention menjadi catatan.
@@ -278,7 +279,7 @@ Setiap mockup dijalankan dari `next build` + `next start`, lalu diuji otomatis d
 - Setujui memindahkan task ke Done.
 - Buat task: validasi, lalu task muncul di Backlog.
 - Chat: pesan tanpa mention diberi catatan; `@` membuka daftar; Enter menyisipkan nama; Escape menutup daftar.
-- Agent Builder: 3 error saat kosong, konfirmasi Draft saat valid.
+- Agent Builder: 4 error saat kosong (termasuk Works in tanpa proyek); All projects menyembunyikan daftar proyek; simpan valid menampilkan "It starts as Idle and reports to CTO."
 - Org chart: node membuka sheet, filter proyek berfungsi.
 - Tema: terang ↔ gelap.
 - Dashboard: badge Preparing tampil.

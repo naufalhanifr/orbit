@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { ActorAvatar } from "@/components/orbit/actor-avatar"
 import { AGENT_STATUS, StatusBadge } from "@/components/orbit/status"
-import { actorById, agents, byId, founder, projects, type Agent } from "@/lib/orbit-data"
+import { actorById, agents, byId, founder, projects, runningExecution, usage, type Agent } from "@/lib/orbit-data"
 import { cn } from "@/lib/utils"
 
 const W = 208
@@ -113,7 +113,7 @@ export function OrgChart() {
             <ActorAvatar actor={founder} />
             <div className="min-w-0 text-xs">
               <p className="font-medium">Founder</p>
-              <p className="text-muted-foreground">Top of the structure, human</p>
+              <p className="text-muted-foreground">Human, top level</p>
             </div>
           </div>
 
@@ -133,7 +133,7 @@ export function OrgChart() {
                 <span className="flex min-w-0 flex-1 flex-col gap-1 text-xs">
                   <span className="truncate font-medium">{a.name}</span>
                   <span className="flex items-center gap-1.5">
-                    <StatusBadge def={AGENT_STATUS[a.status]} progress={0.28} className="h-4 px-1" />
+                    <StatusBadge def={AGENT_STATUS[a.status]} progress={runningExecution.minutes / usage.timeoutMinutes} className="h-4 px-1" />
                     {matrix ? <span className="text-muted-foreground">{matrix} managers</span> : null}
                   </span>
                 </span>
@@ -158,7 +158,7 @@ export function OrgChart() {
               </SheetHeader>
               <dl className="grid grid-cols-[8rem_1fr] gap-x-3 gap-y-3 p-4 text-sm">
                 <dt className="text-muted-foreground">Status</dt>
-                <dd><StatusBadge def={AGENT_STATUS[selected.status]} progress={0.28} /></dd>
+                <dd><StatusBadge def={AGENT_STATUS[selected.status]} progress={runningExecution.minutes / usage.timeoutMinutes} /></dd>
                 <dt className="text-muted-foreground">Fixed manager</dt>
                 <dd>{actorById(selected.managerId)?.name}</dd>
                 <dt className="text-muted-foreground">Per-project managers</dt>

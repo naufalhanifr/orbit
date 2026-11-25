@@ -10,14 +10,13 @@ export default function Page() {
     <AppShell title="Empty, loading and error states">
       <div className="grid gap-8 p-4 md:p-6">
         <section aria-labelledby="s0" className="flex flex-col gap-2">
-          <h2 id="s0" className="text-sm font-medium">Waiting on you: every item type, with the daily budget reached</h2>
+          <h2 id="s0" className="text-sm font-medium">Waiting on you: every item type</h2>
           <WaitingOnYou
             items={[
               { kind: "approval", taskId: "ORB-9", pr: 18 },
               { kind: "question", taskId: "ORB-14", agent: "Shared Specialist" },
               { kind: "suspended", execId: "EXE-468", taskId: "ORB-12" },
               { kind: "blocked", taskId: "ORB-10", reason: "2 tests still fail after 3 attempts. PR opened as draft." },
-              { kind: "budget", taskId: "ORB-13" },
             ]}
           />
         </section>

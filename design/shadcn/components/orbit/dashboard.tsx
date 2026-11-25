@@ -3,16 +3,14 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
-import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ExecutionCard } from "@/components/orbit/execution-card"
 import { EXEC_STATUS, StatusBadge } from "@/components/orbit/status"
-import { budget, byId, formatTokens, recentExecutions, tasks, tokensPerDay } from "@/lib/orbit-data"
+import { byId, formatTokens, recentExecutions, tasks, tokensPerDay, usage } from "@/lib/orbit-data"
 
 const chartConfig = { tokens: { label: "Tokens", color: "var(--chart-3)" } } satisfies ChartConfig
 
 export function Dashboard({ stopOpen }: { stopOpen?: boolean }) {
-  const pct = Math.round((budget.usedToday / budget.perDay) * 100)
   const failed = recentExecutions.filter((e) => e.status === "failed").length
   return (
     <div className="grid gap-6 p-4 md:p-6 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -40,8 +38,8 @@ export function Dashboard({ stopOpen }: { stopOpen?: boolean }) {
                   <TableRow key={e.id}>
                     <TableCell className="font-mono">{e.id}</TableCell>
                     <TableCell className="max-w-64 truncate"><span className="font-mono text-muted-foreground">{e.taskId}</span> {byId(tasks, e.taskId)?.title}</TableCell>
-                    <TableCell><StatusBadge def={EXEC_STATUS[e.status]} progress={e.tokens / budget.perExecution} /></TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">{e.duration}</TableCell>
+                    <TableCell><StatusBadge def={EXEC_STATUS[e.status]} progress={e.minutes / usage.timeoutMinutes} /></TableCell>
+                    <TableCell className="text-right font-mono tabular-nums">{e.minutes}m</TableCell>
                     <TableCell className="text-right font-mono tabular-nums">{formatTokens(e.tokens)}</TableCell>
                   </TableRow>
                 ))}
@@ -51,19 +49,16 @@ export function Dashboard({ stopOpen }: { stopOpen?: boolean }) {
         </section>
       </div>
 
-      <aside aria-label="Budget token" className="flex flex-col gap-6">
+      <aside aria-label="Token usage" className="flex flex-col gap-6">
         <section aria-labelledby="today" className="flex flex-col gap-3 rounded-lg bg-card p-4 ring-1 ring-foreground/10">
           <h2 id="today" className="text-xs text-muted-foreground">Tokens today</h2>
-          <p className="font-mono text-2xl font-medium tabular-nums">{formatTokens(budget.usedToday)}</p>
-          <Progress value={pct} aria-label={`${pct} percent of the daily budget`} />
-          <p className="text-xs text-muted-foreground">
-            {pct}% of {formatTokens(budget.perDay)}. When reached, automatic executions are blocked and Founder-triggered ones need confirmation.
-          </p>
+          <p className="font-mono text-2xl font-medium tabular-nums">{formatTokens(usage.tokensToday)}</p>
+          <p className="text-xs text-muted-foreground">Usage is recorded for every execution.</p>
         </section>
         <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-border ring-1 ring-foreground/10">
           <div className="flex flex-col gap-1 bg-card p-4">
-            <dt className="text-xs text-muted-foreground">Per-execution limit</dt>
-            <dd className="font-mono text-sm tabular-nums">{formatTokens(budget.perExecution)}</dd>
+            <dt className="text-xs text-muted-foreground">Execution timeout</dt>
+            <dd className="font-mono text-sm tabular-nums">{usage.timeoutMinutes} min</dd>
           </div>
           <div className="flex flex-col gap-1 bg-card p-4">
             <dt className="text-xs text-muted-foreground">Failed, last 24h</dt>

@@ -127,7 +127,7 @@ export function Chat() {
                 </p>
                 {m.exec ? (
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <StatusBadge def={EXEC_STATUS[m.exec.status]} progress={m.exec.tokens / 300000} />
+                    <StatusBadge def={EXEC_STATUS[m.exec.status]} />
                     <span className="font-mono">{m.exec.id}</span>
                     <span className="font-mono tabular-nums">{m.exec.tokens.toLocaleString("en-US")} tokens</span>
                   </div>

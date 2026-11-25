@@ -32,10 +32,10 @@ import { ExecutionCard } from "@/components/orbit/execution-card"
 import { TaskThread } from "@/components/orbit/task-thread"
 import { WaitingOnYou } from "@/components/orbit/waiting-on-you"
 import { StatusBadge, StatusIcon, TASK_STATUS } from "@/components/orbit/status"
-import { actorById, byId, formatTokens, tasks as seed, waitingExecutions, type Task, type TaskStatus } from "@/lib/orbit-data"
+import { actorById, byId, formatTokens, runningExecution, tasks as seed, usage, waitingExecutions, type Task, type TaskStatus } from "@/lib/orbit-data"
 import { cn } from "@/lib/utils"
 
-const COLUMNS: TaskStatus[] = ["backlog", "assigned", "in-progress", "founder-approval", "revision", "blocked", "done"]
+const COLUMNS: TaskStatus[] = ["backlog", "assigned", "in-progress", "founder-approval", "blocked", "done"]
 
 type Action = { label: string; to: TaskStatus | "restore"; reason?: "alasan" | "feedback" }
 
@@ -44,7 +44,7 @@ function founderActions(t: Task, all: Task[]): Action[] {
   const end = t.status === "done" || t.status === "cancelled"
   const a: Action[] = []
   if (t.status === "founder-approval") {
-    a.push({ label: "Approve, mark Done", to: "done" }, { label: "Request revision", to: "revision", reason: "feedback" })
+    a.push({ label: "Approve, mark Done", to: "done" }, { label: "Request revision", to: "in-progress", reason: "feedback" })
   }
   if (t.status === "backlog" && readiness(t, all).ok) a.push({ label: "Move to Assigned", to: "assigned" })
   if (t.status === "blocked") a.push({ label: "Unblock", to: "restore" })
@@ -72,7 +72,7 @@ function useBoard() {
           ...t,
           previousStatus: action.to === "blocked" ? t.status : t.previousStatus,
           status: action.to,
-          note: text ? (action.reason === "feedback" ? `Feedback: ${text}` : text) : action.to === "done" ? undefined : t.note,
+          note: text ? (action.reason === "feedback" ? `Revision. Feedback: ${text}` : text) : action.to === "done" ? undefined : t.note,
         }
       })
     )
@@ -116,7 +116,7 @@ function ReasonDialog({
           <DialogHeader>
             <DialogTitle>{pending?.action.label} {pending?.task.id}</DialogTitle>
             <DialogDescription>
-              {feedback ? "Feedback goes to the agent as the basis for the revision and counts as one revision cycle." : "A reason is required and is saved in the task history."}
+              {feedback ? "The task returns to In Progress. Feedback goes to the agent and counts as one revision cycle." : "A reason is required and is saved in the task history."}
             </DialogDescription>
           </DialogHeader>
           <Field data-invalid={error || undefined}>
@@ -165,7 +165,7 @@ function TaskCard({ task, all, onOpen, onPick }: { task: Task; all: Task[]; onOp
   const ready = readiness(task, all)
   const def = TASK_STATUS[task.status]
   const noteTone =
-    task.status === "blocked" ? "text-task-blocked-foreground" : task.status === "revision" ? "text-foreground" : "text-muted-foreground"
+    task.status === "blocked" ? "text-task-blocked-foreground" : task.status === "in-progress" ? "text-foreground" : "text-muted-foreground"
   return (
     <article className="relative flex flex-col gap-2 rounded-lg bg-card p-3 ring-1 ring-foreground/10 transition-colors has-[button[data-open]]:ring-ring hover:bg-muted/50">
       <div className="flex items-center gap-2">
@@ -232,7 +232,7 @@ function TaskSheet({ task, all, onClose, onPick }: { task: Task | null; all: Tas
             <SheetHeader className="gap-2 border-b">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs text-muted-foreground">{task.id}</span>
-                <StatusBadge def={TASK_STATUS[task.status]} progress={task.tokens ? task.tokens / 300000 : undefined} />
+                <StatusBadge def={TASK_STATUS[task.status]} progress={task.id === runningExecution.taskId ? runningExecution.minutes / usage.timeoutMinutes : undefined} />
               </div>
               <SheetTitle className="text-base">{task.title}</SheetTitle>
               <SheetDescription>
