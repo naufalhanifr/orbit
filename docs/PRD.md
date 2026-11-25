@@ -4,7 +4,7 @@
 |---|---|
 | Product | ORBIT |
 | Brand | ORBIT by EVORA Studio |
-| Version | 1.12 |
+| Version | 1.13 |
 | Status | Approved Product Direction |
 | Product Category | AI Workforce & Project Operating System |
 | Initial Organization | EVORA Studio |
@@ -15,6 +15,10 @@
 | Primary Domain | orbit.evora-studio.com |
 
 ## Changelog
+
+### v1.13
+- **Diperbaiki:** Bagian 18.1 diselaraskan dengan 4.4 dan ADR-0001 §3.8: runtime memakai langganan Claude milik Founder; API key organisasi menjadi opsi pengganti.
+- **Baru:** Seluruh teks UI ORBIT memakai bahasa Inggris (Bagian 4.4 dan 31).
 
 ### v1.12
 - **Baru:** Detail task menampilkan execution yang sedang berjalan secara live, dan komentar task berfungsi sebagai chat dengan agent (Bagian 17.4).
@@ -120,6 +124,7 @@ MVP menggabungkan Phase 0 dan Phase 1 dengan batasan berikut. Bagian ini mengesa
 | Review | Founder me-review langsung di PR. Task Done setelah PR di-approve atau di-merge. PO Agent belum ikut alur review. |
 | Hosting | 1 VPS dengan Docker (backend, Postgres, container agent) di `orbit.evora-studio.com`. |
 | Autentikasi Claude | Langganan Claude milik Founder, dengan risiko ketentuan tercatat di ADR-0001 §3.8. Autentikasi dapat diganti ke API key. Budget dalam token. Execution paralel: 1. |
+| Bahasa UI | Seluruh teks UI ORBIT memakai bahasa Inggris. |
 | Web UI | Kanban, List, dan detail task (dengan panel execution live dan thread komentar/chat, Bagian 17.4); Project Chat dengan @mention agent; Agent Builder dan Org chart; Dashboard token serta execution log dengan tombol Stop. |
 | Ditunda | Gantt, Timeline, Calendar, tampilan Dependency Graph, Document Storage, Skill Center, Notifications, FigCraft, VS Code, Row-Level Security multi-org, PO Agent, auto-merge. |
 | Repo target | Repo sandbox khusus uji agent, diakses lewat GitHub App. |
@@ -590,7 +595,7 @@ Chat menampilkan dengan jelas agent yang dipanggil, task yang menjadi konteks, d
 ### 18.1 Runtime
 Execution runtime menggunakan **Claude Agent SDK (Python)** yang dijalankan oleh ORBIT Runner di dalam container Docker terisolasi per execution — lihat [ADR-0001](adr/0001-agent-execution-runtime.md). UI ORBIT tidak menyebut dirinya "Claude Code"; label yang diperbolehkan misalnya "Powered by Claude".
 
-- Autentikasi menggunakan **API key organisasi** (Claude API, atau penyedia cloud yang mendukung), bukan akun langganan pribadi.
+- Autentikasi menggunakan **langganan Claude (subscription) milik Founder**, sesuai Bagian 4.4 dan ADR-0001 §3.8; risiko ketentuannya tercatat di ADR tersebut. **API key organisasi** (Claude API, atau penyedia cloud yang mendukung) tetap menjadi opsi pengganti melalui konfigurasi Runner, tanpa perubahan kode agent.
 - Permission ORBIT dipetakan ke tool allowlist, MCP allowlist, dan network egress allowlist di runtime.
 - Runtime tidak boleh mengubah business state database secara langsung; semua perubahan melalui backend API dan validasi business rules.
 
@@ -837,7 +842,7 @@ Tahap awal menggunakan satu domain dengan routing berbasis path (`/api`, `/files
 - `auth.orbit.evora-studio.com` — Authentication service.
 - `files.orbit.evora-studio.com` — File and document access.
 
-Seluruh interface, dokumentasi, branding, dan notifikasi menggunakan nama ORBIT. Nama PLAN tidak lagi digunakan.
+Seluruh interface, dokumentasi, branding, dan notifikasi menggunakan nama ORBIT. Seluruh teks UI dan notifikasi menggunakan bahasa Inggris. Nama PLAN tidak lagi digunakan.
 
 ## 32. Success Metrics
 
