@@ -4,7 +4,7 @@
 |---|---|
 | Product | ORBIT |
 | Brand | ORBIT by EVORA Studio |
-| Version | 1.14 |
+| Version | 1.15 |
 | Status | Approved Product Direction |
 | Product Category | AI Workforce & Project Operating System |
 | Initial Organization | EVORA Studio |
@@ -15,6 +15,13 @@
 | Primary Domain | orbit.evora-studio.com |
 
 ## Changelog
+
+### v1.15
+- **Diubah:** Budget token tidak diterapkan di MVP; Agent Builder tidak memiliki pengaturan batas token (Bagian 4.4, 19).
+- **Diubah:** Agent baru otomatis berada langsung di bawah Founder; tidak ada pilihan "Founder" saat membuat agent.
+- **Diubah:** Di Agent Builder, "Reports to" dan "Works in" adalah pilihan terpisah; "Works in" dapat berupa proyek tertentu atau semua proyek.
+- **Diubah:** Status task Revision dihapus; revisi mengembalikan task ke In Progress (Bagian 15.1).
+- **Diubah:** Status agent disederhanakan menjadi Idle, Running, dan Blocked (Bagian 10).
 
 ### v1.14
 - **Baru:** Status execution "Preparing Context" ditampilkan sendiri di UI dengan label "Preparing" (Bagian 18.3).
@@ -130,7 +137,7 @@ MVP menggabungkan Phase 0 dan Phase 1 dengan batasan berikut. Bagian ini mengesa
 | Hosting | 1 VPS dengan Docker (backend, Postgres, container agent) di `orbit.evora-studio.com`. |
 | Autentikasi Claude | Langganan Claude milik Founder, dengan risiko ketentuan tercatat di ADR-0001 §3.8. Autentikasi dapat diganti ke API key. Budget dalam token. Execution paralel: 1. |
 | Bahasa UI | Seluruh teks UI ORBIT memakai bahasa Inggris. |
-| Waiting on you | Strip di atas papan task yang menjadi titik fokus Founder. Isinya: task di Founder Approval (PR menunggu review), execution Waiting for Input (agent bertanya), execution Suspended (perlu di-resume), task Blocked (hanya Founder yang dapat membuka blokir), dan konfirmasi run saat budget harian tercapai. Setiap item memiliki aksi langsung. |
+| Waiting on you | Strip di atas papan task yang menjadi titik fokus Founder. Isinya: task di Founder Approval (PR menunggu review), execution Waiting for Input (agent bertanya), execution Suspended (perlu di-resume), dan task Blocked (hanya Founder yang dapat membuka blokir). Setiap item memiliki aksi langsung. |
 | Web UI | Kanban, List, dan detail task (dengan panel execution live dan thread komentar/chat, Bagian 17.4); Project Chat dengan @mention agent; Agent Builder dan Org chart; Dashboard token serta execution log dengan tombol Stop. |
 | Ditunda | Gantt, Timeline, Calendar, tampilan Dependency Graph, Document Storage, Skill Center, Notifications, FigCraft, VS Code, Row-Level Security multi-org, PO Agent, auto-merge. |
 | Repo target | Repo sandbox khusus uji agent, diakses lewat GitHub App. |
@@ -139,10 +146,12 @@ MVP menggabungkan Phase 0 dan Phase 1 dengan batasan berikut. Bagian ini mengesa
 | Struktur agent | Sesuai Bagian 8. Di MVP, reporting line dipakai untuk data dan org chart; seluruh eskalasi langsung ke Founder. Audit trail perubahan reporting line dan otorisasi per pelaku transisi ditunda (di MVP semua aksi dilakukan Founder). |
 | Dependency | Data dan aturan dependency antar-task aktif di MVP (Bagian 14.3). Yang ditunda hanya tampilan Dependency Graph. |
 | Agent template | Tidak ada. Org dimulai dengan 0 agent. |
-| Agent Builder | Nama, jabatan, atasan (tetap dan per proyek), model, instruksi markdown, preset izin tool (`read-only` atau `coding`), batas token per execution. Memory, skill, MCP custom, dan authority limit ditunda. |
+| Agent Builder | Nama, jabatan, model, instruksi markdown, preset izin tool (`read-only` atau `coding`), serta dua pilihan terpisah: **Reports to** dan **Works in**. Tidak ada pengaturan batas token. Memory, skill, MCP custom, dan authority limit ditunda. |
+| Reports to | Atasan tetap agent. Default: langsung di bawah Founder. Agent pertama selalu berada langsung di bawah Founder. Founder adalah human, sehingga tidak ada pilihan "Founder" sebagai jenis agent. Atasan per proyek tetap dapat diatur di penugasan proyek (Bagian 8.2). |
+| Works in | **Selected projects** (satu atau beberapa proyek tertentu) atau **All projects** (semua proyek, termasuk proyek yang dibuat kemudian). Agent hanya dapat menjadi assignee task di proyek tempat ia bekerja. |
 | Versi instruksi | Setiap simpan membuat versi baru; setiap execution mencatat versi yang dipakai. UI draft/publish, compare, dan restore ditunda. |
 | Penugasan | Satu task dikerjakan satu agent. Tanpa handoff dan tanpa percakapan antar-agent. |
-| Budget default | 300.000 token per execution, 3.000.000 token per hari (execution otomatis diblokir saat tercapai; execution yang dipicu Founder memerlukan konfirmasi), timeout 60 menit. |
+| Budget | Tidak diterapkan di MVP. Pemakaian token tetap dicatat dan ditampilkan (dashboard, panel execution) tanpa batas atau pemblokiran. Timeout per execution 60 menit tetap berlaku sebagai pengaman. |
 | Bukti selesai | Agent wajib menjalankan test proyek bila ada dan menyertakan hasilnya di work report dan deskripsi PR. Jika test tetap gagal, PR dibuka sebagai draft dan task menjadi Blocked dengan alasan. |
 | Chat | Agent di chat mana pun boleh mengubah kode, tetapi hanya saat dipanggil eksplisit oleh Founder. Perubahan kode dari chat yang tidak terhubung ke task otomatis membuat task ringan bertanda "dari chat" (acceptance criteria dari isi pesan, terhubung ke percakapan), lalu branch dan PR seperti biasa. |
 
@@ -361,11 +370,17 @@ Setiap agent dapat dikonfigurasi melalui:
 
 Memory tidak boleh membawa informasi melewati batas proyek atau organisasi.
 
-**Agent lifecycle:** Draft → Configuring → Ready → Active → Paused → Error → Archived
+**Status agent:** Idle, Running, Blocked.
 
-- Agent berstatus Draft atau Configuring otomatis menjadi Ready saat task-nya masuk Assigned, baik karena perintah Founder maupun otomatis lewat dependency.
-- Agent berstatus Paused, Error, atau Archived tidak dapat menerima task.
-- Assignee harus ditugaskan ke proyek task tersebut.
+| Status | Kapan |
+|---|---|
+| Idle | Setelah dibuat, dan setiap kali tidak sedang mengerjakan task. |
+| Running | Sedang mengerjakan task (ada execution yang berjalan). |
+| Blocked | Sedang mengerjakan task tetapi berhenti, misalnya task Blocked, execution Waiting for Input, Suspended, atau Failed. |
+
+- Status agent diturunkan oleh sistem dari task dan execution-nya; tidak diubah manual.
+- Assignee harus bekerja di proyek task tersebut (Works in).
+- Pengarsipan agent bukan status. Agent yang diarsipkan disembunyikan dan tidak dapat menerima task.
 
 Agent hanya dapat menjalankan pekerjaan sesuai izin, instruksi, project assignment, dan authority limit yang berlaku. Mengarsipkan agent yang memiliki bawahan mengharuskan bawahannya dipindahkan ke atasan lain terlebih dahulu.
 
@@ -453,13 +468,12 @@ Task wajib memiliki acceptance criteria sebelum execution, kecuali pekerjaan eks
 | Assigned | In Progress | Assignee / system | Execution dimulai |
 | In Progress | Founder Approval | Assignee | URL PR wajib; Founder me-review di PR |
 | Founder Approval | Done | Founder | – |
-| Founder Approval | Revision | Founder | Feedback wajib; jumlah revisi dihitung |
-| Revision | Founder Approval | Assignee | Revisi diserahkan |
+| Founder Approval | In Progress | Founder | Revisi: feedback wajib; jumlah revisi dihitung |
 | * (kecuali Done/Cancelled) | Blocked | Founder / Assignee | Alasan wajib |
 | Blocked | status sebelumnya | Founder | Hanya kembali ke status sebelum Blocked |
 | * (kecuali Done/Cancelled) | Cancelled | Founder | Alasan wajib |
 
-PO Review belum dipakai di MVP. Batas 3 siklus revisi (15.4) belum ditegakkan di MVP.
+Tidak ada status Revision: revisi mengembalikan task ke In Progress. PO Review belum dipakai di MVP. Batas 3 siklus revisi (15.4) belum ditegakkan di MVP.
 
 **Target (Phase 3, dengan PO):**
 
@@ -468,12 +482,11 @@ PO Review belum dipakai di MVP. Batas 3 siklus revisi (15.4) belum ditegakkan di
 | Backlog | Assigned | PO / Manager | Acceptance criteria terisi |
 | Assigned | In Progress | Assignee / system | Execution dimulai |
 | In Progress | PO Review | Assignee | Hasil dan work report diserahkan |
-| PO Review | Revision | PO | Feedback terstruktur wajib |
-| Revision | PO Review | Assignee | Revisi diserahkan |
+| PO Review | In Progress | PO | Revisi: feedback terstruktur wajib |
 | PO Review | Founder Approval | PO | Task memiliki approval gate |
 | PO Review | Done | PO | Tidak ada approval gate |
 | Founder Approval | Done | Founder | – |
-| Founder Approval | Revision | Founder | Feedback terstruktur wajib |
+| Founder Approval | In Progress | Founder | Revisi: feedback terstruktur wajib |
 | * (kecuali Done/Cancelled) | Blocked | Assignee / PO / Manager | Alasan wajib |
 | Blocked | status sebelumnya | Pihak yang berwenang | Blocker terselesaikan |
 | * (kecuali Done/Cancelled) | Cancelled | PO / Founder | Alasan wajib |
@@ -552,7 +565,7 @@ Chat dapat dihubungkan ke task. Agent memperoleh task context yang relevan (desc
 - Status execution dan langkah yang sedang dikerjakan.
 - Output agent secara streaming.
 - Ringkasan tool yang dipanggil (misalnya file yang diubah, perintah yang dijalankan).
-- Pemakaian token berjalan terhadap batas execution.
+- Pemakaian token berjalan.
 - Tombol Stop.
 
 Riwayat execution sebelumnya tetap dapat dibuka dari detail task.
@@ -616,6 +629,8 @@ Di UI, Preparing Context ditampilkan sebagai status tersendiri dengan label "Pre
 **Waiting for Input:** jika tidak ada respons dalam **(default) 30 menit**, execution berpindah ke Suspended: state disimpan dan container dihentikan. Execution dapat di-resume oleh human.
 
 ## 19. Budget & Cost Control
+
+> **MVP:** budget tidak diterapkan (Bagian 4.4). Ketentuan di bawah berlaku setelah MVP.
 
 - Budget token dan biaya dapat ditetapkan per execution, agent, proyek, dan organisasi per periode.
 - Budget execution tercapai → execution dihentikan dengan status `Failed (Budget Exceeded)`.
@@ -901,7 +916,8 @@ Identitas visual mengacu ke `design/brand-guidelines.md`. Design system diimplem
 - Organisasi baru memiliki 0 agent; hanya Founder yang ada di workforce, sebagai puncak struktur.
 - Tidak ada agent yang dibuat otomatis oleh sistem, termasuk dari template.
 - Agent tanpa atasan agent melapor langsung ke Founder; jumlahnya tidak dibatasi.
-- Agent Draft/Configuring otomatis menjadi Ready saat task-nya masuk Assigned.
+- Agent baru berstatus Idle dan otomatis berada langsung di bawah Founder.
+- Status agent hanya Idle, Running, atau Blocked, diturunkan dari task dan execution-nya.
 - Agent yang masih memiliki bawahan tidak dapat diarsipkan.
 - Atasan yang berlaku untuk task ditentukan dari penugasan proyek, lalu atasan tetap, lalu Founder.
 - Reporting line tidak dapat membentuk siklus, dicek untuk atasan tetap dan atasan per proyek.
