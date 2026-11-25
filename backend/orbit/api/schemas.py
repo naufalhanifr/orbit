@@ -142,6 +142,11 @@ class TaskOut(BaseModel):
     reporter_id: int | None
     pr_url: str | None
     revision_count: int
+    depends_on: list[int]
+
+
+class DependencyIn(BaseModel):
+    depends_on_id: int
 
 
 class TaskEventOut(ORM):

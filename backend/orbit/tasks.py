@@ -15,6 +15,7 @@ from orbit.models import (
     Project,
     ProjectAssignment,
     Task,
+    TaskDependency,
     TaskStatus,
     TaskStatusEvent,
     User,
@@ -95,7 +96,7 @@ def validate_assignee(db: Session, task: Task, agent_id: int) -> Agent:
 
 def transition(
     db: Session,
-    user: User,
+    user: User | None,
     task: Task,
     to: TaskStatus,
     *,
@@ -138,11 +139,14 @@ def transition(
             from_status=current,
             to_status=to,
             reason=reason,
-            actor_id=user.workforce_id,
+            actor_id=user.workforce_id if user else None,  # None = system
         )
     )
     task.status = to
     db.flush()
+    if to == S.DONE:
+        for dependent in dependents(db, task):
+            auto_advance(db, dependent)
     return task
 
 
@@ -150,6 +154,10 @@ def _check_forward(
     db: Session, task: Task, to: TaskStatus, *, reason: str | None, pr_url: str | None
 ) -> None:
     if to == S.ASSIGNED:
+        if unfinished_dependencies(db, task):
+            raise TransitionError(
+                "dependencies_not_done", "All dependencies must be Done before assignment"
+            )
         if not has_acceptance_criteria(task):
             raise TransitionError(
                 "acceptance_criteria_required", "Acceptance criteria are required before assignment"
@@ -168,3 +176,107 @@ def _check_forward(
         if reason is None:
             raise TransitionError("feedback_required", "Revision requires structured feedback")
         task.revision_count += 1
+
+
+# --- Dependencies -------------------------------------------------------------
+# A task waits in Backlog until every task it depends on is Done. When the last
+# one is Done, the task moves to Assigned automatically (actor: system) if it is
+# ready for it (acceptance criteria and an available assignee in the project);
+# otherwise it stays in Backlog until the Founder completes it.
+# A Cancelled dependency does not count as Done: the Founder decides by removing it.
+
+
+def dependency_ids(db: Session, task: Task) -> list[int]:
+    return list(
+        db.scalars(
+            select(TaskDependency.depends_on_id)
+            .where(TaskDependency.task_id == task.id)
+            .order_by(TaskDependency.depends_on_id)
+        )
+    )
+
+
+def unfinished_dependencies(db: Session, task: Task) -> list[int]:
+    return list(
+        db.scalars(
+            select(Task.id)
+            .join(TaskDependency, TaskDependency.depends_on_id == Task.id)
+            .where(TaskDependency.task_id == task.id, Task.status != S.DONE)
+        )
+    )
+
+
+def dependents(db: Session, task: Task) -> list[Task]:
+    return list(
+        db.scalars(
+            select(Task)
+            .join(TaskDependency, TaskDependency.task_id == Task.id)
+            .where(TaskDependency.depends_on_id == task.id)
+            .order_by(Task.id)
+        )
+    )
+
+
+def auto_advance(db: Session, task: Task, *, dependency_removed: bool = False) -> bool:
+    """Move a waiting Backlog task to Assigned once its dependencies are all Done and it
+    is ready. Tasks that never had dependencies are only moved by the Founder."""
+    if task.status != S.BACKLOG:
+        return False
+    if not dependency_removed and not dependency_ids(db, task):
+        return False
+    savepoint = db.begin_nested()
+    try:
+        transition(db, None, task, S.ASSIGNED, reason="All dependencies are Done")
+    except TransitionError:
+        savepoint.rollback()
+        return False
+    savepoint.commit()
+    return True
+
+
+def _depends_transitively(db: Session, start_id: int, target_id: int) -> bool:
+    """True if `start_id` depends (directly or not) on `target_id`."""
+    seen, stack = set(), [start_id]
+    while stack:
+        current = stack.pop()
+        if current == target_id:
+            return True
+        if current in seen:
+            continue
+        seen.add(current)
+        stack.extend(
+            db.scalars(select(TaskDependency.depends_on_id).where(TaskDependency.task_id == current))
+        )
+    return False
+
+
+def add_dependency(db: Session, task: Task, depends_on: Task) -> None:
+    if task.status != S.BACKLOG:
+        raise TransitionError("not_backlog", "Dependencies can only be added to Backlog tasks")
+    if depends_on.id == task.id or _depends_transitively(db, depends_on.id, task.id):
+        raise TransitionError("dependency_cycle", "Task dependencies cannot form a cycle")
+    exists = db.scalar(
+        select(TaskDependency.id).where(
+            TaskDependency.task_id == task.id, TaskDependency.depends_on_id == depends_on.id
+        )
+    )
+    if exists is None:
+        db.add(
+            TaskDependency(
+                organization_id=task.organization_id, task_id=task.id, depends_on_id=depends_on.id
+            )
+        )
+        db.flush()
+
+
+def remove_dependency(db: Session, task: Task, depends_on_id: int) -> None:
+    dep = db.scalar(
+        select(TaskDependency).where(
+            TaskDependency.task_id == task.id, TaskDependency.depends_on_id == depends_on_id
+        )
+    )
+    if dep is None:
+        raise NotFound("Dependency")
+    db.delete(dep)
+    db.flush()
+    auto_advance(db, task, dependency_removed=True)

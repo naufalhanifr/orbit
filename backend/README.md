@@ -58,6 +58,14 @@ Backlog → Assigned → In Progress → Founder Approval → Done
 - Revision: feedback wajib (field `reason`); `revision_count` bertambah.
 - Setiap transisi tercatat di `task_status_events`.
 
+### Dependency antar-task
+
+- `POST /tasks/{id}/dependencies` `{"depends_on_id": ...}` dan `DELETE /tasks/{id}/dependencies/{depends_on_id}`. Boleh lintas proyek dalam satu organisasi. Dependency hanya bisa ditambahkan ke task di Backlog, dan tidak boleh membentuk siklus.
+- Task tidak bisa Assigned selama ada dependency yang belum Done.
+- Begitu dependency terakhir Done (atau dihapus), task otomatis pindah ke Assigned oleh sistem (`actor_id = null`), dan agent-nya otomatis Ready, asalkan task punya acceptance criteria dan assignee yang tersedia. Jika belum, task menunggu di Backlog dan otomatis maju saat Founder melengkapinya.
+- Dependency yang Cancelled tidak dihitung Done; Founder memutuskan dengan menghapus dependency tersebut.
+- Perpindahan otomatis hanya sampai Assigned. Menjalankan agent (In Progress) menunggu runtime agent (ADR-0001).
+
 ## Ditunda
 
 Redis/Dramatiq, Row-Level Security, agent execution runtime, integrasi GitHub, chat, frontend,

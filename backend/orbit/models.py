@@ -3,6 +3,7 @@ from enum import StrEnum
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     DateTime,
     Enum,
     ForeignKey,
@@ -246,3 +247,20 @@ class TaskStatusEvent(TimestampMixin, Base):
     to_status: Mapped[TaskStatus] = mapped_column(_enum(TaskStatus, "task_status"))
     reason: Mapped[str | None] = mapped_column(Text)
     actor_id: Mapped[int | None] = mapped_column(ForeignKey("workforce.id"))
+
+
+class TaskDependency(TimestampMixin, Base):
+    """`task_id` cannot start until `depends_on_id` is Done."""
+
+    __tablename__ = "task_dependencies"
+    __table_args__ = (
+        UniqueConstraint("task_id", "depends_on_id"),
+        CheckConstraint("task_id <> depends_on_id", name="ck_task_dependency_not_self"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id", ondelete="CASCADE"), index=True)
+    depends_on_id: Mapped[int] = mapped_column(
+        ForeignKey("tasks.id", ondelete="CASCADE"), index=True
+    )
