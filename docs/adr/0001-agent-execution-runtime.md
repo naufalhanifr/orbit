@@ -118,6 +118,7 @@ Disediakan sebagai MCP server in-process (`create_sdk_mcp_server`). Semua memang
 - `orbit_escalate` — membuat eskalasi sesuai PRD 8.7.
 - `orbit_read_document` / `orbit_write_document` — akses Document Storage sesuai permission.
 - `orbit_ask_human` — memindahkan execution ke Waiting for Input.
+- `orbit_propose_tasks` — PO mengirim usulan breakdown task ke Project Chat untuk disetujui Founder (PRD 17.10). Task baru dibuat oleh backend setelah disetujui.
 
 Agent **tidak** diberi tool untuk mengubah status task secara langsung di luar transisi yang diizinkan state machine.
 

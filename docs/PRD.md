@@ -4,7 +4,7 @@
 |---|---|
 | Product | ORBIT |
 | Brand | ORBIT by EVORA Studio |
-| Version | 1.15 |
+| Version | 1.16 |
 | Status | Approved Product Direction |
 | Product Category | AI Workforce & Project Operating System |
 | Initial Organization | EVORA Studio |
@@ -15,6 +15,9 @@
 | Primary Domain | orbit.evora-studio.com |
 
 ## Changelog
+
+### v1.16
+- **Baru:** Perencanaan proyek bersama PO di Project Chat: PO mengusulkan breakdown task, Founder menyetujui sebelum task dibuat dan di-assign (Bagian 17.10).
 
 ### v1.15
 - **Diubah:** Budget token tidak diterapkan di MVP; Agent Builder tidak memiliki pengaturan batas token (Bagian 4.4, 19).
@@ -136,6 +139,7 @@ MVP menggabungkan Phase 0 dan Phase 1 dengan batasan berikut. Bagian ini mengesa
 | Review | Founder me-review langsung di PR. Task Done setelah PR di-approve atau di-merge. PO Agent belum ikut alur review. |
 | Hosting | 1 VPS dengan Docker (backend, Postgres, container agent) di `orbit.evora-studio.com`. |
 | Autentikasi Claude | Langganan Claude milik Founder, dengan risiko ketentuan tercatat di ADR-0001 §3.8. Autentikasi dapat diganti ke API key. Budget dalam token. Execution paralel: 1. |
+| Perencanaan dengan PO | Founder me-mention PO di Project Chat; PO mengusulkan breakdown task; task baru dibuat dan di-assign setelah Founder menyetujui (Bagian 17.10). |
 | Bahasa UI | Seluruh teks UI ORBIT memakai bahasa Inggris. |
 | Waiting on you | Strip di atas papan task yang menjadi titik fokus Founder. Isinya: task di Founder Approval (PR menunggu review), execution Waiting for Input (agent bertanya), execution Suspended (perlu di-resume), dan task Blocked (hanya Founder yang dapat membuka blokir). Setiap item memiliki aksi langsung. |
 | Web UI | Kanban, List, dan detail task (dengan panel execution live dan thread komentar/chat, Bagian 17.4); Project Chat dengan @mention agent; Agent Builder dan Org chart; Dashboard token serta execution log dengan tombol Stop. |
@@ -608,6 +612,23 @@ Chat dan task adalah entitas berbeda. Percakapan tidak otomatis menjadi task; hu
 Conversation sidebar, message history, composer, agent mention/selector, task selector, task reference card, file attachment, document reference, agent response, execution status, token usage per respons, Stop, Retry, dan conversation search.
 
 Chat menampilkan dengan jelas agent yang dipanggil, task yang menjadi konteks, dan apakah agent sedang menjalankan execution atau hanya merespons.
+
+### 17.10 Planning with PO
+Founder menyampaikan kebutuhan proyek kepada PO agent di Project Chat dengan me-mention PO tersebut.
+
+Alur:
+1. Founder me-mention PO, misalnya: "@PO 1, I want Google login in JAPRI".
+2. PO boleh bertanya balik di chat bila kebutuhan belum jelas.
+3. PO membalas dengan **usulan breakdown task** berbentuk terstruktur. Setiap task berisi judul, deskripsi, acceptance criteria, dependency antar-task, dan usulan assignee.
+4. Founder dapat **menyetujui**, **mengedit**, atau **menolak** usulan, seluruhnya atau per task.
+5. Setelah disetujui, sistem membuat task di proyek tersebut. Task yang punya assignee dan acceptance criteria berjalan sesuai aturan biasa (Bagian 14.3 dan 15.1).
+
+Ketentuan:
+- PO hanya boleh mengusulkan assignee yang bekerja di proyek tersebut (Works in) dan yang atasan berlakunya untuk proyek itu adalah PO tersebut (Bagian 8.2).
+- PO tidak dapat membuat atau meng-assign task tanpa persetujuan Founder di MVP.
+- PO hanya bekerja saat di-mention secara eksplisit (Bagian 17.5).
+- Usulan yang belum disetujui tidak muncul di board.
+- Fitur ini membutuhkan endpoint Project Chat tingkat proyek dan runtime agent (ADR-0001).
 
 ## 18. Agent Execution Management
 
