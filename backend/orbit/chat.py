@@ -15,7 +15,6 @@ from orbit.errors import DomainError, NotFound
 from orbit.models import (
     Agent,
     AgentInstructionVersion,
-    AgentStatus,
     Conversation,
     ConversationMessage,
     Execution,
@@ -24,10 +23,10 @@ from orbit.models import (
     ExecutionStatus,
     ExecutionTrigger,
     Project,
-    ProjectAssignment,
     Task,
     User,
 )
+from orbit.structure import works_in
 
 E = ExecutionStatus
 # Lifecycle (PRD 18.3). Suspended is resumed by a human back to Queued.
@@ -41,7 +40,6 @@ EXECUTION_TRANSITIONS: dict[ExecutionStatus, set[ExecutionStatus]] = {
 TERMINAL = {E.COMPLETED, E.FAILED, E.CANCELLED}
 # The agent is working: a comment mentioning it is an extra instruction, not a new run.
 IN_FLIGHT = {E.PREPARING, E.RUNNING, E.WAITING_FOR_INPUT}
-UNAVAILABLE = {AgentStatus.PAUSED, AgentStatus.ERROR, AgentStatus.ARCHIVED}
 
 
 class ChatError(DomainError):
@@ -99,16 +97,10 @@ def _check_mentionable(db: Session, conv: Conversation, agent_id: int) -> Agent:
     agent = db.get(Agent, agent_id)
     if agent is None or agent.organization_id != conv.organization_id:
         raise ChatError("invalid_mention", f"Mentioned agent {agent_id} does not exist")
-    if agent.status in UNAVAILABLE:
-        raise ChatError("agent_unavailable", f"Agent {agent_id} is {agent.status.value}")
-    in_project = db.scalar(
-        select(ProjectAssignment.id).where(
-            ProjectAssignment.project_id == conv.project_id,
-            ProjectAssignment.agent_id == agent_id,
-        )
-    )
-    if in_project is None:
-        raise ChatError("agent_not_in_project", f"Agent {agent_id} is not assigned to this project")
+    if agent.archived_at is not None:
+        raise ChatError("agent_unavailable", f"Agent {agent_id} is archived")
+    if not works_in(db, agent, conv.project_id):
+        raise ChatError("agent_not_in_project", f"Agent {agent_id} does not work in this project")
     return agent
 
 
@@ -195,7 +187,6 @@ def queue_execution(
         trigger_message_id=message.id if message else None,
         triggered_by_id=user.workforce_id if user else None,
         instruction_version_id=latest_instructions,
-        token_limit=agent.token_limit_per_execution,
     )
     db.add(execution)
     db.flush()

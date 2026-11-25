@@ -2,7 +2,7 @@
 
 MVP: the Founder reviews directly on the PR, so the PO Review step is not used.
 In Progress goes straight to Founder Approval; the Founder approves (Done) or
-asks for a revision.
+sends it back to In Progress with feedback (a revision; there is no Revision status).
 """
 
 from sqlalchemy import select
@@ -11,15 +11,15 @@ from sqlalchemy.orm import Session
 from orbit.errors import DomainError, NotFound
 from orbit.models import (
     Agent,
-    AgentStatus,
     Project,
-    ProjectAssignment,
     Task,
     TaskDependency,
     TaskStatus,
     TaskStatusEvent,
     User,
 )
+
+from orbit.structure import works_in
 
 S = TaskStatus
 
@@ -28,14 +28,9 @@ TRANSITIONS: dict[TaskStatus, set[TaskStatus]] = {
     S.BACKLOG: {S.ASSIGNED},
     S.ASSIGNED: {S.IN_PROGRESS},
     S.IN_PROGRESS: {S.FOUNDER_APPROVAL},
-    S.FOUNDER_APPROVAL: {S.DONE, S.REVISION},
-    S.REVISION: {S.FOUNDER_APPROVAL},
+    S.FOUNDER_APPROVAL: {S.DONE, S.IN_PROGRESS},
 }
 TERMINAL = {S.DONE, S.CANCELLED}
-# Agents in these statuses cannot take work. Draft/Configuring agents can: they
-# become Ready automatically when the Founder assigns them a task.
-UNASSIGNABLE_AGENT_STATUSES = {AgentStatus.PAUSED, AgentStatus.ERROR, AgentStatus.ARCHIVED}
-AUTO_READY_STATUSES = {AgentStatus.DRAFT, AgentStatus.CONFIGURING}
 
 
 class TransitionError(DomainError):
@@ -79,18 +74,10 @@ def validate_assignee(db: Session, task: Task, agent_id: int) -> Agent:
     agent = db.get(Agent, agent_id)
     if agent is None or agent.organization_id != task.organization_id:
         raise TransitionError("invalid_assignee", "Assignee must be an agent in this organization")
-    if agent.status in UNASSIGNABLE_AGENT_STATUSES:
-        raise TransitionError(
-            "assignee_unavailable", f"Assignee agent is {agent.status.value} and cannot take work"
-        )
-    assigned = db.scalar(
-        select(ProjectAssignment.id).where(
-            ProjectAssignment.project_id == task.project_id,
-            ProjectAssignment.agent_id == agent_id,
-        )
-    )
-    if assigned is None:
-        raise TransitionError("assignee_not_in_project", "Assignee agent is not assigned to this project")
+    if agent.archived_at is not None:
+        raise TransitionError("assignee_unavailable", "Archived agents cannot take work")
+    if not works_in(db, agent, task.project_id):
+        raise TransitionError("assignee_not_in_project", "Assignee agent does not work in this project")
     return agent
 
 
@@ -164,15 +151,13 @@ def _check_forward(
             )
         if task.assignee_id is None:
             raise TransitionError("assignee_required", "Set an assignee before assigning the task")
-        agent = validate_assignee(db, task, task.assignee_id)
-        if agent.status in AUTO_READY_STATUSES:
-            agent.status = AgentStatus.READY
+        validate_assignee(db, task, task.assignee_id)
     elif to == S.FOUNDER_APPROVAL:
         if pr_url:
             task.pr_url = pr_url
         if not task.pr_url:
             raise TransitionError("pr_required", "A pull request URL is required for Founder review")
-    elif to == S.REVISION:
+    elif task.status == S.FOUNDER_APPROVAL and to == S.IN_PROGRESS:  # revision
         if reason is None:
             raise TransitionError("feedback_required", "Revision requires structured feedback")
         task.revision_count += 1

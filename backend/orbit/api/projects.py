@@ -15,7 +15,7 @@ from orbit.api.schemas import (
 )
 from orbit.db import get_db
 from orbit.errors import DomainError, NotFound
-from orbit.models import AgentStatus, Project, ProjectAssignment, User
+from orbit.models import Project, ProjectAssignment, User
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -85,7 +85,7 @@ def create_assignment(
 ):
     project = get_project(db, user.organization_id, project_id)
     agent = structure.get_agent(db, user.organization_id, body.agent_id)
-    if agent.status == AgentStatus.ARCHIVED:
+    if agent.archived_at is not None:
         raise DomainError("archived", "Archived agents cannot be assigned to projects")
     exists = db.scalar(
         select(ProjectAssignment.id).where(

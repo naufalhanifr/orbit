@@ -21,8 +21,8 @@ def test_new_org_has_zero_agents_and_founder_is_not_an_agent(api, client):
 
 
 def test_many_agents_can_report_directly_to_the_founder(api, client):
-    agents = [api.agent(f"Agent {i}", ready=True) for i in range(5)]
-    assert all(a["fixed_supervisor_id"] is None and a["status"] == "ready" for a in agents)
+    agents = [api.agent(f"Agent {i}") for i in range(5)]
+    assert all(a["fixed_supervisor_id"] is None and a["status"] == "idle" for a in agents)
 
 
 def test_founder_can_be_named_explicitly_as_supervisor(api):
@@ -126,8 +126,10 @@ def test_agent_with_project_only_subordinate_cannot_be_archived(api, client):
 
 def test_agent_without_subordinates_can_be_archived(api, client):
     a = api.agent("A")
-    assert api.ok(client.post(f"/agents/{a['id']}/archive"))["status"] == "archived"
+    assert api.ok(client.post(f"/agents/{a['id']}/archive"))["archived"] is True
     assert api.ok(client.get("/agents")) == []
+    [archived] = api.ok(client.get("/agents", params={"include_archived": True}))
+    assert archived["id"] == a["id"]
 
 
 # --- Supervisor resolution for tasks ------------------------------------------
@@ -138,10 +140,10 @@ def _task_for(api, client, project, agent):
 
 
 def test_supervisor_resolution_project_then_fixed_then_founder(api, client):
-    cto = api.agent("CTO", ready=True)
-    po1 = api.agent("PO 1", supervisor=cto["id"], ready=True)
-    po2 = api.agent("PO 2", supervisor=cto["id"], ready=True)
-    shared = api.agent("Shared", supervisor=po2["id"], ready=True)
+    cto = api.agent("CTO")
+    po1 = api.agent("PO 1", supervisor=cto["id"])
+    po2 = api.agent("PO 2", supervisor=cto["id"])
+    shared = api.agent("Shared", supervisor=po2["id"])
     pa, pb = api.project("AAA", "A"), api.project("BBB", "B")
     api.ok(api.assign(pa["id"], shared["id"], supervisor=po1["id"]))
     api.ok(api.assign(pb["id"], shared["id"]))

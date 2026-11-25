@@ -13,22 +13,23 @@ from orbit.api.schemas import (
     SupervisorIn,
 )
 from orbit.db import get_db
-from orbit.models import Agent, AgentStatus, User
+from orbit.models import Agent, User
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
 
-def agent_out(agent: Agent) -> AgentOut:
+def agent_out(db: Session, agent: Agent) -> AgentOut:
     versions = agent.instruction_versions
     return AgentOut(
         id=agent.workforce_id,
         name=agent.workforce.name,
         title=agent.workforce.title,
-        status=agent.status,
+        status=structure.agent_status(db, agent),
         fixed_supervisor_id=agent.fixed_supervisor_id,
         model=agent.model,
         tool_preset=agent.tool_preset,
-        token_limit_per_execution=agent.token_limit_per_execution,
+        works_in_all_projects=agent.works_in_all_projects,
+        archived=agent.archived_at is not None,
         instruction_version=versions[-1].version if versions else None,
     )
 
@@ -36,7 +37,7 @@ def agent_out(agent: Agent) -> AgentOut:
 def _commit_and_out(db: Session, agent: Agent) -> AgentOut:
     db.commit()
     db.refresh(agent)
-    return agent_out(agent)
+    return agent_out(db, agent)
 
 
 @router.get("", response_model=list[AgentOut])
@@ -45,8 +46,8 @@ def list_agents(
 ):
     q = select(Agent).where(Agent.organization_id == user.organization_id)
     if not include_archived:
-        q = q.where(Agent.status != AgentStatus.ARCHIVED)
-    return [agent_out(a) for a in db.scalars(q.order_by(Agent.workforce_id))]
+        q = q.where(Agent.archived_at.is_(None))
+    return [agent_out(db, a) for a in db.scalars(q.order_by(Agent.workforce_id))]
 
 
 @router.post("", response_model=AgentOut, status_code=201)
@@ -57,7 +58,7 @@ def create_agent(body: AgentCreate, user: User = Depends(founder), db: Session =
 
 @router.get("/{agent_id}", response_model=AgentOut)
 def get_agent(agent_id: int, user: User = Depends(founder), db: Session = Depends(get_db)):
-    return agent_out(structure.get_agent(db, user.organization_id, agent_id))
+    return agent_out(db, structure.get_agent(db, user.organization_id, agent_id))
 
 
 @router.patch("/{agent_id}", response_model=AgentOut)
@@ -69,11 +70,8 @@ def update_agent(
     for field in ("name", "title"):
         if field in data:
             setattr(agent.workforce, field, data.pop(field))
-    status = data.pop("status", None)
     for field, value in data.items():
         setattr(agent, field, value)
-    if status is not None:
-        structure.set_status(db, agent, status)
     return _commit_and_out(db, agent)
 
 

@@ -10,8 +10,8 @@ PR = "https://github.com/example/sandbox/pull/1"
 
 @pytest.fixture
 def setup(api, client):
-    cto = api.agent("CTO", ready=True)
-    dev = api.agent("Dev", supervisor=cto["id"], ready=True)
+    cto = api.agent("CTO")
+    dev = api.agent("Dev", supervisor=cto["id"])
     project = api.project()
     api.ok(api.assign(project["id"], dev["id"]))
     return {"project": project, "dev": dev, "cto": cto}
@@ -38,7 +38,7 @@ def advance(api, client, task, path, dev_id):
             task = api.ok(client.patch(f"/tasks/{task['id']}", json={"assignee_id": dev_id}))
         if to == "founder_approval":
             extra["pr_url"] = PR
-        if to in {"revision", "blocked", "cancelled"}:
+        if to in {"in_progress", "blocked", "cancelled"}:  # in_progress: revision feedback
             extra["reason"] = "because"
         task = api.ok(move(client, task, to, **extra))
     return task
@@ -62,12 +62,16 @@ def test_happy_path_to_done_via_founder_review(api, client, setup, new_task):
     ]
 
 
-def test_revision_loop(api, client, setup, new_task):
+def test_revision_returns_to_in_progress(api, client, setup, new_task):
     t = advance(api, client, new_task(), ["assigned", "in_progress", "founder_approval"], setup["dev"]["id"])
-    t = api.ok(move(client, t, "revision", reason="Button label is wrong"))
-    assert t["revision_count"] == 1
-    t = advance(api, client, t, ["founder_approval", "done"], setup["dev"]["id"])
-    assert t["status"] == "done"
+    t = api.ok(move(client, t, "in_progress", reason="Button label is wrong"))
+    assert (t["status"], t["revision_count"]) == ("in_progress", 1)
+    t = advance(api, client, t, ["founder_approval", "in_progress", "founder_approval", "done"], setup["dev"]["id"])
+    assert (t["status"], t["revision_count"]) == ("done", 2)
+
+
+def test_no_revision_status(client, new_task):
+    assert move(client, new_task(), "revision").status_code == 422
 
 
 VALID = {(src, dst) for src, dsts in TRANSITIONS.items() for dst in dsts}
@@ -77,7 +81,6 @@ PATH_TO = {
     "assigned": ["assigned"],
     "in_progress": ["assigned", "in_progress"],
     "founder_approval": ["assigned", "in_progress", "founder_approval"],
-    "revision": ["assigned", "in_progress", "founder_approval", "revision"],
     "done": ["assigned", "in_progress", "founder_approval", "done"],
 }
 
@@ -128,43 +131,28 @@ def test_assigned_requires_assignee_in_project(api, client, setup, new_task):
     t = new_task()
     r = move(client, t, "assigned")
     assert r.json()["code"] == "assignee_required"
-    outsider = api.agent("Outsider", ready=True)
+    outsider = api.agent("Outsider")
     r = client.patch(f"/tasks/{t['id']}", json={"assignee_id": outsider["id"]})
     assert r.json()["code"] == "assignee_not_in_project"
 
 
-def test_draft_agent_becomes_ready_when_founder_assigns_a_task(api, client, setup, new_task):
-    sub = api.agent("Subordinate", supervisor=setup["dev"]["id"])
-    assert sub["status"] == "draft"
-    api.ok(api.assign(setup["project"]["id"], sub["id"]))
-    t = new_task(assignee_id=sub["id"])
-    assert api.ok(client.get(f"/agents/{sub['id']}"))["status"] == "draft"  # not yet ordered
-    api.ok(move(client, t, "assigned"))
-    assert api.ok(client.get(f"/agents/{sub['id']}"))["status"] == "ready"
+def test_agent_working_in_all_projects_can_be_assigned_anywhere(api, client, setup, new_task):
+    roamer = api.agent("Roamer", works_in_all_projects=True)
+    t = new_task(assignee_id=roamer["id"])
+    assert api.ok(move(client, t, "assigned"))["status"] == "assigned"
+    later = api.project("NEW", "Created later")
+    t2 = api.ok(client.post(f"/projects/{later['id']}/tasks", json={"title": "x", "assignee_id": roamer["id"]}))
+    assert t2["assignee_id"] == roamer["id"]
 
 
-def test_agent_without_any_supervisor_line_is_auto_ready_too(api, client, setup, new_task):
-    """No agent supervisor means it reports to the Founder; nothing blocks Ready."""
-    solo = api.agent("Solo")
-    api.ok(api.assign(setup["project"]["id"], solo["id"]))
-    api.ok(move(client, new_task(assignee_id=solo["id"]), "assigned"))
-    assert api.ok(client.get(f"/agents/{solo['id']}"))["status"] == "ready"
-
-
-@pytest.mark.parametrize("status", ["paused", "error"])
-def test_paused_or_errored_agent_cannot_be_assigned(api, client, setup, new_task, status):
-    a = api.agent("Stopped")
+def test_archived_agent_cannot_be_assigned(api, client, setup, new_task):
+    a = api.agent("Gone")
     api.ok(api.assign(setup["project"]["id"], a["id"]))
-    api.ok(client.patch(f"/agents/{a['id']}", json={"status": status}))
-    r = client.post(f"/projects/{setup['project']['id']}/tasks", json={"title": "x", "assignee_id": a["id"]})
-    assert r.status_code == 409 and r.json()["code"] == "assignee_unavailable"
-    # Also rejected if the agent was paused after being set as assignee.
-    b = api.agent("Later paused")
-    api.ok(api.assign(setup["project"]["id"], b["id"]))
-    t = new_task(assignee_id=b["id"])
-    api.ok(client.patch(f"/agents/{b['id']}", json={"status": status}))
+    t = new_task(assignee_id=a["id"])
+    api.ok(client.post(f"/agents/{a['id']}/archive"))
     assert move(client, t, "assigned").json()["code"] == "assignee_unavailable"
-    assert api.ok(client.get(f"/agents/{b['id']}"))["status"] == status
+    r = client.patch(f"/tasks/{t['id']}", json={"assignee_id": a["id"]})
+    assert r.json()["code"] == "assignee_unavailable"
 
 
 def test_founder_review_requires_pr(api, client, setup, new_task):
@@ -175,11 +163,11 @@ def test_founder_review_requires_pr(api, client, setup, new_task):
 
 def test_revision_requires_feedback(api, client, setup, new_task):
     t = advance(api, client, new_task(), ["assigned", "in_progress", "founder_approval"], setup["dev"]["id"])
-    r = move(client, t, "revision", reason="  ")
+    r = move(client, t, "in_progress", reason="  ")
     assert r.status_code == 409 and r.json()["code"] == "feedback_required"
 
 
-@pytest.mark.parametrize("src", ["backlog", "assigned", "in_progress", "founder_approval", "revision"])
+@pytest.mark.parametrize("src", ["backlog", "assigned", "in_progress", "founder_approval"])
 def test_block_requires_reason_and_returns_to_previous_status(api, client, setup, new_task, src):
     t = advance(api, client, new_task(), PATH_TO[src], setup["dev"]["id"])
     r = move(client, t, "blocked")
@@ -194,7 +182,7 @@ def test_block_requires_reason_and_returns_to_previous_status(api, client, setup
     assert t["status"] == src and t["status_before_block"] is None
 
 
-@pytest.mark.parametrize("src", ["backlog", "assigned", "in_progress", "founder_approval", "revision"])
+@pytest.mark.parametrize("src", ["backlog", "assigned", "in_progress", "founder_approval"])
 def test_cancel_requires_reason(api, client, setup, new_task, src):
     t = advance(api, client, new_task(), PATH_TO[src], setup["dev"]["id"])
     r = move(client, t, "cancelled", reason="")

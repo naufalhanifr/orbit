@@ -69,11 +69,8 @@ class Api:
         assert resp.status_code in status, resp.text
         return resp.json() if resp.content else None
 
-    def agent(self, name, supervisor=None, ready=False, **extra):
-        a = self.ok(self.c.post("/agents", json={"name": name, "fixed_supervisor_id": supervisor, **extra}))
-        if ready:
-            a = self.ok(self.c.patch(f"/agents/{a['id']}", json={"status": "ready"}))
-        return a
+    def agent(self, name, supervisor=None, **extra):
+        return self.ok(self.c.post("/agents", json={"name": name, "fixed_supervisor_id": supervisor, **extra}))
 
     def project(self, key="ORB", name="Orbit"):
         return self.ok(self.c.post("/projects", json={"key": key, "name": name}))

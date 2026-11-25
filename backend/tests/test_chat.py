@@ -75,7 +75,7 @@ def test_mention_queues_a_new_execution_with_instruction_snapshot(api, client, c
     assert ex["agent_id"] == ctx["dev"]["id"]
     assert (ex["status"], ex["trigger"], ex["trigger_message_id"]) == ("queued", "chat_mention", msg["id"])
     assert ex["instruction_version_id"] is not None
-    assert ex["token_limit"] == 300_000
+    assert "token_limit" not in ex  # no token budget in the MVP
 
 
 def test_mention_of_working_assignee_goes_to_running_execution(api, client, ctx):
@@ -100,7 +100,7 @@ def test_mention_of_other_agent_starts_new_invocation_while_assignee_runs(api, c
 def test_mention_must_be_available_agent_in_project(api, client, ctx):
     r = ctx["post"]("hi", [ctx["outsider"]["id"]])
     assert r.status_code == 409 and r.json()["code"] == "agent_not_in_project"
-    api.ok(client.patch(f"/agents/{ctx['qa']['id']}", json={"status": "paused"}))
+    api.ok(client.post(f"/agents/{ctx['qa']['id']}/archive"))
     r = ctx["post"]("hi", [ctx["qa"]["id"]])
     assert r.status_code == 409 and r.json()["code"] == "agent_unavailable"
     assert ctx["post"]("hi", [9999]).json()["code"] == "invalid_mention"

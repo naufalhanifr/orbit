@@ -37,7 +37,7 @@ class AgentCreate(BaseModel):
     fixed_supervisor_id: int | None = None
     model: str | None = None
     tool_preset: ToolPreset = ToolPreset.READ_ONLY
-    token_limit_per_execution: int = Field(default=300_000, gt=0)
+    works_in_all_projects: bool = False
     instructions: str | None = None
 
 
@@ -46,8 +46,7 @@ class AgentUpdate(BaseModel):
     title: str | None = Field(default=None, max_length=200)
     model: str | None = None
     tool_preset: ToolPreset | None = None
-    token_limit_per_execution: int | None = Field(default=None, gt=0)
-    status: AgentStatus | None = None
+    works_in_all_projects: bool | None = None
 
 
 class SupervisorIn(BaseModel):
@@ -73,7 +72,8 @@ class AgentOut(BaseModel):
     fixed_supervisor_id: int | None
     model: str | None
     tool_preset: ToolPreset
-    token_limit_per_execution: int
+    works_in_all_projects: bool
+    archived: bool
     instruction_version: int | None
 
 
@@ -130,7 +130,8 @@ class TaskUpdate(BaseModel):
 class TransitionIn(BaseModel):
     to_status: TaskStatus
     reason: str | None = Field(
-        default=None, description="Required for blocked, cancelled and revision (feedback)."
+        default=None,
+        description="Required for blocked, cancelled, and revision feedback (Founder Approval → In Progress).",
     )
     pr_url: str | None = None
 
@@ -198,7 +199,6 @@ class ExecutionOut(ORM):
     instruction_version_id: int | None
     current_step: str | None
     tokens_used: int
-    token_limit: int
     created_at: datetime
     started_at: datetime | None
     finished_at: datetime | None

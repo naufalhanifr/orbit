@@ -38,13 +38,11 @@ class UserRole(StrEnum):
 
 
 class AgentStatus(StrEnum):
-    DRAFT = "draft"
-    CONFIGURING = "configuring"
-    READY = "ready"
-    ACTIVE = "active"
-    PAUSED = "paused"
-    ERROR = "error"
-    ARCHIVED = "archived"
+    """Derived by the system from tasks and executions (PRD 10); never stored."""
+
+    IDLE = "idle"
+    RUNNING = "running"
+    BLOCKED = "blocked"
 
 
 class ToolPreset(StrEnum):
@@ -57,7 +55,6 @@ class TaskStatus(StrEnum):
     ASSIGNED = "assigned"
     IN_PROGRESS = "in_progress"
     FOUNDER_APPROVAL = "founder_approval"
-    REVISION = "revision"
     BLOCKED = "blocked"
     DONE = "done"
     CANCELLED = "cancelled"
@@ -145,8 +142,11 @@ class Agent(TimestampMixin, Base):
     __tablename__ = "agents"
     workforce_id: Mapped[int] = mapped_column(ForeignKey("workforce.id"), primary_key=True)
     organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
-    status: Mapped[AgentStatus] = mapped_column(
-        _enum(AgentStatus, "agent_status"), default=AgentStatus.DRAFT
+    # Archiving is not a status: archived agents are hidden and take no work.
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # "Works in": all projects (including future ones) or the projects in project_assignments.
+    works_in_all_projects: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
     )
     # Fixed supervisor (atasan tetap); NULL means the agent reports to the Founder.
     # Per-project supervisors live on ProjectAssignment.
@@ -155,7 +155,6 @@ class Agent(TimestampMixin, Base):
     tool_preset: Mapped[ToolPreset] = mapped_column(
         _enum(ToolPreset, "tool_preset"), default=ToolPreset.READ_ONLY
     )
-    token_limit_per_execution: Mapped[int] = mapped_column(Integer, default=300_000)
 
     workforce: Mapped[Workforce] = relationship(
         back_populates="agent", foreign_keys=[workforce_id]
@@ -357,7 +356,6 @@ class Execution(TimestampMixin, Base):
     )
     current_step: Mapped[str | None] = mapped_column(Text)
     tokens_used: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
-    token_limit: Mapped[int] = mapped_column(Integer)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

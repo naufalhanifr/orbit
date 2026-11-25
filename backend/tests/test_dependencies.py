@@ -45,14 +45,12 @@ def test_task_cannot_be_assigned_until_dependencies_are_done(api, ctx):
     assert r.status_code == 409 and r.json()["code"] == "dependencies_not_done"
 
 
-def test_dependent_moves_to_assigned_automatically_and_agent_becomes_ready(api, client, ctx):
+def test_dependent_moves_to_assigned_automatically(api, client, ctx):
     a = ctx["task"](ctx["dev"]["id"])
     b = ctx["task"](ctx["sub"]["id"])
     api.ok(ctx["depend"](b, a))
-    assert api.ok(client.get(f"/agents/{ctx['sub']['id']}"))["status"] == "draft"
     ctx["finish"](a)
     assert ctx["get"](b)["status"] == "assigned"
-    assert api.ok(client.get(f"/agents/{ctx['sub']['id']}"))["status"] == "ready"
     last = api.ok(client.get(f"/tasks/{b['id']}/events"))[-1]
     assert (last["to_status"], last["actor_id"]) == ("assigned", None)  # system
 
@@ -90,11 +88,11 @@ def test_unready_dependent_stays_in_backlog_then_moves_once_completed(api, clien
     assert t["status"] == "assigned"
 
 
-def test_paused_assignee_keeps_dependent_in_backlog(api, client, ctx):
+def test_archived_assignee_keeps_dependent_in_backlog(api, client, ctx):
     a = ctx["task"](ctx["dev"]["id"])
     b = ctx["task"](ctx["sub"]["id"])
     api.ok(ctx["depend"](b, a))
-    api.ok(client.patch(f"/agents/{ctx['sub']['id']}", json={"status": "paused"}))
+    api.ok(client.post(f"/agents/{ctx['sub']['id']}/archive"))
     ctx["finish"](a)
     assert ctx["get"](a)["status"] == "done"
     assert ctx["get"](b)["status"] == "backlog"

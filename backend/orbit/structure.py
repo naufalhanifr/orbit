@@ -11,6 +11,8 @@ transaction and then checked with `validate_structure`; on a violation the calle
 rolls back. The organisation is small, so the whole structure is rechecked.
 """
 
+from datetime import UTC, datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -19,6 +21,9 @@ from orbit.models import (
     Agent,
     AgentInstructionVersion,
     AgentStatus,
+    Execution,
+    ExecutionStatus,
+    TaskStatus,
     ProjectAssignment,
     Task,
     User,
@@ -36,7 +41,7 @@ def _live_agents(db: Session, org_id: int) -> list[Agent]:
     return list(
         db.scalars(
             select(Agent).where(
-                Agent.organization_id == org_id, Agent.status != AgentStatus.ARCHIVED
+                Agent.organization_id == org_id, Agent.archived_at.is_(None)
             )
         )
     )
@@ -163,15 +168,6 @@ def set_fixed_supervisor(db: Session, agent: Agent, supervisor_id: int | None) -
     validate_structure(db, agent.organization_id)
 
 
-def set_status(db: Session, agent: Agent, status: AgentStatus) -> None:
-    if status == AgentStatus.ARCHIVED:
-        raise StructureError("use_archive", "Use the archive action to archive an agent")
-    if agent.status == AgentStatus.ARCHIVED:
-        raise StructureError("archived", "Archived agents cannot change status")
-    agent.status = status
-    validate_structure(db, agent.organization_id)
-
-
 def _subordinate_ids(db: Session, agent: Agent) -> set[int]:
     org_id = agent.organization_id
     live = {a.workforce_id: a for a in _live_agents(db, org_id)}
@@ -185,13 +181,13 @@ def _subordinate_ids(db: Session, agent: Agent) -> set[int]:
 
 
 def archive_agent(db: Session, agent: Agent) -> None:
-    if agent.status == AgentStatus.ARCHIVED:
+    if agent.archived_at is not None:
         return
     if _subordinate_ids(db, agent):
         raise StructureError(
             "has_subordinates", "Move this agent's subordinates to another supervisor first"
         )
-    agent.status = AgentStatus.ARCHIVED
+    agent.archived_at = datetime.now(UTC)
     validate_structure(db, agent.organization_id)
 
 
@@ -220,3 +216,53 @@ def resolve_supervisor(db: Session, task: Task) -> Workforce:
         if agent is not None and agent.fixed_supervisor_id is not None:
             return db.get(Workforce, agent.fixed_supervisor_id)
     return founder_workforce(db, task.organization_id)
+
+
+def works_in(db: Session, agent: Agent, project_id: int) -> bool:
+    if agent.works_in_all_projects:
+        return True
+    return (
+        db.scalar(
+            select(ProjectAssignment.id).where(
+                ProjectAssignment.project_id == project_id,
+                ProjectAssignment.agent_id == agent.workforce_id,
+            )
+        )
+        is not None
+    )
+
+
+def agent_status(db: Session, agent: Agent) -> AgentStatus:
+    """Derived status (PRD 10): Running if an execution is preparing or running;
+    Blocked if one of its tasks is Blocked, an execution waits for input or is
+    suspended, or a task's latest execution failed (until a new execution starts
+    on that task or the task is Done/Cancelled); otherwise Idle."""
+    executions = list(
+        db.scalars(
+            select(Execution)
+            .where(Execution.agent_id == agent.workforce_id)
+            .order_by(Execution.id.desc())
+        )
+    )
+    statuses = {e.status for e in executions}
+    if statuses & {ExecutionStatus.PREPARING, ExecutionStatus.RUNNING}:
+        return AgentStatus.RUNNING
+    if statuses & {ExecutionStatus.WAITING_FOR_INPUT, ExecutionStatus.SUSPENDED}:
+        return AgentStatus.BLOCKED
+    blocked_task = db.scalar(
+        select(Task.id).where(
+            Task.assignee_id == agent.workforce_id, Task.status == TaskStatus.BLOCKED
+        )
+    )
+    if blocked_task is not None:
+        return AgentStatus.BLOCKED
+    latest_per_task: dict[int, Execution] = {}
+    for e in executions:  # newest first
+        if e.task_id is not None:
+            latest_per_task.setdefault(e.task_id, e)
+    for task_id, e in latest_per_task.items():
+        if e.status == ExecutionStatus.FAILED:
+            task = db.get(Task, task_id)
+            if task.status not in {TaskStatus.DONE, TaskStatus.CANCELLED}:
+                return AgentStatus.BLOCKED
+    return AgentStatus.IDLE
