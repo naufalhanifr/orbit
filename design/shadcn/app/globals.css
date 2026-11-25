@@ -1,3 +1,18 @@
+/*
+ * ORBIT design tokens: globals.css untuk frontend (Next.js + Tailwind v4 + shadcn/ui).
+ *
+ * Dasar: proyek shadcn di design/shadcn (style "base-lyra", baseColor "neutral",
+ * cssVariables, iconLibrary "lucide"). Nama dan format variabel mengikuti
+ * shadcn/ui terkini: warna oklch() di :root dan .dark, dipetakan ke Tailwind
+ * lewat @theme inline, radius turunan dari --radius.
+ *
+ * Perubahan dari default proyek shadcn dibuat hanya demi kontras WCAG 2.1 AA
+ * (lihat design/design-system.md §7). Token ORBIT tambahan diberi prefiks
+ * --tone-*, --task-*, --exec-*, --human, --agent.
+ *
+ * Pemakaian: salin file ini menjadi app/globals.css.
+ */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -7,6 +22,9 @@
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
+    --font-mono: var(--font-mono);
+
+    /* shadcn/ui */
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -45,6 +63,60 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+
+    /* ORBIT: status task. Kelas: bg-task-done-subtle text-task-done-foreground, bg-task-done (titik) */
+    --color-task-backlog: var(--task-backlog);
+    --color-task-backlog-subtle: var(--task-backlog-subtle);
+    --color-task-backlog-foreground: var(--task-backlog-foreground);
+    --color-task-assigned: var(--task-assigned);
+    --color-task-assigned-subtle: var(--task-assigned-subtle);
+    --color-task-assigned-foreground: var(--task-assigned-foreground);
+    --color-task-in-progress: var(--task-in-progress);
+    --color-task-in-progress-subtle: var(--task-in-progress-subtle);
+    --color-task-in-progress-foreground: var(--task-in-progress-foreground);
+    --color-task-review: var(--task-review);
+    --color-task-review-subtle: var(--task-review-subtle);
+    --color-task-review-foreground: var(--task-review-foreground);
+    --color-task-blocked: var(--task-blocked);
+    --color-task-blocked-subtle: var(--task-blocked-subtle);
+    --color-task-blocked-foreground: var(--task-blocked-foreground);
+    --color-task-done: var(--task-done);
+    --color-task-done-subtle: var(--task-done-subtle);
+    --color-task-done-foreground: var(--task-done-foreground);
+    --color-task-cancelled: var(--task-cancelled);
+    --color-task-cancelled-subtle: var(--task-cancelled-subtle);
+    --color-task-cancelled-foreground: var(--task-cancelled-foreground);
+
+    /* ORBIT: status execution */
+    --color-exec-queued: var(--exec-queued);
+    --color-exec-queued-subtle: var(--exec-queued-subtle);
+    --color-exec-queued-foreground: var(--exec-queued-foreground);
+    --color-exec-running: var(--exec-running);
+    --color-exec-running-subtle: var(--exec-running-subtle);
+    --color-exec-running-foreground: var(--exec-running-foreground);
+    --color-exec-waiting: var(--exec-waiting);
+    --color-exec-waiting-subtle: var(--exec-waiting-subtle);
+    --color-exec-waiting-foreground: var(--exec-waiting-foreground);
+    --color-exec-completed: var(--exec-completed);
+    --color-exec-completed-subtle: var(--exec-completed-subtle);
+    --color-exec-completed-foreground: var(--exec-completed-foreground);
+    --color-exec-failed: var(--exec-failed);
+    --color-exec-failed-subtle: var(--exec-failed-subtle);
+    --color-exec-failed-foreground: var(--exec-failed-foreground);
+    --color-exec-cancelled: var(--exec-cancelled);
+    --color-exec-cancelled-subtle: var(--exec-cancelled-subtle);
+    --color-exec-cancelled-foreground: var(--exec-cancelled-foreground);
+    --color-exec-suspended: var(--exec-suspended);
+    --color-exec-suspended-subtle: var(--exec-suspended-subtle);
+    --color-exec-suspended-foreground: var(--exec-suspended-foreground);
+
+    /* ORBIT: human vs agent */
+    --color-human: var(--human);
+    --color-human-subtle: var(--human-subtle);
+    --color-human-foreground: var(--human-foreground);
+    --color-agent: var(--agent);
+    --color-agent-subtle: var(--agent-subtle);
+    --color-agent-foreground: var(--agent-foreground);
 }
 
 :root {
@@ -54,32 +126,58 @@
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.488 0.243 264.376);
+    --primary: oklch(0.46 0.23 264.376);         /* default 0.488: teks di atas hover primary/80 hanya 4.21:1 */
     --primary-foreground: oklch(0.97 0.014 254.604);
     --secondary: oklch(0.967 0.001 286.375);
     --secondary-foreground: oklch(0.21 0.006 285.885);
     --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
+    --muted-foreground: oklch(0.52 0 0);          /* default 0.556 → 4.34:1 di atas --muted, gagal AA */
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
+    --destructive: oklch(0.53 0.21 27);           /* default 0.577 → teks di atas destructive/10 hanya 3.99:1 */
     --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.809 0.105 251.813);
-    --chart-2: oklch(0.623 0.214 259.815);
-    --chart-3: oklch(0.546 0.245 262.881);
-    --chart-4: oklch(0.488 0.243 264.376);
-    --chart-5: oklch(0.424 0.199 265.638);
+    --input: oklch(0.64 0 0);                     /* batas input ≥ 3:1 (WCAG 1.4.11) */
+    --ring: oklch(0.46 0.23 264.376);           /* fokus ≥ 3:1; default 0.708 hanya 2.59:1 */
+    --chart-1: oklch(0.623 0.214 259.815);
+    --chart-2: oklch(0.546 0.245 262.881);
+    --chart-3: oklch(0.488 0.243 264.376);
+    --chart-4: oklch(0.424 0.199 265.638);
+    --chart-5: oklch(0.379 0.146 265.522);
     --radius: 0.625rem;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.546 0.245 262.881);
+    --sidebar-primary: oklch(0.46 0.23 264.376);
     --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
     --sidebar-accent: oklch(0.97 0 0);
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --sidebar-ring: oklch(0.46 0.23 264.376);
+
+    /* ORBIT tones: solid = titik/ikon/garis (≥3:1), subtle = latar badge, foreground = teks (≥4.5:1) */
+    --tone-gray: oklch(0.6 0 0);
+    --tone-gray-subtle: oklch(0.96 0 0);
+    --tone-gray-foreground: oklch(0.47 0 0);
+    --tone-sky: oklch(0.6 0.11 230);
+    --tone-sky-subtle: oklch(0.965 0.016 230);
+    --tone-sky-foreground: oklch(0.47 0.09 230);
+    --tone-blue: oklch(0.6 0.2 262);
+    --tone-blue-subtle: oklch(0.965 0.022 262);
+    --tone-blue-foreground: oklch(0.48 0.18 262);
+    --tone-violet: oklch(0.6 0.2 293);
+    --tone-violet-subtle: oklch(0.965 0.022 293);
+    --tone-violet-foreground: oklch(0.48 0.18 293);
+    --tone-amber: oklch(0.6 0.13 70);
+    --tone-amber-subtle: oklch(0.965 0.03 80);
+    --tone-amber-foreground: oklch(0.48 0.1 65);
+    --tone-orange: oklch(0.6 0.16 45);
+    --tone-orange-subtle: oklch(0.965 0.022 45);
+    --tone-orange-foreground: oklch(0.49 0.14 42);
+    --tone-red: oklch(0.6 0.2 25);
+    --tone-red-subtle: oklch(0.965 0.02 25);
+    --tone-red-foreground: oklch(0.5 0.18 25);
+    --tone-green: oklch(0.6 0.14 150);
+    --tone-green-subtle: oklch(0.965 0.025 150);
+    --tone-green-foreground: oklch(0.47 0.11 150);
 }
 
 .dark {
@@ -89,8 +187,8 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.205 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.424 0.199 265.638);
-    --primary-foreground: oklch(0.97 0.014 254.604);
+    --primary: oklch(0.707 0.165 254.624);        /* default 0.424: teks link hanya 2.24:1 di atas background */
+    --primary-foreground: oklch(0.145 0 0);
     --secondary: oklch(0.274 0.006 286.033);
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.269 0 0);
@@ -99,31 +197,136 @@
     --accent-foreground: oklch(0.985 0 0);
     --destructive: oklch(0.704 0.191 22.216);
     --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
+    --input: oklch(1 0 0 / 36%);                  /* default 15% → batas input 1.47:1 */
+    --ring: oklch(0.707 0.165 254.624);
     --chart-1: oklch(0.809 0.105 251.813);
-    --chart-2: oklch(0.623 0.214 259.815);
-    --chart-3: oklch(0.546 0.245 262.881);
-    --chart-4: oklch(0.488 0.243 264.376);
-    --chart-5: oklch(0.424 0.199 265.638);
+    --chart-2: oklch(0.707 0.165 254.624);
+    --chart-3: oklch(0.623 0.214 259.815);
+    --chart-4: oklch(0.585 0.23 262);
+    --chart-5: oklch(0.546 0.245 262.881);
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.623 0.214 259.815);
-    --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
+    --sidebar-primary: oklch(0.707 0.165 254.624);
+    --sidebar-primary-foreground: oklch(0.145 0 0);
     --sidebar-accent: oklch(0.269 0 0);
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --sidebar-ring: oklch(0.707 0.165 254.624);
+
+    --tone-gray: oklch(0.62 0 0);
+    --tone-gray-subtle: oklch(0.27 0 0);
+    --tone-gray-foreground: oklch(0.8 0 0);
+    --tone-sky: oklch(0.7 0.11 230);
+    --tone-sky-subtle: oklch(0.27 0.035 230);
+    --tone-sky-foreground: oklch(0.82 0.08 230);
+    --tone-blue: oklch(0.68 0.17 262);
+    --tone-blue-subtle: oklch(0.27 0.06 262);
+    --tone-blue-foreground: oklch(0.8 0.1 262);
+    --tone-violet: oklch(0.68 0.17 293);
+    --tone-violet-subtle: oklch(0.27 0.06 293);
+    --tone-violet-foreground: oklch(0.8 0.1 293);
+    --tone-amber: oklch(0.75 0.14 75);
+    --tone-amber-subtle: oklch(0.27 0.045 75);
+    --tone-amber-foreground: oklch(0.83 0.11 80);
+    --tone-orange: oklch(0.7 0.15 45);
+    --tone-orange-subtle: oklch(0.27 0.05 45);
+    --tone-orange-foreground: oklch(0.81 0.1 50);
+    --tone-red: oklch(0.68 0.18 25);
+    --tone-red-subtle: oklch(0.27 0.06 25);
+    --tone-red-foreground: oklch(0.8 0.1 25);
+    --tone-green: oklch(0.7 0.14 150);
+    --tone-green-subtle: oklch(0.27 0.045 150);
+    --tone-green-foreground: oklch(0.82 0.1 150);
+}
+
+/* Pemetaan status → tone. Sama untuk light dan dark; hanya tone yang berganti.
+   Selektor ganda agar var() di-resolve ulang bila .dark dipasang pada subtree. */
+:root, .dark {
+    /* Task */
+    --task-backlog: var(--tone-gray);
+    --task-backlog-subtle: var(--tone-gray-subtle);
+    --task-backlog-foreground: var(--tone-gray-foreground);
+    --task-assigned: var(--tone-sky);
+    --task-assigned-subtle: var(--tone-sky-subtle);
+    --task-assigned-foreground: var(--tone-sky-foreground);
+    --task-in-progress: var(--tone-blue);
+    --task-in-progress-subtle: var(--tone-blue-subtle);
+    --task-in-progress-foreground: var(--tone-blue-foreground);
+    --task-review: var(--tone-amber);             /* amber = menunggu Founder */
+    --task-review-subtle: var(--tone-amber-subtle);
+    --task-review-foreground: var(--tone-amber-foreground);
+    --task-blocked: var(--tone-red);
+    --task-blocked-subtle: var(--tone-red-subtle);
+    --task-blocked-foreground: var(--tone-red-foreground);
+    --task-done: var(--tone-green);
+    --task-done-subtle: var(--tone-green-subtle);
+    --task-done-foreground: var(--tone-green-foreground);
+    --task-cancelled: var(--tone-gray);
+    --task-cancelled-subtle: var(--tone-gray-subtle);
+    --task-cancelled-foreground: var(--tone-gray-foreground);
+
+    /* Execution */
+    --exec-queued: var(--tone-gray);
+    --exec-queued-subtle: var(--tone-gray-subtle);
+    --exec-queued-foreground: var(--tone-gray-foreground);
+    --exec-running: var(--tone-blue);
+    --exec-running-subtle: var(--tone-blue-subtle);
+    --exec-running-foreground: var(--tone-blue-foreground);
+    --exec-waiting: var(--tone-amber);            /* Waiting for Input = menunggu Founder */
+    --exec-waiting-subtle: var(--tone-amber-subtle);
+    --exec-waiting-foreground: var(--tone-amber-foreground);
+    --exec-completed: var(--tone-green);
+    --exec-completed-subtle: var(--tone-green-subtle);
+    --exec-completed-foreground: var(--tone-green-foreground);
+    --exec-failed: var(--tone-red);
+    --exec-failed-subtle: var(--tone-red-subtle);
+    --exec-failed-foreground: var(--tone-red-foreground);
+    --exec-cancelled: var(--tone-gray);
+    --exec-cancelled-subtle: var(--tone-gray-subtle);
+    --exec-cancelled-foreground: var(--tone-gray-foreground);
+    --exec-suspended: var(--tone-orange);         /* dihentikan sistem: budget/timeout */
+    --exec-suspended-subtle: var(--tone-orange-subtle);
+    --exec-suspended-foreground: var(--tone-orange-foreground);
+
+    /* Pelaku */
+    --human: var(--tone-gray);
+    --human-subtle: var(--tone-gray-subtle);
+    --human-foreground: var(--tone-gray-foreground);
+    --agent: var(--tone-violet);
+    --agent-subtle: var(--tone-violet-subtle);
+    --agent-foreground: var(--tone-violet-foreground);
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+    * {
+        @apply border-border outline-ring/50;
     }
-  body {
-    @apply bg-background text-foreground;
+    body {
+        @apply bg-background text-foreground;
     }
-  html {
-    @apply font-sans;
+    html {
+        @apply font-sans;
+    }
+    code, kbd, samp, pre {
+        @apply font-mono;
+    }
+    /* Affordance klik (Tailwind v4 me-reset cursor tombol ke default). */
+    button:not(:disabled),
+    [role="button"]:not([aria-disabled="true"]),
+    [role="tab"], [role="switch"], [role="checkbox"], [role="option"], [role="menuitem"],
+    select, summary, label[for], a[href] {
+        cursor: pointer;
+    }
+    button:disabled, [aria-disabled="true"] {
+        cursor: not-allowed;
+    }
+}
+
+/* Gerak: hanya indikator Running yang berdenyut, dan mati bila pengguna meminta reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }
