@@ -2,7 +2,16 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from orbit.models import AgentStatus, TaskPriority, TaskStatus, TaskType, ToolPreset
+from orbit.models import (
+    AgentStatus,
+    ExecutionEventKind,
+    ExecutionStatus,
+    ExecutionTrigger,
+    TaskPriority,
+    TaskStatus,
+    TaskType,
+    ToolPreset,
+)
 
 
 class ORM(BaseModel):
@@ -162,3 +171,39 @@ class SupervisorOut(BaseModel):
     name: str
     type: str
     is_founder: bool
+
+
+class MessageIn(BaseModel):
+    body: str = Field(min_length=1, max_length=20_000)
+    mentions: list[int] = Field(default_factory=list, description="Agent ids mentioned in the comment")
+
+
+class MessageOut(ORM):
+    id: int
+    author_id: int
+    body: str
+    mentions: list[int]
+    created_at: datetime
+
+
+class ExecutionOut(ORM):
+    id: int
+    task_id: int | None
+    agent_id: int
+    status: ExecutionStatus
+    trigger: ExecutionTrigger
+    trigger_message_id: int | None
+    instruction_version_id: int | None
+    current_step: str | None
+    tokens_used: int
+    token_limit: int
+    created_at: datetime
+    started_at: datetime | None
+    finished_at: datetime | None
+
+
+class ExecutionEventOut(ORM):
+    seq: int
+    kind: ExecutionEventKind
+    payload: dict
+    created_at: datetime

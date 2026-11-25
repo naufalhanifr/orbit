@@ -13,6 +13,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -264,3 +265,88 @@ class TaskDependency(TimestampMixin, Base):
     depends_on_id: Mapped[int] = mapped_column(
         ForeignKey("tasks.id", ondelete="CASCADE"), index=True
     )
+
+
+class ExecutionStatus(StrEnum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    STOPPED = "stopped"
+
+
+class ExecutionTrigger(StrEnum):
+    CHAT_MENTION = "chat_mention"
+    TASK_ASSIGNMENT = "task_assignment"
+    HUMAN_ACTION = "human_action"
+
+
+class ExecutionEventKind(StrEnum):
+    STEP = "step"  # payload: {"step": str}
+    OUTPUT = "output"  # payload: {"text": str}
+    TOOL = "tool"  # payload: {"tool": str, "summary": str}
+    TOKENS = "tokens"  # payload: {"used": int}
+    INSTRUCTION = "instruction"  # extra instruction from a comment; payload: {"message_id": int}
+
+
+class Conversation(TimestampMixin, Base):
+    """Chat thread. A task's thread is also its comment section (PRD 17.4)."""
+
+    __tablename__ = "conversations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    task_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tasks.id", ondelete="CASCADE"), unique=True
+    )
+
+
+class ConversationMessage(TimestampMixin, Base):
+    __tablename__ = "conversation_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    conversation_id: Mapped[int] = mapped_column(
+        ForeignKey("conversations.id", ondelete="CASCADE"), index=True
+    )
+    author_id: Mapped[int] = mapped_column(ForeignKey("workforce.id"))
+    body: Mapped[str] = mapped_column(Text)
+    mentions: Mapped[list[int]] = mapped_column(ARRAY(Integer), default=list, server_default="{}")
+
+
+class Execution(TimestampMixin, Base):
+    __tablename__ = "executions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    task_id: Mapped[int | None] = mapped_column(ForeignKey("tasks.id"), index=True)
+    agent_id: Mapped[int] = mapped_column(ForeignKey("agents.workforce_id"), index=True)
+    status: Mapped[ExecutionStatus] = mapped_column(
+        _enum(ExecutionStatus, "execution_status"), default=ExecutionStatus.QUEUED
+    )
+    trigger: Mapped[ExecutionTrigger] = mapped_column(_enum(ExecutionTrigger, "execution_trigger"))
+    trigger_message_id: Mapped[int | None] = mapped_column(ForeignKey("conversation_messages.id"))
+    triggered_by_id: Mapped[int | None] = mapped_column(ForeignKey("workforce.id"))
+    # Instruction snapshot used by this execution (PRD 11).
+    instruction_version_id: Mapped[int | None] = mapped_column(
+        ForeignKey("agent_instruction_versions.id")
+    )
+    current_step: Mapped[str | None] = mapped_column(Text)
+    tokens_used: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    token_limit: Mapped[int] = mapped_column(Integer)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ExecutionEvent(TimestampMixin, Base):
+    __tablename__ = "execution_events"
+    __table_args__ = (UniqueConstraint("execution_id", "seq"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), index=True)
+    execution_id: Mapped[int] = mapped_column(ForeignKey("executions.id", ondelete="CASCADE"))
+    seq: Mapped[int] = mapped_column(Integer)
+    kind: Mapped[ExecutionEventKind] = mapped_column(_enum(ExecutionEventKind, "execution_event_kind"))
+    payload: Mapped[dict] = mapped_column(JSONB, default=dict)

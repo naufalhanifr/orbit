@@ -66,7 +66,18 @@ Backlog → Assigned → In Progress → Founder Approval → Done
 - Dependency yang Cancelled tidak dihitung Done; Founder memutuskan dengan menghapus dependency tersebut.
 - Perpindahan otomatis hanya sampai Assigned. Menjalankan agent (In Progress) menunggu runtime agent (ADR-0001).
 
+### Komentar task = chat, dan panel execution (PRD 17.4)
+
+- `GET/POST /tasks/{id}/messages` — satu thread per task. `POST` berisi `{"body", "mentions": [agent_id, ...]}`; mention dipilih di UI, bukan di-parse dari teks.
+  - Mention assignee yang punya execution `running` di task ini → event `instruction` ke execution itu (tanpa execution baru).
+  - Mention agent lain (atau assignee tanpa execution berjalan) → execution baru `queued`, trigger `chat_mention`, dengan snapshot versi instruksi dan batas token agent.
+  - Tanpa mention → catatan saja.
+  - Agent yang di-mention harus ditugaskan ke proyek dan tidak Paused/Error/Archived.
+- `GET /tasks/{id}/executions` (riwayat), `GET /executions/{id}` (status, `current_step`, `tokens_used`/`token_limit`), `GET /executions/{id}/events?after_seq=N` (step, output, tool, tokens, instruction; polling), `POST /executions/{id}/stop`.
+- Endpoint baca tidak memicu aktivitas agent (17.5).
+- Belum ada runtime: execution tetap `queued`. Runtime nanti memakai `chat.start_execution` dan `chat.record_event`; streaming SSE dan Stop yang mematikan container menyusul.
+
 ## Ditunda
 
-Redis/Dramatiq, Row-Level Security, agent execution runtime, integrasi GitHub, chat, frontend,
+Redis/Dramatiq, Row-Level Security, agent execution runtime, integrasi GitHub, Project Chat di luar task, frontend,
 2FA, audit trail perubahan reporting line, otorisasi per pelaku transisi (di MVP semua aksi oleh Founder).
