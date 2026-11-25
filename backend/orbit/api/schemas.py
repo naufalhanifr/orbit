@@ -61,7 +61,6 @@ class AgentOut(BaseModel):
     name: str
     title: str | None
     status: AgentStatus
-    is_top: bool
     fixed_supervisor_id: int | None
     model: str | None
     tool_preset: ToolPreset

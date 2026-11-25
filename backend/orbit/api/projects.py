@@ -98,7 +98,7 @@ def create_assignment(
         organization_id=user.organization_id,
         project_id=project.id,
         agent_id=agent.workforce_id,
-        supervisor_id=body.supervisor_id,
+        supervisor_id=structure.normalize_supervisor(db, user.organization_id, body.supervisor_id),
     )
     db.add(pa)
     structure.validate_structure(db, user.organization_id)
@@ -115,7 +115,7 @@ def set_assignment_supervisor(
     db: Session = Depends(get_db),
 ):
     pa = _get_assignment(db, get_project(db, user.organization_id, project_id), assignment_id)
-    pa.supervisor_id = body.supervisor_id
+    pa.supervisor_id = structure.normalize_supervisor(db, user.organization_id, body.supervisor_id)
     structure.validate_structure(db, user.organization_id)
     db.commit()
     return pa

@@ -124,17 +124,47 @@ def test_acceptance_criteria_cannot_be_cleared_after_assignment(api, client, set
     assert r.status_code == 409
 
 
-def test_assigned_requires_ready_agent_in_project(api, client, setup, new_task):
+def test_assigned_requires_assignee_in_project(api, client, setup, new_task):
     t = new_task()
     r = move(client, t, "assigned")
     assert r.json()["code"] == "assignee_required"
-    outsider = api.agent("Outsider", supervisor=setup["cto"]["id"], ready=True)
+    outsider = api.agent("Outsider", ready=True)
     r = client.patch(f"/tasks/{t['id']}", json={"assignee_id": outsider["id"]})
     assert r.json()["code"] == "assignee_not_in_project"
-    drafty = api.agent("Drafty", supervisor=setup["cto"]["id"])
-    api.ok(api.assign(setup["project"]["id"], drafty["id"]))
-    r = client.patch(f"/tasks/{t['id']}", json={"assignee_id": drafty["id"]})
-    assert r.json()["code"] == "assignee_not_ready"
+
+
+def test_draft_agent_becomes_ready_when_founder_assigns_a_task(api, client, setup, new_task):
+    sub = api.agent("Subordinate", supervisor=setup["dev"]["id"])
+    assert sub["status"] == "draft"
+    api.ok(api.assign(setup["project"]["id"], sub["id"]))
+    t = new_task(assignee_id=sub["id"])
+    assert api.ok(client.get(f"/agents/{sub['id']}"))["status"] == "draft"  # not yet ordered
+    api.ok(move(client, t, "assigned"))
+    assert api.ok(client.get(f"/agents/{sub['id']}"))["status"] == "ready"
+
+
+def test_agent_without_any_supervisor_line_is_auto_ready_too(api, client, setup, new_task):
+    """No agent supervisor means it reports to the Founder; nothing blocks Ready."""
+    solo = api.agent("Solo")
+    api.ok(api.assign(setup["project"]["id"], solo["id"]))
+    api.ok(move(client, new_task(assignee_id=solo["id"]), "assigned"))
+    assert api.ok(client.get(f"/agents/{solo['id']}"))["status"] == "ready"
+
+
+@pytest.mark.parametrize("status", ["paused", "error"])
+def test_paused_or_errored_agent_cannot_be_assigned(api, client, setup, new_task, status):
+    a = api.agent("Stopped")
+    api.ok(api.assign(setup["project"]["id"], a["id"]))
+    api.ok(client.patch(f"/agents/{a['id']}", json={"status": status}))
+    r = client.post(f"/projects/{setup['project']['id']}/tasks", json={"title": "x", "assignee_id": a["id"]})
+    assert r.status_code == 409 and r.json()["code"] == "assignee_unavailable"
+    # Also rejected if the agent was paused after being set as assignee.
+    b = api.agent("Later paused")
+    api.ok(api.assign(setup["project"]["id"], b["id"]))
+    t = new_task(assignee_id=b["id"])
+    api.ok(client.patch(f"/agents/{b['id']}", json={"status": status}))
+    assert move(client, t, "assigned").json()["code"] == "assignee_unavailable"
+    assert api.ok(client.get(f"/agents/{b['id']}"))["status"] == status
 
 
 def test_founder_review_requires_pr(api, client, setup, new_task):
